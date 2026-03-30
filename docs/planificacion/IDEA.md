@@ -11,6 +11,28 @@ en apariencia, compartibles en LinkedIn, descargables en PDF y verificables púb
 
 ---
 
+## Posicionamiento de Marca (Humor + Inclusion)
+
+Esta plataforma se comunica con tono humoristico y satirico, pero sin promover discriminacion,
+acoso o lenguaje degradante contra ningun grupo.
+
+Lineas de comunicacion obligatorias:
+- Es entretenimiento: no evaluacion psicologica, medica ni legal.
+- Es inclusivo: respeta todas las identidades, orientaciones y estilos de vida.
+- Es transparente: el resultado es un juego basado en preguntas aleatorias.
+
+Disclaimer recomendado para header y footer:
+
+"Sitio humoristico de entretenimiento. No es una certificacion real y no define el valor,
+identidad ni capacidades de ninguna persona. Apoyamos y respetamos todas las mentalidades."
+
+Recomendacion de marketing:
+- Mantener el estilo institucional de broma (visual serio + contenido satirico).
+- Usar copys divertidos, sin insultos directos ni etiquetas estigmatizantes.
+- Reforzar el disclaimer antes del examen, al ver resultado y al descargar PDF.
+
+---
+
 ## 🚀 Cómo usar este repositorio en GitHub Codespace
 
 ### Paso 1 — Crear el repositorio en GitHub
@@ -271,3 +293,11 @@ Proyecto personal de broma. Todos los certificados son ficticios y sin validez l
 
 *"Este sitio es puramente humorístico. Los certificados no tienen validez legal,
 médica, psicológica ni oficial de ningún tipo."*
+
+---
+
+## 🌍 Disclaimers multilingües
+
+Para textos legales/inclusivos listos para pegar en home, resultado y PDF, ver:
+
+- `docs/planificacion/DISCLAIMERS_I18N.md`
