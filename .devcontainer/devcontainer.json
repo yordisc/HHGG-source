@@ -1,0 +1,110 @@
+{
+  "name": "Instituto de Certificaciones Dudosas — Laravel 11",
+  "image": "mcr.microsoft.com/devcontainers/php:8.2-bullseye",
+
+  // ─── Servicios adicionales ──────────────────────────────────────────────────
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "20"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "configureZshAsDefaultShell": true
+    }
+  },
+
+  // ─── Servicios Docker (MySQL local para desarrollo) ──────────────────────────
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+
+  // ─── Extensiones de VS Code que se instalan automáticamente ─────────────────
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        // PHP y Laravel
+        "bmewburn.vscode-intelephense-client",
+        "onecentlin.laravel-blade",
+        "onecentlin.laravel5-snippets",
+        "amiralizadeh9480.laravel-extra-intellisense",
+        "ryannaddy.laravel-artisan",
+        "austenc.laravel-blade-spacer",
+        "shufo.vscode-blade-formatter",
+        // Tailwind CSS
+        "bradlc.vscode-tailwindcss",
+        // Base de datos
+        "mtxr.sqltools",
+        "mtxr.sqltools-driver-mysql",
+        // Git y utilidades
+        "eamodio.gitlens",
+        "editorconfig.editorconfig",
+        "streetsidesoftware.code-spell-checker",
+        "streetsidesoftware.code-spell-checker-spanish",
+        // DotEnv
+        "mikestead.dotenv",
+        // Prettier / formateo
+        "esbenp.prettier-vscode"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "[php]": {
+          "editor.defaultFormatter": "bmewburn.vscode-intelephense-client"
+        },
+        "[blade]": {
+          "editor.defaultFormatter": "shufo.vscode-blade-formatter"
+        },
+        "intelephense.environment.phpVersion": "8.2.0",
+        "php.validate.executablePath": "/usr/local/bin/php",
+        "tailwindCSS.includeLanguages": {
+          "blade": "html"
+        },
+        "emmet.includeLanguages": {
+          "blade": "html"
+        },
+        // SQLTools: conexión automática a MySQL local
+        "sqltools.connections": [
+          {
+            "name": "MySQL Local (Codespace)",
+            "driver": "MySQL",
+            "server": "127.0.0.1",
+            "port": 3306,
+            "database": "certificados_dev",
+            "username": "laravel",
+            "password": "secret"
+          }
+        ]
+      }
+    }
+  },
+
+  // ─── Puertos expuestos ───────────────────────────────────────────────────────
+  "forwardPorts": [8000, 3306, 5173],
+  "portsAttributes": {
+    "8000": {
+      "label": "Laravel App",
+      "onAutoForward": "openBrowserOnce"
+    },
+    "5173": {
+      "label": "Vite (assets)",
+      "onAutoForward": "silent"
+    },
+    "3306": {
+      "label": "MySQL",
+      "onAutoForward": "silent"
+    }
+  },
+
+  // ─── Script que se ejecuta al crear el Codespace ─────────────────────────────
+  "onCreateCommand": "bash .devcontainer/scripts/on-create.sh",
+
+  // ─── Script que se ejecuta cada vez que el Codespace arranca ─────────────────
+  "postStartCommand": "bash .devcontainer/scripts/post-start.sh",
+
+  // ─── Variables de entorno disponibles en el contenedor ───────────────────────
+  "remoteEnv": {
+    "APP_ENV": "local",
+    "APP_DEBUG": "true"
+  }
+}

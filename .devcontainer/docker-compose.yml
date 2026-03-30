@@ -1,0 +1,40 @@
+version: "3.8"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Docker Compose para desarrollo local en GitHub Codespace
+# Levanta: contenedor PHP (app) + MySQL 8 (base de datos local)
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── Aplicación Laravel ────────────────────────────────────────────────────
+  app:
+    image: mcr.microsoft.com/devcontainers/php:8.2-bullseye
+    volumes:
+      - ..:/workspaces:cached
+    command: sleep infinity
+    network_mode: service:db
+    depends_on:
+      - db
+
+  # ── MySQL 8 ───────────────────────────────────────────────────────────────
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root_secret
+      MYSQL_DATABASE: certificados_dev
+      MYSQL_USER: laravel
+      MYSQL_PASSWORD: secret
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --default-authentication-plugin=mysql_native_password
+
+volumes:
+  mysql_data:
