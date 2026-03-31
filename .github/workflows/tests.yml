@@ -6,16 +6,26 @@ on:
 
 jobs:
   laravel-tests:
+    name: Laravel tests (PHP ${{ matrix.php }})
     runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.experimental }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - php: "8.4"
+            experimental: false
+          - php: "8.2"
+            experimental: true
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: "8.2"
+          php-version: ${{ matrix.php }}
           extensions: mbstring, dom, fileinfo, sqlite, pdo_sqlite
           coverage: none
 
