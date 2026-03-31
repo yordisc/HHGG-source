@@ -5,6 +5,7 @@ Este directorio centraliza la documentacion del proyecto.
 ## Documento principal
 
 - [PROYECTO_DETALLADO.md](PROYECTO_DETALLADO.md)
+- [CODESPACES_PRUEBAS.md](CODESPACES_PRUEBAS.md)
 
 ## Planificacion
 
