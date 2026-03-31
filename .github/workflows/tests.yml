@@ -45,7 +45,7 @@ jobs:
           QUEUE_CONNECTION: sync
           MAIL_MAILER: array
           ADMIN_ACCESS_KEY: test-admin-key
-        run: php artisan test -v
+        run: php artisan test
 
       - name: Skip unsupported version
         if: matrix.php == '8.2'
