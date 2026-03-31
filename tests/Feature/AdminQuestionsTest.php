@@ -46,9 +46,13 @@ class AdminQuestionsTest extends TestCase
             ->get(route('admin.questions.export.csv'));
 
         $response->assertOk();
+        $response->assertStreamed();
         $response->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
-        $response->assertSee('question_id,language,cert_type,prompt,option_1,option_2,option_3,option_4,correct_option,active', false);
-        $response->assertSee('Test question', false);
-        $response->assertSee('A,B,C,D', false);
+
+        $content = $response->streamedContent();
+
+        $this->assertStringContainsString('question_id,language,cert_type,prompt,option_1,option_2,option_3,option_4,correct_option,active', $content);
+        $this->assertStringContainsString('Test question', $content);
+        $this->assertStringContainsString('A,B,C,D', $content);
     }
 }
