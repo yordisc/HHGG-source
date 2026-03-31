@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Question;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -48,6 +49,19 @@ class QuizFlowTest extends TestCase
 
     public function test_quiz_show_returns_ok_when_candidate_session_exists(): void
     {
+        for ($i = 1; $i <= 30; $i++) {
+            Question::create([
+                'cert_type' => 'social_energy',
+                'prompt' => 'Question '.$i,
+                'option_1' => 'A',
+                'option_2' => 'B',
+                'option_3' => 'C',
+                'option_4' => 'D',
+                'correct_option' => 1,
+                'active' => true,
+            ]);
+        }
+
         session([
             'quiz_candidate.social_energy' => [
                 'first_name' => 'Ana',
