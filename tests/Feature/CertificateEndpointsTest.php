@@ -36,8 +36,8 @@ class CertificateEndpointsTest extends TestCase
     {
         return Certificate::create([
             'serial' => 'CERT-2026-SE-XYZ987',
-            'cert_type' => 'social_energy',
-            'result_key' => 'social_spark',
+            'cert_type' => 'hetero',
+            'result_key' => 'hetero_exitoso',
             'first_name' => 'Ana',
             'last_name' => 'Lopez',
             'country' => 'CO',

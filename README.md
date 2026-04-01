@@ -17,7 +17,7 @@ No es una certificacion real ni sustituye evaluaciones medicas, psicologicas o l
 
 - Home con seleccion de certificaciones y buscador.
 - Registro de candidato por tipo de certificacion.
-- Motor de quiz con calificacion por umbral de aciertos/errores.
+- Motor de quiz con opciones remezcladas en cada intento y resultado por umbral de errores.
 - Emision de certificado con serial unico.
 - Consulta publica por serial y descarga PDF.
 - Busqueda por serial o documento (hash de consulta).
@@ -26,7 +26,7 @@ No es una certificacion real ni sustituye evaluaciones medicas, psicologicas o l
 
 ## Stack tecnico
 
-- PHP 8.2+
+- PHP 8.4+
 - Laravel 11
 - Livewire 4
 - Tailwind CSS + Vite
@@ -35,43 +35,26 @@ No es una certificacion real ni sustituye evaluaciones medicas, psicologicas o l
 
 ## Inicio rapido local
 
-1. Instalar dependencias backend:
+Para preparar el entorno y validar la suite en un solo paso:
 
 ```bash
-composer install
+sh scripts/local-test.sh
 ```
 
-2. Instalar dependencias frontend:
+El script instala dependencias, crea `.env` si falta, usa SQLite local, ejecuta migraciones y seeders, y lanza `php artisan test`.
+
+Para levantar el stack de desarrollo de inmediato:
 
 ```bash
-npm install
+sh scripts/dev-local.sh
 ```
 
-3. Preparar entorno:
+Ese comando arranca `php artisan serve`, `queue:listen` y `npm run dev`. Si quieres validar antes de levantarlo, usa `sh scripts/dev-local.sh --all`.
+
+Tambien puedes usar el modo de desarrollo con validacion previa:
 
 ```bash
-cp .env.example .env
-php artisan key:generate
-```
-
-4. Configurar base de datos en .env:
-
-- DB_HOST
-- DB_PORT
-- DB_DATABASE
-- DB_USERNAME
-- DB_PASSWORD
-
-5. Ejecutar migraciones y seeders:
-
-```bash
-php artisan migrate --seed
-```
-
-6. Levantar entorno de desarrollo:
-
-```bash
-composer run dev
+sh scripts/dev-local.sh --all
 ```
 
 ## Variables de entorno clave
@@ -117,8 +100,8 @@ Tablas principales:
 
 Seeders iniciales:
 
-- database/seeders/SocialEnergyQuestionsSeeder.php
-- database/seeders/LifeStyleQuestionsSeeder.php
+- database/seeders/SocialEnergyQuestionsSeeder.php (certificado `hetero`)
+- database/seeders/LifeStyleQuestionsSeeder.php (certificado `good_girl`)
 
 ## Panel admin
 
@@ -140,7 +123,7 @@ En produccion, ejecutar schedule:run cada minuto via cron.
 
 - Indice general: docs/README.md
 - Documento detallado: docs/PROYECTO_DETALLADO.md
-- Planificacion: docs/planificacion/
+- Operacion local: docs/CODESPACES_PRUEBAS.md
 - Retencion de datos: docs/planificacion/POLITICA_RETENCION_DATOS.md
 - Despliegue staging/produccion: docs/planificacion/DESPLIEGUE_STAGING_PRODUCCION.md
 

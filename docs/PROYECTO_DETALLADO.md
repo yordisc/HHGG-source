@@ -1,14 +1,14 @@
 # Documentacion detallada del proyecto CertificacionHHGG
 
-Ultima actualizacion: 2026-03-30
+Ultima actualizacion: 2026-04-01
 
 ## 1. Resumen funcional
 
 CertificacionHHGG es una aplicacion Laravel 11 + Livewire que permite:
 
 - Registrar candidato para un quiz humoristico.
-- Ejecutar quiz de 30 preguntas aleatorias por tipo de certificado.
-- Calcular resultado por umbral de aciertos/errores.
+- Ejecutar quiz de 30 preguntas aleatorias por tipo de certificado, con opciones remezcladas en cada intento.
+- Calcular resultado por umbral de errores y mostrarlo al final en el certificado.
 - Generar certificado con serial unico.
 - Publicar vista verificable por serial.
 - Descargar certificado en PDF.
@@ -26,7 +26,7 @@ CertificacionHHGG es una aplicacion Laravel 11 + Livewire que permite:
 
 ## 3. Stack tecnico
 
-- Backend: Laravel 11 (PHP 8.2+)
+- Backend: Laravel 11 (PHP 8.4+)
 - UI interactiva: Livewire 4
 - Frontend build: Vite + Tailwind (npm)
 - PDF: barryvdh/laravel-dompdf
@@ -94,7 +94,9 @@ Estrategia:
   - scheduler: routes/console.php
 - Observabilidad basica por logs y metricas en cache.
 - Scripts locales:
-  - scripts/setup-local.sh (Codespaces/Linux Mint)
+  - scripts/local-test.sh (validacion, migraciones, seeders y tests)
+  - scripts/dev-local.sh (arranque del stack de desarrollo)
+  - scripts/setup-local.sh (bootstrap inicial)
 
 ## 9. Backoffice admin
 

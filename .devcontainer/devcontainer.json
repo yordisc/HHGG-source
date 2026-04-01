@@ -1,6 +1,6 @@
 {
   "name": "Instituto de Certificaciones Dudosas — Laravel 11",
-  "image": "mcr.microsoft.com/devcontainers/php:8.2-bullseye",
+  "image": "mcr.microsoft.com/devcontainers/php:8.4-bullseye",
 
   // ─── Servicios adicionales ──────────────────────────────────────────────────
   "features": {
@@ -55,7 +55,7 @@
         "[blade]": {
           "editor.defaultFormatter": "shufo.vscode-blade-formatter"
         },
-        "intelephense.environment.phpVersion": "8.2.0",
+        "intelephense.environment.phpVersion": "8.4.0",
         "php.validate.executablePath": "/usr/local/bin/php",
         "tailwindCSS.includeLanguages": {
           "blade": "html"
@@ -88,7 +88,7 @@
     },
     "5173": {
       "label": "Vite (assets)",
-      "onAutoForward": "silent"
+      "onAutoForward": "openBrowserOnce"
     },
     "3306": {
       "label": "MySQL",

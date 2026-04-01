@@ -1,6 +1,6 @@
 # Flujo de despliegue: staging y produccion
 
-Ultima actualizacion: 2026-03-30
+Ultima actualizacion: 2026-04-01
 
 ## Objetivo
 
@@ -8,7 +8,7 @@ Estandarizar como desplegar CertificacionHHGG en staging y produccion de forma s
 
 ## Requisitos previos
 
-- PHP 8.2+
+- PHP 8.4+
 - Composer
 - Node.js + npm
 - Base de datos (MySQL/MariaDB o SQLite segun entorno)

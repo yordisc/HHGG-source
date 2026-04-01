@@ -13,7 +13,7 @@ echo "║   Instituto de Certificaciones Dudosas™ — Iniciando...       ║"
 echo "╚══════════════════════════════════════════════════════════════╝"
 echo ""
 
-WORKSPACE_DIR="/workspaces/$(ls /workspaces/ | head -1)"
+WORKSPACE_DIR="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 cd "$WORKSPACE_DIR"
 
 # ─── 1. Esperar a que MySQL esté disponible ──────────────────────────────────

@@ -19,8 +19,8 @@
                 <div>
                     <label class="text-xs font-semibold text-slate-700">Tipo</label>
                     <select name="cert_type" class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-2 text-sm">
-                        <option value="social_energy" @selected(old('cert_type') === 'social_energy')>social_energy</option>
-                        <option value="life_style" @selected(old('cert_type') === 'life_style')>life_style</option>
+                        <option value="hetero" @selected(old('cert_type') === 'hetero')>hetero</option>
+                        <option value="good_girl" @selected(old('cert_type') === 'good_girl')>good_girl</option>
                     </select>
                 </div>
                 <div class="flex items-end">

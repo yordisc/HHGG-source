@@ -17,14 +17,14 @@ echo ""
 echo "► Instalando extensiones PHP necesarias..."
 sudo apt-get update -qq
 sudo apt-get install -y -qq \
-  php8.2-bcmath \
-  php8.2-xml \
-  php8.2-curl \
-  php8.2-mbstring \
-  php8.2-mysql \
-  php8.2-gd \
-  php8.2-zip \
-  php8.2-intl \
+  php8.4-bcmath \
+  php8.4-xml \
+  php8.4-curl \
+  php8.4-mbstring \
+  php8.4-mysql \
+  php8.4-gd \
+  php8.4-zip \
+  php8.4-intl \
   libfreetype6-dev \
   libjpeg62-turbo-dev \
   libpng-dev \
@@ -49,8 +49,8 @@ echo "► Verificando Node.js..."
 echo "   ✓ Node.js $(node --version) / npm $(npm --version)"
 
 # ─── 4. Instalar el proyecto Laravel (solo si no existe aún) ────────────────
-WORKSPACE_DIR="/workspaces/$(basename $(pwd))"
-cd "$WORKSPACE_DIR" 2>/dev/null || cd /workspaces/*/ 2>/dev/null || true
+WORKSPACE_DIR="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+cd "$WORKSPACE_DIR"
 CURRENT_DIR=$(pwd)
 
 echo ""

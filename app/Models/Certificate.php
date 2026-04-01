@@ -39,12 +39,16 @@ class Certificate extends Model
 
     public function isExpired(): bool
     {
-        return $this->expires_at->isPast();
+        return $this->expires_at?->isPast() ?? false;
     }
 
     public function canRenew(int $days = 30): bool
     {
         $pivot = $this->last_attempt_at ?? $this->issued_at;
+        
+        if ($pivot === null) {
+            return false;
+        }
 
         return Carbon::now()->greaterThanOrEqualTo($pivot->copy()->addDays($days));
     }

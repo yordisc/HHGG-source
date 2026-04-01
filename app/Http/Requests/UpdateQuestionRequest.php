@@ -14,7 +14,7 @@ class UpdateQuestionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'cert_type' => ['required', 'in:social_energy,life_style'],
+                'cert_type' => ['required', 'in:hetero,good_girl'],
             'prompt' => ['required', 'string', 'min:8'],
             'option_1' => ['required', 'string', 'min:1'],
             'option_2' => ['required', 'string', 'min:1'],

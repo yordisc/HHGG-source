@@ -54,8 +54,8 @@
         <form method="GET" class="mt-6 grid gap-3 sm:grid-cols-[1fr_auto]">
             <select name="cert_type" class="rounded-xl border border-slate-300 px-4 py-2 text-sm">
                 <option value="">Todos los tipos</option>
-                <option value="social_energy" @selected($filterType === 'social_energy')>social_energy</option>
-                <option value="life_style" @selected($filterType === 'life_style')>life_style</option>
+                <option value="hetero" @selected($filterType === 'hetero')>hetero</option>
+                <option value="good_girl" @selected($filterType === 'good_girl')>good_girl</option>
             </select>
             <button type="submit" class="rounded-xl bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white">Filtrar</button>
         </form>

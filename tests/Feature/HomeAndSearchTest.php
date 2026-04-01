@@ -24,9 +24,9 @@ class HomeAndSearchTest extends TestCase
     public function test_search_by_serial_redirects_to_public_certificate(): void
     {
         $certificate = Certificate::create([
-            'serial' => 'CERT-2026-SE-ABC123',
-            'cert_type' => 'social_energy',
-            'result_key' => 'social_spark',
+            'serial' => 'CERT-2026-HO-ABC123',
+            'cert_type' => 'hetero',
+            'result_key' => 'hetero_exitoso',
             'first_name' => 'Ana',
             'last_name' => 'Lopez',
             'country' => 'CO',

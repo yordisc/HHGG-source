@@ -29,7 +29,8 @@ Route::get('/locale/{locale}', function (Request $request, string $locale): Redi
         session(['locale' => $locale]);
     }
 
-    return redirect()->to($request->headers->get('referer', '/'));
+    // Use back() which safely handles the referer header
+    return back(default: route('home'));
 });
 
 Route::prefix('admin')->name('admin.')->group(function () {

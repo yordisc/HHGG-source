@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StartQuizRequest;
 use App\Models\Certificate;
+use App\Models\Question;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -13,7 +14,7 @@ class QuizController extends Controller
 {
     public function register(string $certType): View
     {
-        abort_unless(in_array($certType, ['social_energy', 'life_style'], true), 404);
+        abort_unless(in_array($certType, ['hetero', 'good_girl'], true), 404);
 
         return view('quiz.register', [
             'certType' => $certType,
@@ -51,10 +52,28 @@ class QuizController extends Controller
 
     public function show(string $certType): View|RedirectResponse
     {
-        abort_unless(in_array($certType, ['social_energy', 'life_style'], true), 404);
+        abort_unless(in_array($certType, ['hetero', 'good_girl'], true), 404);
 
         if (!session()->has("quiz_candidate.{$certType}")) {
             return redirect()->route('quiz.register', ['certType' => $certType]);
+        }
+
+        // Verify that there are enough questions before showing the exam
+        $questionCount = Question::where('cert_type', $certType)
+            ->where('active', true)
+            ->count();
+
+        if ($questionCount < 30) {
+            Log::warning('quiz.insufficient_questions', [
+                'cert_type' => $certType,
+                'available' => $questionCount,
+                'required' => 30,
+            ]);
+
+            return redirect()->route('quiz.register', ['certType' => $certType])
+                ->withErrors([
+                    'general' => "The exam for {$certType} could not be started. Please try again later or contact support.",
+                ]);
         }
 
         return view('quiz.take', [

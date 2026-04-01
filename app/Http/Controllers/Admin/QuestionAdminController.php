@@ -58,7 +58,7 @@ class QuestionAdminController extends Controller
         $filterType = (string) $request->query('cert_type', '');
 
         $questions = Question::query()
-            ->when(in_array($filterType, ['social_energy', 'life_style'], true), function ($query) use ($filterType) {
+            ->when(in_array($filterType, ['hetero', 'good_girl'], true), function ($query) use ($filterType) {
                 $query->where('cert_type', $filterType);
             })
             ->latest('id')
@@ -187,7 +187,7 @@ class QuestionAdminController extends Controller
                 }
 
                 $certType = trim((string) ($item['cert_type'] ?? ''));
-                if (!in_array($certType, ['social_energy', 'life_style'], true)) {
+                if (!in_array($certType, ['hetero', 'good_girl'], true)) {
                     $skipped++;
                     continue;
                 }
@@ -315,7 +315,7 @@ class QuestionAdminController extends Controller
             ]);
 
             Question::query()
-                ->when(in_array($filterType, ['social_energy', 'life_style'], true), function ($query) use ($filterType) {
+                ->when(in_array($filterType, ['hetero', 'good_girl'], true), function ($query) use ($filterType) {
                     $query->where('cert_type', $filterType);
                 })
                 ->with('translations')
@@ -392,12 +392,12 @@ class QuestionAdminController extends Controller
             fputcsv($output, [
                 '',
                 'en',
-                'social_energy',
-                'At a social event, what describes you best? #999',
-                'I greet many people quickly',
-                'I prefer one deep conversation',
-                'I observe first and then join',
-                'I stay near close friends',
+                'hetero',
+                'What do you do when you see an attractive person? #999',
+                'Always',
+                'Sometimes',
+                'Rarely',
+                'Never',
                 '1',
                 '1',
             ]);
@@ -406,26 +406,26 @@ class QuestionAdminController extends Controller
             fputcsv($output, [
                 '1',
                 'es',
-                'social_energy',
-                'En un evento social, que te describe mejor? #1',
-                'Saludo rapido a muchas personas',
-                'Prefiero una conversacion profunda',
-                'Primero observo y luego participo',
-                'Me quedo cerca de amistades cercanas',
+                'hetero',
+                '¿Qué haces cuando ves una persona atractiva? #1',
+                'Siempre',
+                'A veces',
+                'Raramente',
+                'Nunca',
                 '1',
                 '1',
             ]);
 
-            // Otro ejemplo base para life_style.
+            // Otro ejemplo base para good_girl.
             fputcsv($output, [
                 '',
                 'en',
-                'life_style',
-                'How do you usually handle your weekly plans? #999',
-                'I plan tasks in advance',
-                'I improvise as things happen',
-                'I set priorities but stay flexible',
-                'I ask others to organize with me',
+                'good_girl',
+                'How often do you apologize unnecessarily? #999',
+                'Always',
+                'Sometimes',
+                'Rarely',
+                'Never',
                 '1',
                 '1',
             ]);

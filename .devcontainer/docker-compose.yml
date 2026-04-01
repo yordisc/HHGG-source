@@ -9,7 +9,7 @@ services:
 
   # ── Aplicación Laravel ────────────────────────────────────────────────────
   app:
-    image: mcr.microsoft.com/devcontainers/php:8.2-bullseye
+    image: mcr.microsoft.com/devcontainers/php:8.4-bullseye
     volumes:
       - ..:/workspaces:cached
     command: sleep infinity

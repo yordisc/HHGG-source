@@ -30,8 +30,17 @@ class QuizRunner extends Component
         $attempt = session($this->attemptKey());
 
         if (!is_array($attempt)) {
-            $attempt = $this->buildAttempt();
-            session([$this->attemptKey() => $attempt]);
+            try {
+                $attempt = $this->buildAttempt();
+                session([$this->attemptKey() => $attempt]);
+            } catch (\Exception $e) {
+                Log::error('quiz.attempt.build.failed', [
+                    'cert_type' => $certType,
+                    'error' => $e->getMessage(),
+                ]);
+                $this->redirectRoute('quiz.register', ['certType' => $certType], true);
+                return;
+            }
         }
 
         $this->total = count($attempt['questions']);
@@ -97,7 +106,10 @@ class QuizRunner extends Component
             ->get();
 
         if ($questions->count() < 30) {
-            abort(422, 'Question bank must contain at least 30 active questions for this certificate type.');
+            throw new \Exception(
+                "Question bank must contain at least 30 active questions for certificate type '{$this->certType}'. ". 
+                "Currently has {$questions->count()} questions. Contact support if the problem persists."
+            );
         }
 
         $prepared = [];
@@ -163,13 +175,13 @@ class QuizRunner extends Component
             return;
         }
 
-        $failureThreshold = (int) ceil($this->total / 3);
+        $failureThreshold = 11;
         $failed = $this->incorrectCount >= $failureThreshold;
 
         $resultKey = match ($this->certType) {
-            'social_energy' => $failed ? 'social_reflective' : 'social_spark',
-            'life_style' => $failed ? 'life_flexible' : 'life_structured',
-            default => 'social_spark',
+            'hetero' => $failed ? 'hetero_rebeldon' : 'hetero_exitoso',
+            'good_girl' => $failed ? 'good_girl_desatada' : 'good_girl_pura',
+            default => 'hetero_exitoso',
         };
 
         $serial = 'CERT-'.date('Y').'-'.strtoupper(substr($this->certType, 0, 2)).'-'.Str::upper(Str::random(6));

@@ -8,48 +8,39 @@ Esta guia explica como levantar el proyecto y ejecutar pruebas dentro de GitHub 
 - Terminal en la raiz del proyecto
 - PHP y Composer disponibles (ya vienen en el entorno)
 
+La configuracion del Codespace levanta MySQL local y deja los puertos 8000, 3306 y 5173 listos para Laravel, base de datos y Vite.
+
 ## 1) Instalar dependencias
 
 ```bash
-composer install
-npm install
+sh scripts/local-test.sh
 ```
 
 ## 2) Preparar entorno
 
-```bash
-cp .env.example .env
-php artisan key:generate
-```
+`scripts/local-test.sh` ya prepara `.env`, genera la APP_KEY, crea la base SQLite temporal para validacion y ejecuta migraciones y tests.
 
-## 3) Configurar DB local simple con SQLite (recomendado en Codespaces)
+## 3) Configurar entorno local
 
-Crear archivo de base de datos:
+Si quieres arrancar el stack de desarrollo de inmediato:
 
 ```bash
-touch database/database.sqlite
-```
-
-Editar `.env` y usar:
-
-```dotenv
-DB_CONNECTION=sqlite
-DB_DATABASE=/workspaces/CertificacionHHGG-source/database/database.sqlite
+sh scripts/dev-local.sh --serve
 ```
 
 ## 4) Ejecutar migraciones y seeders
 
 ```bash
-php artisan migrate --seed
+php artisan migrate:fresh --seed
 ```
 
 ## 5) Levantar aplicacion en desarrollo
 
 ```bash
-composer run dev
+sh scripts/dev-local.sh
 ```
 
-Nota: esto inicia servidor Laravel, cola, logs y Vite.
+Nota: `sh scripts/dev-local.sh` levanta servidor Laravel, cola y Vite; si quieres ejecutar validacion previa antes del arranque, usa `sh scripts/dev-local.sh --all`.
 
 ## 6) Ejecutar pruebas
 
@@ -77,10 +68,5 @@ php artisan optimize:clear
 ## Atajo: todo en bloque
 
 ```bash
-composer install && npm install \
-&& cp .env.example .env \
-&& php artisan key:generate \
-&& touch database/database.sqlite \
-&& php artisan migrate --seed \
-&& php artisan test
+sh scripts/local-test.sh
 ```

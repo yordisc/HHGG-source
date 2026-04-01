@@ -1,6 +1,6 @@
 # Tareas del proyecto: completadas y pendientes
 
-Ultima actualizacion: 2026-03-30
+Ultima actualizacion: 2026-04-01
 
 ## Completadas
 
@@ -12,13 +12,13 @@ Ultima actualizacion: 2026-03-30
 - [x] Selector manual de idioma por ruta.
 - [x] Home con flujo de inicio.
 - [x] Registro de candidato para quiz.
-- [x] Motor de quiz Livewire (30 preguntas aleatorias).
+- [x] Motor de quiz Livewire (30 preguntas aleatorias, opciones remezcladas).
 - [x] Logica de resultado por umbral de errores.
 - [x] Emision de certificado con serial unico.
 - [x] Vista publica de certificado por serial.
 - [x] Descarga de certificado en PDF (DomPDF).
 - [x] Busqueda de certificado por serial o hash de documento.
-- [x] Seeders iniciales de preguntas para 2 certificaciones.
+- [x] Seeders iniciales de preguntas para 2 certificaciones tematicas.
 - [x] Limite de intento diario por IP y documento.
 - [x] Regla de renovacion por vigencia de certificado.
 - [x] Limpieza diaria de certificados vencidos (scheduler).

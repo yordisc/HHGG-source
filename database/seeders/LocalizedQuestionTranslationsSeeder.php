@@ -52,12 +52,12 @@ class LocalizedQuestionTranslationsSeeder extends Seeder
     {
         $suffix = $this->extractNumericSuffix($basePrompt);
 
-        if ($certType === 'social_energy') {
-            return $this->socialEnergyTranslations($locale, $suffix);
+        if ($certType === 'hetero') {
+            return $this->heteroTranslations($locale, $suffix);
         }
 
-        if ($certType === 'life_style') {
-            return $this->lifeStyleTranslations($locale, $suffix);
+        if ($certType === 'good_girl') {
+            return $this->goodGirlTranslations($locale, $suffix);
         }
 
         return [
@@ -81,7 +81,7 @@ class LocalizedQuestionTranslationsSeeder extends Seeder
     /**
      * @return array{0:string,1:string,2:string,3:string,4:string}
      */
-    private function socialEnergyTranslations(string $locale, string $suffix): array
+    private function heteroTranslations(string $locale, string $suffix): array
     {
         return match ($locale) {
             'es' => [
@@ -139,7 +139,7 @@ class LocalizedQuestionTranslationsSeeder extends Seeder
     /**
      * @return array{0:string,1:string,2:string,3:string,4:string}
      */
-    private function lifeStyleTranslations(string $locale, string $suffix): array
+    private function goodGirlTranslations(string $locale, string $suffix): array
     {
         return match ($locale) {
             'es' => [

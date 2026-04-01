@@ -32,7 +32,7 @@ class AdminQuestionsTest extends TestCase
     public function test_admin_export_csv_contains_question_and_options(): void
     {
         Question::create([
-            'cert_type' => 'social_energy',
+            'cert_type' => 'hetero',
             'prompt' => 'Test question',
             'option_1' => 'A',
             'option_2' => 'B',

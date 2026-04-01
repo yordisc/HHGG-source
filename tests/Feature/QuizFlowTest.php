@@ -12,7 +12,7 @@ class QuizFlowTest extends TestCase
 
     public function test_quiz_register_returns_ok_for_valid_type(): void
     {
-        $response = $this->get(route('quiz.register', ['certType' => 'social_energy']));
+        $response = $this->get(route('quiz.register', ['certType' => 'hetero']));
 
         $response->assertOk();
     }
@@ -31,27 +31,27 @@ class QuizFlowTest extends TestCase
             'last_name' => 'Lopez',
             'document' => 'ABC12345',
             'country' => 'CO',
-            'cert_type' => 'social_energy',
+            'cert_type' => 'hetero',
         ];
 
         $response = $this->post(route('quiz.start'), $payload);
 
-        $response->assertRedirect(route('quiz.show', ['certType' => 'social_energy']));
-        $this->assertTrue(session()->has('quiz_candidate.social_energy'));
+        $response->assertRedirect(route('quiz.show', ['certType' => 'hetero']));
+        $this->assertTrue(session()->has('quiz_candidate.hetero'));
     }
 
     public function test_quiz_show_redirects_to_register_when_session_is_missing(): void
     {
-        $response = $this->get(route('quiz.show', ['certType' => 'social_energy']));
+        $response = $this->get(route('quiz.show', ['certType' => 'hetero']));
 
-        $response->assertRedirect(route('quiz.register', ['certType' => 'social_energy']));
+        $response->assertRedirect(route('quiz.register', ['certType' => 'hetero']));
     }
 
     public function test_quiz_show_returns_ok_when_candidate_session_exists(): void
     {
         for ($i = 1; $i <= 30; $i++) {
             Question::create([
-                'cert_type' => 'social_energy',
+                'cert_type' => 'hetero',
                 'prompt' => 'Question '.$i,
                 'option_1' => 'A',
                 'option_2' => 'B',
@@ -63,7 +63,7 @@ class QuizFlowTest extends TestCase
         }
 
         session([
-            'quiz_candidate.social_energy' => [
+            'quiz_candidate.hetero' => [
                 'first_name' => 'Ana',
                 'last_name' => 'Lopez',
                 'country' => 'CO',
@@ -74,8 +74,7 @@ class QuizFlowTest extends TestCase
             ],
         ]);
 
-        $response = $this->get(route('quiz.show', ['certType' => 'social_energy']));
-
+        $response = $this->get(route('quiz.show', ['certType' => 'hetero']));
         $response->assertOk();
     }
 }
