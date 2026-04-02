@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Certification;
 use App\Models\Question;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -31,8 +32,14 @@ class AdminQuestionsTest extends TestCase
 
     public function test_admin_export_csv_contains_question_and_options(): void
     {
+        $certification = Certification::query()->create([
+            'slug' => 'hetero',
+            'name' => 'Certificado Hetero',
+            'active' => true,
+        ]);
+
         Question::create([
-            'cert_type' => 'hetero',
+            'certification_id' => $certification->id,
             'prompt' => 'Test question',
             'option_1' => 'A',
             'option_2' => 'B',

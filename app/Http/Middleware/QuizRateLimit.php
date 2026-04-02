@@ -16,60 +16,44 @@ class QuizRateLimit
     {
         $document = (string) $request->input('document', '');
         $certType = (string) $request->input('cert_type', '');
+        $countryCode = strtoupper((string) $request->input('country_code', ''));
+        $documentType = strtoupper((string) $request->input('document_type', ''));
 
-        if ($document === '' || $certType === '') {
+        if ($document === '' || $certType === '' || $countryCode === '' || $documentType === '') {
             return $next($request);
         }
 
         $now = now();
+        $windowMinutes = (int) config('quiz.start_rate_limit_minutes', 2);
 
         $ipHash = $this->hashIdentifier((string) $request->ip());
-        $docHash = $this->hashIdentifier($document);
+        $identityHash = Certificate::identityLookupHash($countryCode, $documentType, $document);
+        $docHash = $this->hashIdentifier($identityHash.'|'.$certType);
 
         $blockedByIp = RateLimit::query()
             ->where('identifier_hash', $ipHash)
             ->where('scope', 'quiz_start_ip')
-            ->where('attempted_at', '>=', $now->copy()->subDay())
+            ->where('attempted_at', '>=', $now->copy()->subMinutes($windowMinutes))
             ->exists();
 
         $blockedByDoc = RateLimit::query()
             ->where('identifier_hash', $docHash)
             ->where('scope', 'quiz_start_doc')
-            ->where('attempted_at', '>=', $now->copy()->subDay())
+            ->where('attempted_at', '>=', $now->copy()->subMinutes($windowMinutes))
             ->exists();
 
         if ($blockedByIp || $blockedByDoc) {
-            $this->incrementMetric('quiz.rate_limit.blocked_daily');
-            Log::warning('quiz.rate_limit.blocked_daily', [
+            $this->incrementMetric('quiz.rate_limit.blocked_short_window');
+            Log::warning('quiz.rate_limit.blocked_short_window', [
                 'cert_type' => $certType,
                 'blocked_by_ip' => $blockedByIp,
                 'blocked_by_doc' => $blockedByDoc,
                 'ip_hash_prefix' => substr($ipHash, 0, 12),
+                'window_minutes' => $windowMinutes,
             ]);
 
             return back()->withErrors([
-                'rate_limit' => __('app.rate_limit_daily'),
-            ])->withInput();
-        }
-
-        $lookup = Certificate::documentLookupHash($document);
-
-        $latestCertificate = Certificate::query()
-            ->where('doc_lookup_hash', $lookup)
-            ->where('cert_type', $certType)
-            ->latest('issued_at')
-            ->first();
-
-        if ($latestCertificate !== null && !$latestCertificate->isExpired() && !$latestCertificate->canRenew(30)) {
-            $this->incrementMetric('quiz.rate_limit.blocked_monthly');
-            Log::warning('quiz.rate_limit.blocked_monthly', [
-                'cert_type' => $certType,
-                'serial' => $latestCertificate->serial,
-                'expires_at' => $latestCertificate->expires_at?->toISOString(),
-            ]);
-
-            return back()->withErrors([
-                'rate_limit' => __('app.rate_limit_monthly'),
+                'rate_limit' => __('app.rate_limit_short_window', ['minutes' => $windowMinutes]),
             ])->withInput();
         }
 
@@ -88,6 +72,8 @@ class QuizRateLimit
         $this->incrementMetric('quiz.rate_limit.allowed');
         Log::info('quiz.rate_limit.allowed', [
             'cert_type' => $certType,
+            'country_code' => $countryCode,
+            'document_type' => $documentType,
             'ip_hash_prefix' => substr($ipHash, 0, 12),
             'doc_hash_prefix' => substr($docHash, 0, 12),
         ]);

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Certificate;
+use App\Models\Certification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -23,9 +24,15 @@ class HomeAndSearchTest extends TestCase
 
     public function test_search_by_serial_redirects_to_public_certificate(): void
     {
+        $certification = Certification::query()->create([
+            'slug' => 'hetero',
+            'name' => 'Certificado Hetero',
+            'active' => true,
+        ]);
+
         $certificate = Certificate::create([
             'serial' => 'CERT-2026-HO-ABC123',
-            'cert_type' => 'hetero',
+            'certification_id' => $certification->id,
             'result_key' => 'hetero_exitoso',
             'first_name' => 'Ana',
             'last_name' => 'Lopez',

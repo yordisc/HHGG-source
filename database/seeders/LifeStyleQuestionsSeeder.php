@@ -2,17 +2,15 @@
 
 namespace Database\Seeders;
 
-use App\Models\Question;
 use Illuminate\Database\Seeder;
 
 class LifeStyleQuestionsSeeder extends Seeder
 {
+    /**
+     * Seed questions for the "good_girl" (Life Style) certification.
+     */
     public function run(): void
     {
-        if (Question::where('cert_type', 'good_girl')->count() >= 30) {
-            return;
-        }
-
         $questions = [
             ['prompt' => '¿Con qué frecuencia dices "perdón" innecesariamente?', 'correct' => 1],
             ['prompt' => '¿Cómo manejas los cambios de planes de último minuto?', 'correct' => 2],
@@ -46,22 +44,6 @@ class LifeStyleQuestionsSeeder extends Seeder
             ['prompt' => '¿Cuál de estas te describe mejor?', 'correct' => 2],
         ];
 
-        $rows = [];
-        foreach ($questions as $q) {
-            $rows[] = [
-                'cert_type' => 'good_girl',
-                'prompt' => $q['prompt'],
-                'option_1' => 'Siempre',
-                'option_2' => 'A veces',
-                'option_3' => 'Raramente',
-                'option_4' => 'Nunca',
-                'correct_option' => $q['correct'],
-                'active' => true,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
-        }
-
-        Question::insert($rows);
+        QuestionSeederHelper::seedQuestionsForCertification('good_girl', $questions);
     }
 }

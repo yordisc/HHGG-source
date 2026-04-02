@@ -2,17 +2,15 @@
 
 namespace Database\Seeders;
 
-use App\Models\Question;
 use Illuminate\Database\Seeder;
 
 class SocialEnergyQuestionsSeeder extends Seeder
 {
+    /**
+     * Seed questions for the "hetero" (Social Energy) certification.
+     */
     public function run(): void
     {
-        if (Question::where('cert_type', 'hetero')->count() >= 30) {
-                return;
-        }
-
         $questions = [
             ['prompt' => '¿Qué haces cuando ves una persona atractiva?', 'correct' => 1],
             ['prompt' => '¿Cómo defines una primera cita exitosa?', 'correct' => 2],
@@ -46,22 +44,6 @@ class SocialEnergyQuestionsSeeder extends Seeder
             ['prompt' => '¿Cuál es tu mayor miedo en una relación?', 'correct' => 2],
         ];
 
-        $rows = [];
-        foreach ($questions as $q) {
-            $rows[] = [
-                    'cert_type' => 'hetero',
-                'prompt' => $q['prompt'],
-                'option_1' => 'Siempre',
-                'option_2' => 'A veces',
-                'option_3' => 'Raramente',
-                'option_4' => 'Nunca',
-                'correct_option' => $q['correct'],
-                'active' => true,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
-        }
-
-        Question::insert($rows);
+        QuestionSeederHelper::seedQuestionsForCertification('hetero', $questions);
     }
 }

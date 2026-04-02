@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Certificate;
+use App\Models\Certification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -34,9 +35,15 @@ class CertificateEndpointsTest extends TestCase
 
     private function createCertificate(): Certificate
     {
+        $certification = Certification::query()->create([
+            'slug' => 'hetero',
+            'name' => 'Certificado Hetero',
+            'active' => true,
+        ]);
+
         return Certificate::create([
             'serial' => 'CERT-2026-SE-XYZ987',
-            'cert_type' => 'hetero',
+            'certification_id' => $certification->id,
             'result_key' => 'hetero_exitoso',
             'first_name' => 'Ana',
             'last_name' => 'Lopez',

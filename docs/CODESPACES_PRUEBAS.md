@@ -1,14 +1,14 @@
 # Pruebas locales en Codespaces
 
-Esta guia explica como levantar el proyecto y ejecutar pruebas dentro de GitHub Codespaces.
+Esta guía explica cómo levantar el proyecto y ejecutar pruebas dentro de GitHub Codespaces.
 
 ## Requisitos
 
 - Codespace activo sobre este repositorio
-- Terminal en la raiz del proyecto
+- Terminal en la raíz del proyecto
 - PHP y Composer disponibles (ya vienen en el entorno)
 
-La configuracion del Codespace levanta MySQL local y deja los puertos 8000, 3306 y 5173 listos para Laravel, base de datos y Vite.
+La configuración del Codespace levanta MySQL local y deja los puertos 8000, 3306 y 5173 listos para Laravel, base de datos y Vite.
 
 ## 1) Instalar dependencias
 
@@ -18,7 +18,7 @@ sh scripts/local-test.sh
 
 ## 2) Preparar entorno
 
-`scripts/local-test.sh` ya prepara `.env`, genera la APP_KEY, crea la base SQLite temporal para validacion y ejecuta migraciones y tests.
+`scripts/local-test.sh` ya prepara `.env`, genera la APP_KEY, crea la base SQLite temporal para validación y ejecuta migraciones y tests.
 
 ## 3) Configurar entorno local
 
@@ -34,13 +34,13 @@ sh scripts/dev-local.sh --serve
 php artisan migrate:fresh --seed
 ```
 
-## 5) Levantar aplicacion en desarrollo
+## 5) Levantar aplicación en desarrollo
 
 ```bash
 sh scripts/dev-local.sh
 ```
 
-Nota: `sh scripts/dev-local.sh` levanta servidor Laravel, cola y Vite; si quieres ejecutar validacion previa antes del arranque, usa `sh scripts/dev-local.sh --all`.
+Nota: `sh scripts/dev-local.sh` levanta servidor Laravel, cola y Vite; si quieres ejecutar validación previa antes del arranque, usa `sh scripts/dev-local.sh --all`.
 
 ## 6) Ejecutar pruebas
 
@@ -50,7 +50,7 @@ Correr toda la suite:
 php artisan test
 ```
 
-Variantes utiles:
+Variantes útiles:
 
 ```bash
 php artisan test tests/Feature

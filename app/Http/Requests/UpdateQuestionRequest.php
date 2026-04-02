@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateQuestionRequest extends FormRequest
 {
@@ -14,7 +15,10 @@ class UpdateQuestionRequest extends FormRequest
     public function rules(): array
     {
         return [
-                'cert_type' => ['required', 'in:hetero,good_girl'],
+            'cert_type' => [
+                'required',
+                Rule::exists('certifications', 'slug')->where(fn ($query) => $query->where('active', true)),
+            ],
             'prompt' => ['required', 'string', 'min:8'],
             'option_1' => ['required', 'string', 'min:1'],
             'option_2' => ['required', 'string', 'min:1'],

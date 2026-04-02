@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Certification;
 use App\Models\Question;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -9,6 +10,27 @@ use Tests\TestCase;
 class QuizFlowTest extends TestCase
 {
     use RefreshDatabase;
+
+    private int $heteroCertificationId;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $certification = Certification::query()->create([
+            'slug' => 'hetero',
+            'name' => 'Certificado Hetero',
+            'active' => true,
+            'questions_required' => 30,
+            'pass_score_percentage' => 66.67,
+            'cooldown_days' => 30,
+            'result_mode' => 'binary_threshold',
+            'pdf_view' => 'pdf.certificate',
+            'home_order' => 10,
+        ]);
+
+        $this->heteroCertificationId = $certification->id;
+    }
 
     public function test_quiz_register_returns_ok_for_valid_type(): void
     {
@@ -29,8 +51,9 @@ class QuizFlowTest extends TestCase
         $payload = [
             'first_name' => 'Ana',
             'last_name' => 'Lopez',
-            'document' => 'ABC12345',
-            'country' => 'CO',
+            'document' => 'CC-123456789',
+            'country_code' => 'CO',
+            'document_type' => 'CC',
             'cert_type' => 'hetero',
         ];
 
@@ -51,7 +74,7 @@ class QuizFlowTest extends TestCase
     {
         for ($i = 1; $i <= 30; $i++) {
             Question::create([
-                'cert_type' => 'hetero',
+                'certification_id' => $this->heteroCertificationId,
                 'prompt' => 'Question '.$i,
                 'option_1' => 'A',
                 'option_2' => 'B',
@@ -66,8 +89,11 @@ class QuizFlowTest extends TestCase
             'quiz_candidate.hetero' => [
                 'first_name' => 'Ana',
                 'last_name' => 'Lopez',
-                'country' => 'CO',
+                'country' => 'Colombia',
+                'country_code' => 'CO',
+                'document_type' => 'CC',
                 'doc_lookup_hash' => 'hash',
+                'identity_lookup_hash' => 'identity_hash',
                 'doc_partial' => '2345',
                 'document_hash' => bcrypt('ABC12345'),
                 'started_at' => now()->toISOString(),

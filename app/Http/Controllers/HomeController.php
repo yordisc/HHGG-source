@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Certificate;
+use App\Models\Certification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -12,6 +13,7 @@ class HomeController extends Controller
     public function index(): View
     {
         return view('home', [
+            'certifications' => Certification::query()->active()->ordered()->get(),
             'currentLocale' => app()->getLocale(),
             'supportedLocales' => config('app.supported_locales', ['en']),
         ]);

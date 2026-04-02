@@ -137,8 +137,11 @@ run_migrations_and_seeders() {
 }
 
 run_tests() {
-  log "[INFO] Ejecutando suite de pruebas..."
-  php artisan test
+  log "[INFO] Ejecutando pruebas Feature..."
+  php artisan test --testsuite=Feature --stop-on-failure
+
+  log "[INFO] Ejecutando pruebas Unit..."
+  php artisan test --testsuite=Unit --stop-on-failure
 }
 
 main() {

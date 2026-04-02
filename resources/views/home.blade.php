@@ -75,22 +75,19 @@
     @endif
 
     <section id="quiz-cards" class="mt-8 grid gap-4 sm:grid-cols-2">
-        <article class="reveal rounded-[1.5rem] border border-slate-300 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
-            <h2 class="brand-title text-lg font-bold text-[var(--ink)] sm:text-xl">{{ __('app.cert_one_title') }}</h2>
-            <p class="mt-2 text-sm text-slate-700">{{ __('app.cert_one_desc') }}</p>
-            <p class="mt-2 text-sm text-slate-600">{{ __('app.certificate_card_hint') }}</p>
-            <a href="{{ route('quiz.register', ['certType' => 'hetero']) }}" class="mt-5 block w-full rounded-full border border-slate-400 px-4 py-3 text-center text-sm font-semibold text-slate-700 transition hover:border-[var(--accent)] hover:text-[var(--accent)]">
-                {{ __('app.start_exam') }}
-            </a>
-        </article>
-
-        <article class="reveal rounded-[1.5rem] border border-slate-300 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg" style="animation-delay:120ms;">
-            <h2 class="brand-title text-lg font-bold text-[var(--ink)] sm:text-xl">{{ __('app.cert_two_title') }}</h2>
-            <p class="mt-2 text-sm text-slate-700">{{ __('app.cert_two_desc') }}</p>
-            <p class="mt-2 text-sm text-slate-600">{{ __('app.certificate_card_hint') }}</p>
-            <a href="{{ route('quiz.register', ['certType' => 'good_girl']) }}" class="mt-5 block w-full rounded-full border border-slate-400 px-4 py-3 text-center text-sm font-semibold text-slate-700 transition hover:border-[var(--accent)] hover:text-[var(--accent)]">
-                {{ __('app.start_exam') }}
-            </a>
-        </article>
+        @forelse ($certifications as $index => $certification)
+            <article class="reveal rounded-[1.5rem] border border-slate-300 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg" @if($index > 0) style="animation-delay:{{ $index * 120 }}ms;" @endif>
+                <h2 class="brand-title text-lg font-bold text-[var(--ink)] sm:text-xl">{{ $certification->name }}</h2>
+                <p class="mt-2 text-sm text-slate-700">{{ $certification->description ?: __('app.certificate_card_hint') }}</p>
+                <p class="mt-2 text-sm text-slate-600">{{ __('app.certificate_card_hint') }}</p>
+                <a href="{{ route('quiz.register', ['certType' => $certification->slug]) }}" class="mt-5 block w-full rounded-full border border-slate-400 px-4 py-3 text-center text-sm font-semibold text-slate-700 transition hover:border-[var(--accent)] hover:text-[var(--accent)]">
+                    {{ __('app.start_exam') }}
+                </a>
+            </article>
+        @empty
+            <article class="rounded-[1.5rem] border border-slate-300 bg-white p-5 shadow-sm">
+                <p class="text-sm text-slate-700">{{ __('app.no_certifications_available') }}</p>
+            </article>
+        @endforelse
     </section>
 @endsection

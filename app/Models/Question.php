@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Question extends Model
@@ -11,7 +12,7 @@ class Question extends Model
     use HasFactory;
 
     protected $fillable = [
-        'cert_type',
+        'certification_id',
         'prompt',
         'option_1',
         'option_2',
@@ -31,5 +32,10 @@ class Question extends Model
     public function translations(): HasMany
     {
         return $this->hasMany(QuestionTranslation::class);
+    }
+
+    public function certification(): BelongsTo
+    {
+        return $this->belongsTo(Certification::class);
     }
 }

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ImportQuestionsCsvRequest;
 use App\Http\Requests\StoreQuestionRequest;
 use App\Http\Requests\UpdateQuestionRequest;
+use App\Models\Certification;
 use App\Models\Question;
 use App\Models\QuestionTranslation;
 use Illuminate\Http\RedirectResponse;
@@ -21,6 +22,7 @@ class QuestionAdminController extends Controller
     public function create(): View
     {
         return view('admin.questions.create', [
+            'certifications' => $this->certificationOptions(),
             'supportedLocales' => config('app.supported_locales', ['en']),
             'currentLocale' => app()->getLocale(),
         ]);
@@ -29,9 +31,11 @@ class QuestionAdminController extends Controller
     public function store(StoreQuestionRequest $request): RedirectResponse
     {
         $data = $request->validated();
+        $certificationSlug = (string) $data['cert_type'];
+        $certificationId = $this->resolveCertificationId($certificationSlug);
 
         $question = Question::create([
-            'cert_type' => $data['cert_type'],
+            'certification_id' => $certificationId,
             'prompt' => $data['prompt'],
             'option_1' => $data['option_1'],
             'option_2' => $data['option_2'],
@@ -45,7 +49,7 @@ class QuestionAdminController extends Controller
         $this->incrementMetric('admin.questions.created');
         Log::info('admin.questions.created', [
             'question_id' => $question->id,
-            'cert_type' => $question->cert_type,
+            'certification_slug' => $certificationSlug,
         ]);
 
         return redirect()
@@ -56,11 +60,15 @@ class QuestionAdminController extends Controller
     public function index(Request $request): View
     {
         $filterType = (string) $request->query('cert_type', '');
+        $certifications = $this->certificationOptions();
 
         $questions = Question::query()
-            ->when(in_array($filterType, ['hetero', 'good_girl'], true), function ($query) use ($filterType) {
-                $query->where('cert_type', $filterType);
+            ->when(array_key_exists($filterType, $certifications), function ($query) use ($filterType): void {
+                $query->whereHas('certification', function ($certQuery) use ($filterType): void {
+                    $certQuery->where('slug', $filterType);
+                });
             })
+            ->with('certification')
             ->latest('id')
             ->paginate(20)
             ->withQueryString();
@@ -68,6 +76,7 @@ class QuestionAdminController extends Controller
         return view('admin.questions.index', [
             'questions' => $questions,
             'filterType' => $filterType,
+            'certifications' => $certifications,
             'currentLocale' => app()->getLocale(),
             'supportedLocales' => config('app.supported_locales', ['en']),
         ]);
@@ -79,6 +88,7 @@ class QuestionAdminController extends Controller
 
         return view('admin.questions.edit', [
             'question' => $question,
+            'certifications' => $this->certificationOptions(),
             'translations' => $question->translations->keyBy('language'),
             'supportedLocales' => config('app.supported_locales', ['en']),
             'currentLocale' => app()->getLocale(),
@@ -88,9 +98,11 @@ class QuestionAdminController extends Controller
     public function update(UpdateQuestionRequest $request, Question $question): RedirectResponse
     {
         $data = $request->validated();
+        $certificationSlug = (string) $data['cert_type'];
+        $certificationId = $this->resolveCertificationId($certificationSlug);
 
         $question->update([
-            'cert_type' => $data['cert_type'],
+            'certification_id' => $certificationId,
             'prompt' => $data['prompt'],
             'option_1' => $data['option_1'],
             'option_2' => $data['option_2'],
@@ -104,7 +116,7 @@ class QuestionAdminController extends Controller
         $this->incrementMetric('admin.questions.updated');
         Log::info('admin.questions.updated', [
             'question_id' => $question->id,
-            'cert_type' => $question->cert_type,
+            'certification_slug' => $certificationSlug,
         ]);
 
         return redirect()
@@ -115,13 +127,13 @@ class QuestionAdminController extends Controller
     public function destroy(Question $question): RedirectResponse
     {
         $deletedQuestionId = $question->id;
-        $deletedCertType = $question->cert_type;
+        $deletedCertificationSlug = $question->certification?->slug;
 
         $question->delete();
         $this->incrementMetric('admin.questions.deleted');
         Log::warning('admin.questions.deleted', [
             'question_id' => $deletedQuestionId,
-            'cert_type' => $deletedCertType,
+            'certification_slug' => $deletedCertificationSlug,
         ]);
 
         return redirect()
@@ -165,6 +177,7 @@ class QuestionAdminController extends Controller
         $updated = 0;
         $translations = 0;
         $skipped = 0;
+        $certificationMap = Certification::query()->pluck('id', 'slug')->all();
 
         Log::info('admin.questions.import_csv.started', [
             'original_name' => $file->getClientOriginalName(),
@@ -187,7 +200,8 @@ class QuestionAdminController extends Controller
                 }
 
                 $certType = trim((string) ($item['cert_type'] ?? ''));
-                if (!in_array($certType, ['hetero', 'good_girl'], true)) {
+                $certificationId = $certificationMap[$certType] ?? null;
+                if ($certificationId === null) {
                     $skipped++;
                     continue;
                 }
@@ -203,7 +217,7 @@ class QuestionAdminController extends Controller
                 if ($language === 'en') {
                     if ($question === null) {
                         $question = Question::create([
-                            'cert_type' => $certType,
+                            'certification_id' => $certificationId,
                             'prompt' => (string) ($item['prompt'] ?? ''),
                             'option_1' => (string) ($item['option_1'] ?? ''),
                             'option_2' => (string) ($item['option_2'] ?? ''),
@@ -215,7 +229,7 @@ class QuestionAdminController extends Controller
                         $created++;
                     } else {
                         $question->update([
-                            'cert_type' => $certType,
+                            'certification_id' => $certificationId,
                             'prompt' => (string) ($item['prompt'] ?? $question->prompt),
                             'option_1' => (string) ($item['option_1'] ?? $question->option_1),
                             'option_2' => (string) ($item['option_2'] ?? $question->option_2),
@@ -281,6 +295,7 @@ class QuestionAdminController extends Controller
     public function exportCsv(Request $request): StreamedResponse
     {
         $filterType = (string) $request->query('cert_type', '');
+        $certifications = $this->certificationOptions();
 
         $this->incrementMetric('admin.questions.export_csv.requested');
         Log::info('admin.questions.export_csv.requested', [
@@ -294,7 +309,7 @@ class QuestionAdminController extends Controller
             'Content-Disposition' => 'attachment; filename="'.$fileName.'"',
         ];
 
-        return response()->streamDownload(function () use ($filterType): void {
+        return response()->streamDownload(function () use ($filterType, $certifications): void {
             $output = fopen('php://output', 'wb');
 
             if ($output === false) {
@@ -315,17 +330,21 @@ class QuestionAdminController extends Controller
             ]);
 
             Question::query()
-                ->when(in_array($filterType, ['hetero', 'good_girl'], true), function ($query) use ($filterType) {
-                    $query->where('cert_type', $filterType);
+                ->when(array_key_exists($filterType, $certifications), function ($query) use ($filterType): void {
+                    $query->whereHas('certification', function ($certQuery) use ($filterType): void {
+                        $certQuery->where('slug', $filterType);
+                    });
                 })
-                ->with('translations')
+                ->with(['translations', 'certification'])
                 ->orderBy('id')
                 ->chunkById(200, function ($questions) use ($output): void {
                     foreach ($questions as $question) {
+                        $certificationSlug = $question->certification?->slug ?? '';
+
                         fputcsv($output, [
                             $question->id,
                             'en',
-                            $question->cert_type,
+                            $certificationSlug,
                             $question->prompt,
                             $question->option_1,
                             $question->option_2,
@@ -339,7 +358,7 @@ class QuestionAdminController extends Controller
                             fputcsv($output, [
                                 $question->id,
                                 $translation->language,
-                                $question->cert_type,
+                                $certificationSlug,
                                 $translation->prompt,
                                 $translation->option_1,
                                 $translation->option_2,
@@ -354,6 +373,23 @@ class QuestionAdminController extends Controller
 
             fclose($output);
         }, $fileName, $headers);
+    }
+
+    private function certificationOptions(): array
+    {
+        return Certification::query()
+            ->active()
+            ->ordered()
+            ->pluck('name', 'slug')
+            ->all();
+    }
+
+    private function resolveCertificationId(string $slug): int
+    {
+        return (int) Certification::query()
+            ->where('slug', $slug)
+            ->firstOrFail()
+            ->id;
     }
 
     public function downloadTemplateCsv(): StreamedResponse

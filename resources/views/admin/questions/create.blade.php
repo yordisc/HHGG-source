@@ -19,8 +19,9 @@
                 <div>
                     <label class="text-xs font-semibold text-slate-700">Tipo</label>
                     <select name="cert_type" class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-2 text-sm">
-                        <option value="hetero" @selected(old('cert_type') === 'hetero')>hetero</option>
-                        <option value="good_girl" @selected(old('cert_type') === 'good_girl')>good_girl</option>
+                        @foreach ($certifications as $slug => $name)
+                            <option value="{{ $slug }}" @selected(old('cert_type') === $slug)>{{ $slug }} - {{ $name }}</option>
+                        @endforeach
                     </select>
                 </div>
                 <div class="flex items-end">

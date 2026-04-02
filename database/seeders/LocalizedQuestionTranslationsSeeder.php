@@ -15,13 +15,15 @@ class LocalizedQuestionTranslationsSeeder extends Seeder
     {
         $locales = ['es', 'pt', 'fr', 'zh', 'hi', 'ar'];
 
-        Question::query()->chunkById(200, function ($questions) use ($locales): void {
+        Question::query()->with('certification')->chunkById(200, function ($questions) use ($locales): void {
             $rows = [];
             $now = now();
 
             foreach ($questions as $question) {
+                $certificationSlug = (string) ($question->certification?->slug ?? '');
+
                 foreach ($locales as $locale) {
-                    [$prompt, $option1, $option2, $option3, $option4] = $this->translateQuestion($question->cert_type, $locale, $question->prompt);
+                    [$prompt, $option1, $option2, $option3, $option4] = $this->translateQuestion($certificationSlug, $locale, $question->prompt);
 
                     $rows[] = [
                         'question_id' => $question->id,

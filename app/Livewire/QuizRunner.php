@@ -3,7 +3,10 @@
 namespace App\Livewire;
 
 use App\Models\Certificate;
+use App\Models\Certification;
 use App\Models\Question;
+use App\Support\CertificationResultResolverService;
+use App\Support\CertificationScoringService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -12,6 +15,12 @@ use Livewire\Component;
 class QuizRunner extends Component
 {
     public string $certType;
+    public ?int $certificationId = null;
+    public int $questionsRequired = 30;
+    public float $passScorePercentage = 66.67;
+    public int $cooldownDays = 30;
+    public string $resultMode = 'binary_threshold';
+    public array $resultSettings = [];
     public int $currentIndex = 0;
     public int $total = 30;
     public int $correctCount = 0;
@@ -21,6 +30,19 @@ class QuizRunner extends Component
     public function mount(string $certType): void
     {
         $this->certType = $certType;
+        $certification = Certification::query()->active()->where('slug', $certType)->first();
+
+        if ($certification === null) {
+            $this->redirectRoute('home', [], true);
+            return;
+        }
+
+        $this->certificationId = $certification->id;
+        $this->questionsRequired = (int) ($certification->questions_required ?: 30);
+        $this->passScorePercentage = (float) ($certification->pass_score_percentage ?: 66.67);
+        $this->cooldownDays = (int) ($certification->cooldown_days ?: 30);
+        $this->resultMode = (string) ($certification->result_mode ?: 'binary_threshold');
+        $this->resultSettings = is_array($certification->settings) ? $certification->settings : [];
 
         if (!session()->has("quiz_candidate.{$certType}")) {
             $this->redirectRoute('quiz.register', ['certType' => $certType], true);
@@ -95,19 +117,21 @@ class QuizRunner extends Component
         $fallbackLocale = config('app.fallback_locale', 'en');
         $translationLanguages = array_values(array_unique([$locale, $fallbackLocale]));
 
+        $requiredQuestions = $this->questionsRequired;
+
         $questions = Question::query()
-            ->where('cert_type', $this->certType)
+            ->where('certification_id', $this->certificationId)
             ->where('active', true)
             ->with(['translations' => function ($query) use ($translationLanguages) {
                 $query->whereIn('language', $translationLanguages);
             }])
             ->inRandomOrder()
-            ->limit(30)
+            ->limit($requiredQuestions)
             ->get();
 
-        if ($questions->count() < 30) {
+        if ($questions->count() < $requiredQuestions) {
             throw new \Exception(
-                "Question bank must contain at least 30 active questions for certificate type '{$this->certType}'. ". 
+                "Question bank must contain at least {$requiredQuestions} active questions for certificate type '{$this->certType}'. ".
                 "Currently has {$questions->count()} questions. Contact support if the problem persists."
             );
         }
@@ -175,33 +199,49 @@ class QuizRunner extends Component
             return;
         }
 
-        $failureThreshold = 11;
-        $failed = $this->incorrectCount >= $failureThreshold;
+        $scoring = app(CertificationScoringService::class)->evaluate(
+            $this->correctCount,
+            $this->total,
+            $this->passScorePercentage
+        );
+        $scoreNumeric = $scoring['score_numeric'];
+        $failed = $scoring['failed'];
 
-        $resultKey = match ($this->certType) {
-            'hetero' => $failed ? 'hetero_rebeldon' : 'hetero_exitoso',
-            'good_girl' => $failed ? 'good_girl_desatada' : 'good_girl_pura',
-            default => 'hetero_exitoso',
-        };
+        $resultKey = app(CertificationResultResolverService::class)->resolve(
+            $this->certType,
+            $this->resultMode,
+            $failed,
+            $this->resultSettings
+        );
 
         $serial = 'CERT-'.date('Y').'-'.strtoupper(substr($this->certType, 0, 2)).'-'.Str::upper(Str::random(6));
+        $completedAt = now();
+        $cooldownDays = $this->cooldownDays > 0
+            ? $this->cooldownDays
+            : (int) config('quiz.cooldown_days', 30);
 
         $certificate = Certificate::create([
             'serial' => $serial,
-            'cert_type' => $this->certType,
+            'certification_id' => $this->certificationId,
             'result_key' => $resultKey,
             'first_name' => $candidate['first_name'],
             'last_name' => $candidate['last_name'],
             'country' => $candidate['country'],
+            'country_code' => $candidate['country_code'] ?? null,
+            'document_type' => $candidate['document_type'] ?? null,
             'document_hash' => $candidate['document_hash'],
             'doc_lookup_hash' => $candidate['doc_lookup_hash'],
+            'identity_lookup_hash' => $candidate['identity_lookup_hash'] ?? null,
             'doc_partial' => $candidate['doc_partial'],
             'score_correct' => $this->correctCount,
             'score_incorrect' => $this->incorrectCount,
             'total_questions' => $this->total,
-            'issued_at' => now(),
+            'score_numeric' => $scoreNumeric,
+            'issued_at' => $completedAt,
+            'completed_at' => $completedAt,
+            'next_available_at' => $completedAt->copy()->addDays($cooldownDays),
             'expires_at' => now()->addYear(),
-            'last_attempt_at' => now(),
+            'last_attempt_at' => $completedAt,
         ]);
 
         $this->incrementMetric('quiz.completed');
@@ -213,6 +253,7 @@ class QuizRunner extends Component
             'result_key' => $resultKey,
             'score_correct' => $this->correctCount,
             'score_incorrect' => $this->incorrectCount,
+            'score_numeric' => $scoreNumeric,
             'total_questions' => $this->total,
             'failed' => $failed,
         ]);

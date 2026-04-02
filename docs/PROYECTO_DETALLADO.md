@@ -1,15 +1,15 @@
-# Documentacion detallada del proyecto CertificacionHHGG
+# Documentación detallada del proyecto CertificacionHHGG
 
-Ultima actualizacion: 2026-04-01
+Última actualización: 2026-04-02
 
 ## 1. Resumen funcional
 
-CertificacionHHGG es una aplicacion Laravel 11 + Livewire que permite:
+CertificacionHHGG es una aplicación Laravel 11 + Livewire que permite:
 
-- Registrar candidato para un quiz humoristico.
+- Registrar candidato para un quiz humorístico.
 - Ejecutar quiz de 30 preguntas aleatorias por tipo de certificado, con opciones remezcladas en cada intento.
 - Calcular resultado por umbral de errores y mostrarlo al final en el certificado.
-- Generar certificado con serial unico.
+- Generar certificado con serial único.
 - Publicar vista verificable por serial.
 - Descargar certificado en PDF.
 - Compartir resultado en LinkedIn.
@@ -17,21 +17,21 @@ CertificacionHHGG es una aplicacion Laravel 11 + Livewire que permite:
 
 ## 2. Flujo end-to-end
 
-1. Home: seleccion de certificado o busqueda de serial/documento.
-2. Registro: datos del candidato por tipo de certificacion.
-3. Quiz: preguntas random + traduccion por idioma.
-4. Resultado: estado final + score + accesos rapidos.
-5. Certificado publico: validacion y datos publicos.
+1. Home: selección de certificado o búsqueda de serial/documento.
+2. Registro: datos del candidato por tipo de certificación.
+3. Quiz: preguntas aleatorias + traducción por idioma.
+4. Resultado: estado final + puntaje + accesos rápidos.
+5. Certificado público: validación y datos públicos.
 6. PDF: descarga del certificado en formato formal.
 
-## 3. Stack tecnico
+## 3. Stack técnico
 
 - Backend: Laravel 11 (PHP 8.4+)
 - UI interactiva: Livewire 4
 - Frontend build: Vite + Tailwind (npm)
 - PDF: barryvdh/laravel-dompdf
-- Persistencia: MySQL/MariaDB o SQLite segun entorno
-- Deploy objetivo: Railway/Nixpacks
+- Persistencia: MySQL/MariaDB o SQLite según entorno
+- Despliegue objetivo: Railway/Nixpacks
 
 ## 4. Estructura principal
 
@@ -41,9 +41,9 @@ CertificacionHHGG es una aplicacion Laravel 11 + Livewire que permite:
 - app/Models: Certificate, Question, QuestionTranslation, RateLimit.
 - database/migrations: schema operativo del MVP.
 - database/seeders: preguntas base + traducciones iniciales.
-- resources/views: flujo publico + admin + PDF.
+- resources/views: flujo público + admin + PDF.
 - lang/*/app.php: interfaz multilenguaje.
-- routes/web.php: rutas publicas y admin.
+- routes/web.php: rutas públicas y admin.
 - routes/console.php: scheduler diario.
 
 ## 5. Modelo de datos (resumen)
@@ -71,10 +71,10 @@ CertificacionHHGG es una aplicacion Laravel 11 + Livewire que permite:
 
 - Documento legal no se guarda en texto plano.
 - document_hash con bcrypt.
-- doc_lookup_hash (HMAC) para busqueda.
+- doc_lookup_hash (HMAC) para búsqueda.
 - Middleware de headers seguros en grupo web.
 - Rate limit por IP/documento y reglas de renovacion.
-- Panel admin protegido por ADMIN_ACCESS_KEY (sesion).
+- Panel admin protegido por ADMIN_ACCESS_KEY (sesión).
 
 ## 7. i18n y contenido
 
@@ -87,14 +87,14 @@ Estrategia:
 - Selector manual de idioma por ruta
 - Middleware SetLocale por sesion + navegador
 
-## 8. Operacion y mantenimiento
+## 8. Operación y mantenimiento
 
 - Limpieza diaria de certificados expirados:
   - comando: php artisan certificates:clean
   - scheduler: routes/console.php
-- Observabilidad basica por logs y metricas en cache.
+- Observabilidad básica por logs y métricas en cache.
 - Scripts locales:
-  - scripts/local-test.sh (validacion, migraciones, seeders y tests)
+  - scripts/local-test.sh (validación, migraciones, seeders y tests)
   - scripts/dev-local.sh (arranque del stack de desarrollo)
   - scripts/setup-local.sh (bootstrap inicial)
 
@@ -130,21 +130,19 @@ Comando:
 
 ## 12. Documentos complementarios
 
-Documentacion de planificacion movida a:
-- docs/planificacion/ARRANQUE_MVP.md
-- docs/planificacion/IDEA.md
-- docs/planificacion/plan_certificados_laravel.md
-- docs/planificacion/TAREAS_ESTADO.md
+Documentación vigente:
+- docs/README.md
+- docs/CODESPACES_PRUEBAS.md
+- docs/AGREGAR_NUEVA_CERTIFICACION.md
+- docs/planificacion/PLAN_ESCALABILIDAD_CERTIFICACIONES.md
+- docs/planificacion/FASE_6_LIMPIEZA_TECNICA.md
 - docs/planificacion/POLITICA_RETENCION_DATOS.md
 - docs/planificacion/DESPLIEGUE_STAGING_PRODUCCION.md
-- docs/planificacion/DISCLAIMERS_I18N.md
-- docs/planificacion/INTEGRACION_DISCLAIMER_BLADE.md
-- docs/planificacion/SIGUIENTE_PASO_TECNICO.md
 
 ## 13. Estado actual
 
 - MVP funcional cerrado.
-- UX formalizada visualmente.
-- Microcopy formal multilenguaje.
-- Seguridad base, observabilidad y docs operativas listas.
+- Arquitectura de certificaciones escalable implementada (catálogo + servicios).
+- Home/admin dinámicos por certificaciones activas en BD.
+- Seguridad base, observabilidad y documentación operativa listas.
 

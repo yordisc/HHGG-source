@@ -54,8 +54,9 @@
         <form method="GET" class="mt-6 grid gap-3 sm:grid-cols-[1fr_auto]">
             <select name="cert_type" class="rounded-xl border border-slate-300 px-4 py-2 text-sm">
                 <option value="">Todos los tipos</option>
-                <option value="hetero" @selected($filterType === 'hetero')>hetero</option>
-                <option value="good_girl" @selected($filterType === 'good_girl')>good_girl</option>
+                @foreach ($certifications as $slug => $name)
+                    <option value="{{ $slug }}" @selected($filterType === $slug)>{{ $slug }} - {{ $name }}</option>
+                @endforeach
             </select>
             <button type="submit" class="rounded-xl bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white">Filtrar</button>
         </form>
@@ -73,9 +74,13 @@
                 </thead>
                 <tbody class="divide-y divide-slate-100 bg-white text-slate-700">
                     @forelse ($questions as $question)
+                        @php
+                            $questionSlug = $question->certification?->slug;
+                            $questionName = $questionSlug !== null ? ($certifications[$questionSlug] ?? null) : null;
+                        @endphp
                         <tr>
                             <td class="px-4 py-3 font-semibold">{{ $question->id }}</td>
-                            <td class="px-4 py-3">{{ $question->cert_type }}</td>
+                            <td class="px-4 py-3">{{ $questionSlug ?? 'N/A' }}{{ $questionName ? ' - '.$questionName : '' }}</td>
                             <td class="px-4 py-3">{{ \Illuminate\Support\Str::limit($question->prompt, 90) }}</td>
                             <td class="px-4 py-3">{{ $question->active ? 'Si' : 'No' }}</td>
                             <td class="px-4 py-3 text-right">

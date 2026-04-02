@@ -16,6 +16,9 @@ Route::get('/exam/{certType}/register', [QuizController::class, 'register'])->na
 Route::post('/exam/start', [QuizController::class, 'start'])
     ->name('quiz.start')
     ->middleware(['quiz.rate.limit', 'throttle:8,1']);
+Route::post('/exam/eligibility-check', [QuizController::class, 'eligibilityCheck'])
+    ->name('quiz.eligibility')
+    ->middleware(['throttle:30,1']);
 Route::get('/exam/{certType}', [QuizController::class, 'show'])->name('quiz.show');
 
 Route::get('/result/{serial}', [CertificateController::class, 'result'])->name('result.show');
@@ -30,7 +33,7 @@ Route::get('/locale/{locale}', function (Request $request, string $locale): Redi
     }
 
     // Use back() which safely handles the referer header
-    return back(default: route('home'));
+    return back(fallback: route('home'));
 });
 
 Route::prefix('admin')->name('admin.')->group(function () {

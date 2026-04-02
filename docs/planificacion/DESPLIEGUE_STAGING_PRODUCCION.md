@@ -1,20 +1,20 @@
-# Flujo de despliegue: staging y produccion
+# Flujo de despliegue: staging y producción
 
-Ultima actualizacion: 2026-04-01
+Última actualización: 2026-04-02
 
 ## Objetivo
 
-Estandarizar como desplegar CertificacionHHGG en staging y produccion de forma segura y repetible.
+Estandarizar cómo desplegar CertificacionHHGG en staging y producción de forma segura y repetible.
 
 ## Requisitos previos
 
 - PHP 8.4+
 - Composer
 - Node.js + npm
-- Base de datos (MySQL/MariaDB o SQLite segun entorno)
+- Base de datos (MySQL/MariaDB o SQLite según entorno)
 - Variables de entorno configuradas
 
-## Variables de entorno minimas
+## Variables de entorno mínimas
 
 - APP_NAME
 - APP_ENV
@@ -34,47 +34,47 @@ Estandarizar como desplegar CertificacionHHGG en staging y produccion de forma s
 
 ## Proceso recomendado de release
 
-1. Preparacion de rama
+1. Preparación de rama
 - Trabajar en rama feature.
 - Ejecutar pruebas locales:
   - php artisan test
-- Verificar lint/estado general:
+- Verificar estado general:
   - php artisan optimize:clear
 
-2. Integracion
+2. Integración
 - Abrir PR hacia main.
 - Revisar cambios y aprobar.
 - Merge a main.
 
-3. Deploy en staging
-- Actualizar codigo en servidor staging.
+3. Despliegue en staging
+- Actualizar código en servidor staging.
 - Instalar dependencias:
   - composer install --no-interaction --prefer-dist --optimize-autoloader
   - npm ci
   - npm run build
 - Ejecutar migraciones:
   - php artisan migrate --force
-- Limpiar y cachear config/rutas/vistas:
+- Limpiar y cachear configuración/rutas/vistas:
   - php artisan optimize
 - Verificar scheduler:
   - cron o servicio para php artisan schedule:run cada minuto
 
-4. Smoke test en staging
+4. Prueba de humo en staging
 - Home carga correctamente.
 - Registro de quiz funciona.
 - Resultado/certificado/PDF responden.
 - Login admin funciona.
 - Import/export/template CSV funcionan.
 
-5. Promocion a produccion
-- Repetir pasos de deploy de staging en produccion.
+5. Promoción a producción
+- Repetir pasos de despliegue de staging en producción.
 - APP_ENV=production
 - APP_DEBUG=false
 - Confirmar APP_KEY configurada.
-- Confirmar backups de base de datos.
+- Confirmar respaldos de base de datos.
 
-6. Verificacion post-deploy
-- Revisar logs de aplicacion.
+6. Verificación post-despliegue
+- Revisar logs de aplicación.
 - Confirmar que scheduler ejecuta:
   - certificates:clean
 - Validar endpoints clave:
@@ -92,7 +92,7 @@ Estandarizar como desplegar CertificacionHHGG en staging y produccion de forma s
 - Tests/smoke OK
 - Scheduler activo
 
-### Checklist produccion
+### Checklist producción
 
 - Backup previo aplicado
 - APP_DEBUG en false
@@ -101,16 +101,16 @@ Estandarizar como desplegar CertificacionHHGG en staging y produccion de forma s
 - Scheduler activo
 - Monitoreo/logs revisados
 
-## Rollback rapido
+## Rollback rápido
 
-1. Volver a release anterior (codigo).
+1. Volver a release anterior (código).
 2. Limpiar caches:
 - php artisan optimize:clear
-3. Si una migracion causó problema, aplicar rollback controlado:
+3. Si una migración causó problema, aplicar rollback controlado:
 - php artisan migrate:rollback --step=1
-4. Revalidar smoke tests.
+4. Revalidar pruebas de humo.
 
-## Notas de operacion
+## Notas de operación
 
-- El proyecto ya incluye observabilidad basica via logs estructurados y metricas en cache.
+- El proyecto ya incluye observabilidad básica vía logs estructurados y métricas en cache.
 - Mantener una cadencia de despliegue corta y reversible.
