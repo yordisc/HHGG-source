@@ -24,7 +24,7 @@ class AdminQuestionsTest extends TestCase
             'admin_key' => 'test-admin-key',
         ]);
 
-        $response->assertRedirect(route('admin.questions.index'));
+        $response->assertRedirect(route('admin.dashboard'));
 
         $this->get(route('admin.questions.index'))
             ->assertOk();

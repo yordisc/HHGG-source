@@ -10,6 +10,18 @@
 
 Remover completamente el campo `cert_type` de la arquitectura de base de datos y código, dejando solo `certification_id` como fuente de verdad. Esto ocurre después de garantizar que todo nuevo código use `certification_id` de forma exclusiva.
 
+## Resultado de la auditoría real
+
+La auditoría actual muestra dos clases de referencias a `cert_type`:
+
+- Referencias legacy de base de datos y migraciones históricas.
+- Referencias de contrato de entrada/salida en HTTP, CSV y tests, que siguen siendo intencionales en el flujo actual.
+
+Conclusión:
+
+- La limpieza de base de datos puede considerarse avanzada.
+- La renombrada completa de contratos públicos no pertenece a esta Fase 6 y, si se desea, debe tratarse como una fase posterior separada.
+
 ---
 
 ## Auditoría Pre-Limpieza (Semana 1)
@@ -23,17 +35,22 @@ Remover completamente el campo `cert_type` de la arquitectura de base de datos y
 grep -r "cert_type" app/ database/ resources/ --include="*.php" --include="*.blade.php" | grep -v "migrations/"
 ```
 
-**Documentar hallazgos esperados:**
+**Documentar hallazgos reales actuales:**
 
-- ✅ **Models:** `app/Models/Question.php`, `app/Models/Certificate.php` — campos sin usar (safe)
-- ✅ **Seeders:** `SocialEnergyQuestionsSeeder.php`, etc — marcados como legacy (safe, se pueden remover)
-- ✅ **Migrations (antiguas):** Ignorar — quedan por retrocompatibilidad
+- ✅ **Migrations antiguas:** siguen conteniendo `cert_type` por historial y no deben interpretarse como uso activo.
+- ✅ **HTTP / views / tests:** siguen usando `cert_type` como nombre de campo o parámetro de formulario.
+- ✅ **Admin de preguntas / quiz / rate limit:** el nombre `cert_type` sigue siendo parte del contrato público actual.
 
 **Hallazgos inesperados (si los hay):**
 
-- ❌ Queries que filtren por `cert_type` en controllers → MIGRAR a `certification_id`
-- ❌ Reports/analytics usando `cert_type` → ACTUALIZAR
-- ❌ APIs externas consumiendo `cert_type` → deprecar con aviso de versionado
+- ❌ Queries que filtren por `cert_type` en controllers como si fuera columna de BD → MIGRAR a `certification_id`
+- ❌ Reports/analytics usando `cert_type` como persistencia → ACTUALIZAR
+- ❌ APIs externas consumiendo `cert_type` como identificador de almacenamiento → deprecar con aviso de versionado
+
+**Nota de alcance:**
+
+- Si `cert_type` aparece en requests, formularios, query params o tests, no es necesariamente un error.
+- Solo es un problema si el código lo usa como columna persistida o como filtro directo sobre el esquema viejo.
 
 ---
 
@@ -365,6 +382,13 @@ FEATURE_CERT_TYPE_REMOVAL=false
 - [ ] Si todo OK después de 1 semana → cerrar Fase 6
 - [ ] Documentar lecciones aprendidas
 
+### Criterio de cierre realista
+
+- [ ] No quedan columnas `cert_type` en `questions` ni `certificates`.
+- [ ] No quedan queries del core que dependan de `cert_type` como persistencia.
+- [ ] Los contratos HTTP/CSV que aún usen `cert_type` están documentados y, si hace falta, tienen una fase posterior de renombrado.
+- [ ] Los tests de migración, quiz y admin siguen pasando.
+
 ---
 
 ## Plan de rollback (si es necesario)
@@ -400,11 +424,19 @@ tail -f storage/logs/laravel.log | head -20
 - Verificar no hay referencias externas
 - Limpieza histórica de código deprecado
 
-### Fase 8: Admin Panel para Certificaciones (2+ releases después)
+### Fase 8: Menú de administrador seguro (2+ releases después)
 
-- CRUD UI para certifications
-- Validación en tiempo real de settings JSON
-- Importación CSV integrada
+- Crear dashboard oculto bajo `/admin` con navegación centralizada
+- Mantener auth por `ADMIN_ACCESS_KEY` + sesión + middleware `admin.auth`
+- Separar módulos de Certificaciones, Preguntas y Usuarios
+- Exponer CRUD completo de certifications desde el panel
+- Permitir activar y desactivar cualquier certificación desde el listado o el formulario
+- Integrar importación/exportación de preguntas y usuarios
+- El modulo de usuarios ya debe cubrir listado, alta, edicion, eliminacion y exportacion
+- Soportar metadata multilenguaje para certifications
+- Hacer que la home refleje cambios de admin sin trabajo manual adicional
+
+Referencia técnica detallada: [docs/planificacion/MENU_ADMIN_SEGURO.md](docs/planificacion/MENU_ADMIN_SEGURO.md)
 
 ---
 

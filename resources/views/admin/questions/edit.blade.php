@@ -7,7 +7,13 @@
                 <h1 class="brand-title text-2xl font-bold text-[var(--ink)]">Editar Pregunta #{{ $question->id }}</h1>
                 <p class="mt-1 text-sm text-slate-600">Actualiza la pregunta base y sus traducciones.</p>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex flex-wrap items-center gap-2">
+                <a href="{{ route('admin.dashboard') }}" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-[var(--accent)] hover:text-[var(--accent)]">
+                    Panel
+                </a>
+                <a href="{{ route('admin.certifications.index') }}" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-[var(--accent)] hover:text-[var(--accent)]">
+                    Certificaciones
+                </a>
                 <a href="{{ route('admin.questions.index') }}" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-[var(--accent)] hover:text-[var(--accent)]">
                     Volver al listado
                 </a>

@@ -7,9 +7,17 @@
                 <h1 class="brand-title text-2xl font-bold text-[var(--ink)]">Nueva Pregunta</h1>
                 <p class="mt-1 text-sm text-slate-600">Crea pregunta base y traducciones opcionales.</p>
             </div>
-            <a href="{{ route('admin.questions.index') }}" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-[var(--accent)] hover:text-[var(--accent)]">
-                Volver al listado
-            </a>
+            <div class="flex flex-wrap items-center gap-2">
+                <a href="{{ route('admin.dashboard') }}" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-[var(--accent)] hover:text-[var(--accent)]">
+                    Panel
+                </a>
+                <a href="{{ route('admin.certifications.index') }}" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-[var(--accent)] hover:text-[var(--accent)]">
+                    Certificaciones
+                </a>
+                <a href="{{ route('admin.questions.index') }}" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-[var(--accent)] hover:text-[var(--accent)]">
+                    Volver al listado
+                </a>
+            </div>
         </div>
 
         <form method="POST" action="{{ route('admin.questions.store') }}" class="mt-6 space-y-6">

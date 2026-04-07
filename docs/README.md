@@ -1,33 +1,80 @@
-# Documentación
+# Documentación del Proyecto CertificacionHHGG
 
-Este directorio centraliza la documentación operativa y de arquitectura del proyecto.
+## 📚 Índice por Contexto
 
-## Índice recomendado
+### 🎯 Para Administradores (Panel de Control)
+**Usuario objetivo:** Administradores sin conocimientos técnicos
 
-### 1. Visión general
+- **[ADMIN_PANEL_GUIDE.md](ADMIN_PANEL_GUIDE.md)** - Guía completa del panel administrativo
+  - Cómo iniciar sesión
+  - Crear/editar certificaciones (5-step wizard)
+  - Gestionar preguntas con CSV
+  - Importar/exportar usuarios
+  - Personalizar plantillas de certificados
+  - Revisar registro de auditoría
+  - Solución de problemas comunes
 
-- [PROYECTO_DETALLADO.md](PROYECTO_DETALLADO.md)
+### 🏗️ Para Desarrolladores (Arquitectura)
+**Usuario objetivo:** Desarrolladores y arquitectos
 
-### 2. Operación local y pruebas
+- **[PROYECTO_DETALLADO.md](PROYECTO_DETALLADO.md)** - Documentación técnica completa
+  - Resumen funcional del sistema
+  - Flujo end-to-end
+  - Stack tecnológico (Laravel 11, Livewire, Tailwind)
+  - Estructura de directorios
+  - Modelo de datos (ER básico)
+  - Integración multilenguaje
+  - API y rutas principales
 
-- [CODESPACES_PRUEBAS.md](CODESPACES_PRUEBAS.md)
-- [scripts/local-test.sh](../scripts/local-test.sh)
-- [scripts/dev-local.sh](../scripts/dev-local.sh)
-- [scripts/setup-local.sh](../scripts/setup-local.sh)
+### 💻 Para Desarrollo Local
+**Usuario objetivo:** Desarrolladores en Codespaces o máquinas locales
 
-### 3. Escalabilidad de certificaciones
+- **[CODESPACES_PRUEBAS.md](CODESPACES_PRUEBAS.md)** - Setup y validación local
+  - Instalación de dependencias
+  - Preparación del entorno
+  - Ejecución de migraciones
+  - Levantar servidor de desarrollo
+  - Ejecutar suite de tests
+  - Scripts de utilidad
 
-- [AGREGAR_NUEVA_CERTIFICACION.md](AGREGAR_NUEVA_CERTIFICACION.md)
-- [planificacion/PLAN_ESCALABILIDAD_CERTIFICACIONES.md](planificacion/PLAN_ESCALABILIDAD_CERTIFICACIONES.md)
-- [planificacion/FASE_6_LIMPIEZA_TECNICA.md](planificacion/FASE_6_LIMPIEZA_TECNICA.md)
+### 🚀 Planificación Futura (Roadmap)
+**Usuario objetivo:** Product managers y líderes técnicos
 
-### 4. Operación productiva
+- **[planificacion/PLAN_ESCALABILIDAD_CERTIFICACIONES.md](planificacion/PLAN_ESCALABILIDAD_CERTIFICACIONES.md)** - Crecimiento del catálogo
+- **[planificacion/DESPLIEGUE_STAGING_PRODUCCION.md](planificacion/DESPLIEGUE_STAGING_PRODUCCION.md)** - Estrategia de deploy
+- **[planificacion/POLITICA_RETENCION_DATOS.md](planificacion/POLITICA_RETENCION_DATOS.md)** - Compliance y retención
+- **[planificacion/FASE_6_LIMPIEZA_TECNICA.md](planificacion/FASE_6_LIMPIEZA_TECNICA.md)** - Refactorización futura (cert_type → certification_id)
 
-- [planificacion/DESPLIEGUE_STAGING_PRODUCCION.md](planificacion/DESPLIEGUE_STAGING_PRODUCCION.md)
-- [planificacion/POLITICA_RETENCION_DATOS.md](planificacion/POLITICA_RETENCION_DATOS.md)
+---
 
-## Criterio de estructura
+## 📋 Criterios de Documentación
 
-- Mantener solo documentos vigentes y accionables.
-- Evitar reportes puntuales de fecha en documentación permanente.
-- Centralizar estado y hoja de ruta en planificación de certificaciones.
+✅ **Mantener:**
+- Documentos operativos y accionables
+- Guías para diferentes perfiles de usuario
+- Arquitectura y decisiones técnicas registradas
+- Roadmap y planes futuros
+
+❌ **Evitar:**
+- Documentos obsoletos o duplicados
+- Reportes puntuales de fecha
+- Instrucciones reemplazadas por UI mejorada
+- Planes completados/archivados
+
+---
+
+## 🎓 Flujo de Lectura Recomendado
+
+**Primer acceso (administrador no-técnico):**
+1. ADMIN_PANEL_GUIDE.md → "Introducción" + "Acceso al Panel"
+2. ADMIN_PANEL_GUIDE.md → Tu caso de uso específico (Certificaciones / Usuarios / etc)
+
+**Primer acceso (desarrollador):**
+1. PROYECTO_DETALLADO.md → "Resumen funcional" + "Stack técnico"
+2. PROYECTO_DETALLADO.md → Secciones específicas según interés
+3. CODESPACES_PRUEBAS.md → Para levantar ambiente local
+
+**Roadmap futuro:**
+1. Carpeta `planificacion/` → Planes por trimestre
+
+

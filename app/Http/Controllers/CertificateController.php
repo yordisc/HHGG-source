@@ -37,7 +37,12 @@ class CertificateController extends Controller
     {
         $certificate = Certificate::where('serial', $serial)->firstOrFail();
 
+        $currentLocale = app()->getLocale();
+        app()->setLocale('en');
+
         $pdf = Pdf::loadView('pdf.certificate', ['certificate' => $certificate]);
+
+        app()->setLocale($currentLocale);
 
         return response($pdf->output(), 200, [
             'Content-Type' => 'application/pdf',

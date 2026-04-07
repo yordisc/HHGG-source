@@ -1,7 +1,12 @@
 <?php
 
 use App\Http\Controllers\Admin\AdminAuthController;
+use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AuditLogController;
+use App\Http\Controllers\Admin\CertificateTemplateController;
+use App\Http\Controllers\Admin\CertificationAdminController;
 use App\Http\Controllers\Admin\QuestionAdminController;
+use App\Http\Controllers\Admin\UserAdminController;
 use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\QuizController;
@@ -41,7 +46,57 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::post('/login', [AdminAuthController::class, 'login'])->name('login.submit');
 
     Route::middleware('admin.auth')->group(function () {
+        Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
         Route::post('/logout', [AdminAuthController::class, 'logout'])->name('logout');
+
+        Route::resource('certifications', CertificationAdminController::class)->except(['show']);
+        Route::post('/certifications/reorder', [CertificationAdminController::class, 'reorder'])
+            ->name('certifications.reorder');
+        Route::get('/certifications/wizard/{step?}', [CertificationAdminController::class, 'wizard'])
+            ->whereNumber('step')
+            ->name('certifications.wizard');
+        Route::post('/certifications/wizard/{step?}', [CertificationAdminController::class, 'wizardStore'])
+            ->whereNumber('step')
+            ->name('certifications.wizard.store');
+        Route::post('/certifications/wizard-reset', [CertificationAdminController::class, 'wizardReset'])
+            ->name('certifications.wizard.reset');
+        Route::get('/certifications/{certification}/test', [CertificationAdminController::class, 'test'])
+            ->name('certifications.test');
+        Route::post('/certifications/{certification}/test-questions', [CertificationAdminController::class, 'generateTestQuestions'])
+            ->name('certifications.test-questions');
+        Route::delete('/certifications/{certification}/test-questions', [CertificationAdminController::class, 'clearTestQuestions'])
+            ->name('certifications.test-questions.clear');
+        Route::patch('/certifications/{certification}/toggle', [CertificationAdminController::class, 'toggle'])
+            ->name('certifications.toggle');
+
+        Route::prefix('certificates/templates')->name('certificates.templates.')->group(function () {
+            Route::get('/', [CertificateTemplateController::class, 'index'])->name('index');
+            Route::get('/create', [CertificateTemplateController::class, 'create'])->name('create');
+            Route::post('/', [CertificateTemplateController::class, 'store'])->name('store');
+            Route::get('/{template}/edit', [CertificateTemplateController::class, 'edit'])->name('edit');
+            Route::put('/{template}', [CertificateTemplateController::class, 'update'])->name('update');
+            Route::delete('/{template}', [CertificateTemplateController::class, 'destroy'])->name('destroy');
+            Route::get('/{template}/preview', [CertificateTemplateController::class, 'preview'])->name('preview');
+        });
+
+        Route::get('/certifications/{certification}/template', [CertificateTemplateController::class, 'certificationTemplates'])
+            ->name('certificates.templates.certification');
+        Route::post('/certifications/{certification}/template', [CertificateTemplateController::class, 'saveCertificationTemplate'])
+            ->name('certificates.templates.certification.save');
+
+        Route::prefix('users')->name('users.')->group(function () {
+            Route::get('/', [UserAdminController::class, 'index'])->name('index');
+            Route::get('/create', [UserAdminController::class, 'create'])->name('create');
+            Route::post('/', [UserAdminController::class, 'store'])->name('store');
+            Route::get('/export-csv', [UserAdminController::class, 'exportCsv'])->name('export.csv');
+            Route::get('/import-csv', [UserAdminController::class, 'importCsvForm'])->name('import.form');
+            Route::post('/import-csv', [UserAdminController::class, 'importCsv'])->name('import.csv');
+            Route::get('/{user}/edit', [UserAdminController::class, 'edit'])->name('edit');
+            Route::put('/{user}', [UserAdminController::class, 'update'])->name('update');
+            Route::delete('/{user}', [UserAdminController::class, 'destroy'])->name('destroy');
+        });
+
+        Route::get('/audit', [AuditLogController::class, 'index'])->name('audit.index');
 
         Route::prefix('questions')->name('questions.')->group(function () {
             Route::get('/', [QuestionAdminController::class, 'index'])->name('index');

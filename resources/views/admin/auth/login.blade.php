@@ -3,7 +3,7 @@
 @section('content')
     <section class="mx-auto max-w-md rounded-3xl border border-slate-200 bg-white/95 p-6 shadow-sm sm:p-8">
         <h1 class="brand-title text-2xl font-bold text-[var(--ink)]">Acceso Admin</h1>
-        <p class="mt-2 text-sm text-slate-600">Ingresa la clave ADMIN_ACCESS_KEY para gestionar el banco de preguntas.</p>
+        <p class="mt-2 text-sm text-slate-600">Ingresa la clave ADMIN_ACCESS_KEY para entrar al panel de administracion.</p>
 
         @if (session('status'))
             <div class="mt-4 rounded-xl border border-blue-300 bg-blue-50 px-4 py-3 text-sm text-blue-800">

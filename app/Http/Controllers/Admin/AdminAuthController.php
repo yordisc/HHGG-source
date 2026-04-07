@@ -38,7 +38,7 @@ class AdminAuthController extends Controller
         $request->session()->regenerate();
         session(['admin_authenticated' => true]);
 
-        return redirect()->route('admin.questions.index');
+        return redirect()->route('admin.dashboard');
     }
 
     public function logout(): RedirectResponse

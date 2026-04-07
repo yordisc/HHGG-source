@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Certification extends Model
 {
@@ -51,5 +52,10 @@ class Certification extends Model
     public function certificates(): HasMany
     {
         return $this->hasMany(Certificate::class);
+    }
+
+    public function certificateTemplate(): HasOne
+    {
+        return $this->hasOne(CertificateTemplate::class);
     }
 }

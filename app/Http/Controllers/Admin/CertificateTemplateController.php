@@ -1,0 +1,200 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
+use App\Models\Certification;
+use App\Models\CertificateTemplate;
+use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
+
+class CertificateTemplateController extends Controller
+{
+    public function index(): View
+    {
+        return view('admin.certificates.templates.index', [
+            'templates' => CertificateTemplate::query()
+                ->where('certification_id', null)
+                ->orderBy('is_default', 'desc')
+                ->orderBy('name')
+                ->paginate(20),
+            'currentLocale' => app()->getLocale(),
+            'supportedLocales' => config('app.supported_locales', ['en']),
+        ]);
+    }
+
+    public function create(): View
+    {
+        return view('admin.certificates.templates.create', [
+            'template' => new CertificateTemplate(),
+            'certifications' => Certification::query()->active()->ordered()->get(),
+            'currentLocale' => app()->getLocale(),
+            'supportedLocales' => config('app.supported_locales', ['en']),
+        ]);
+    }
+
+    public function store(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'slug' => ['required', 'string', 'max:255', 'unique:certificate_templates,slug'],
+            'name' => ['required', 'string', 'max:255'],
+            'html_template' => ['required', 'string'],
+            'css_template' => ['nullable', 'string'],
+            'is_default' => ['nullable', 'boolean'],
+        ]);
+
+        if ($data['is_default'] ?? false) {
+            CertificateTemplate::query()
+                ->where('is_default', true)
+                ->where('certification_id', null)
+                ->update(['is_default' => false]);
+        }
+
+        $template = CertificateTemplate::query()->create($data);
+        AuditLog::log('create', 'CertificateTemplate', $template->id, $template->name, [
+            'slug' => $template->slug,
+            'is_default' => $template->is_default,
+        ]);
+
+        return redirect()
+            ->route('admin.certificates.templates.index')
+            ->with('status', 'Plantilla creada correctamente.');
+    }
+
+    public function edit(CertificateTemplate $template): View
+    {
+        return view('admin.certificates.templates.edit', [
+            'template' => $template,
+            'certifications' => Certification::query()->active()->ordered()->get(),
+            'currentLocale' => app()->getLocale(),
+            'supportedLocales' => config('app.supported_locales', ['en']),
+        ]);
+    }
+
+    public function update(Request $request, CertificateTemplate $template): RedirectResponse
+    {
+        $data = $request->validate([
+            'slug' => ['required', 'string', 'max:255', 'unique:certificate_templates,slug,'.$template->id],
+            'name' => ['required', 'string', 'max:255'],
+            'html_template' => ['required', 'string'],
+            'css_template' => ['nullable', 'string'],
+            'is_default' => ['nullable', 'boolean'],
+        ]);
+
+        if ($data['is_default'] ?? false) {
+            CertificateTemplate::query()
+                ->where('is_default', true)
+                ->where('certification_id', null)
+                ->where('id', '!=', $template->id)
+                ->update(['is_default' => false]);
+        }
+
+        $oldValues = $template->toArray();
+        $template->update($data);
+
+        $changes = array_diff_assoc($data, $oldValues);
+        if (!empty($changes)) {
+            AuditLog::log('update', 'CertificateTemplate', $template->id, $template->name, $changes);
+        }
+
+        return redirect()
+            ->route('admin.certificates.templates.edit', $template)
+            ->with('status', 'Plantilla actualizada correctamente.');
+    }
+
+    public function destroy(CertificateTemplate $template): RedirectResponse
+    {
+        $name = $template->name;
+        $id = $template->id;
+        $template->delete();
+
+        AuditLog::log('delete', 'CertificateTemplate', $id, $name);
+
+        return redirect()
+            ->route('admin.certificates.templates.index')
+            ->with('status', 'Plantilla eliminada correctamente.');
+    }
+
+    public function certificationTemplates(Certification $certification): View
+    {
+        $customTemplate = CertificateTemplate::query()
+            ->where('certification_id', $certification->id)
+            ->first();
+
+        return view('admin.certificates.templates.certification', [
+            'certification' => $certification,
+            'customTemplate' => $customTemplate,
+            'defaultTemplate' => CertificateTemplate::getDefault(),
+            'currentLocale' => app()->getLocale(),
+            'supportedLocales' => config('app.supported_locales', ['en']),
+        ]);
+    }
+
+    public function saveCertificationTemplate(Request $request, Certification $certification): RedirectResponse
+    {
+        $data = $request->validate([
+            'html_template' => ['required_if:use_custom,1', 'string'],
+            'css_template' => ['nullable', 'string'],
+            'use_custom' => ['nullable', 'boolean'],
+        ]);
+
+        if ($data['use_custom'] ?? false) {
+            $oldTemplate = CertificateTemplate::query()
+                ->where('certification_id', $certification->id)
+                ->first();
+            
+            $templateData = [
+                'slug' => $certification->slug.'_custom',
+                'name' => $certification->name.' (Personalizada)',
+                'html_template' => $data['html_template'],
+                'css_template' => $data['css_template'],
+                'is_default' => false,
+            ];
+            
+            if ($oldTemplate) {
+                $oldTemplate->update($templateData);
+                AuditLog::log('update', 'CertificateTemplate', $oldTemplate->id, $certification->name.' (custom)', [
+                    'html_template' => 'updated',
+                    'css_template' => 'updated',
+                ]);
+            } else {
+                $template = CertificateTemplate::query()->create(
+                    array_merge($templateData, ['certification_id' => $certification->id])
+                );
+                AuditLog::log('create', 'CertificateTemplate', $template->id, $certification->name.' (custom)', [
+                    'html_template' => 'created',
+                    'css_template' => 'created',
+                ]);
+            }
+        } else {
+            $oldTemplate = CertificateTemplate::query()
+                ->where('certification_id', $certification->id)
+                ->first();
+            
+            if ($oldTemplate) {
+                $oldTemplate->delete();
+                AuditLog::log('delete', 'CertificateTemplate', $oldTemplate->id, $certification->name.' (custom)');
+            }
+        }
+
+        return redirect()
+            ->route('admin.certifications.edit', $certification)
+            ->with('status', 'Plantilla de certificado actualizada correctamente.');
+    }
+
+    public function preview(CertificateTemplate $template): View
+    {
+        return view('admin.certificates.templates.preview', [
+            'template' => $template,
+            'sampleData' => [
+                'nombre' => 'Juan Pérez',
+                'fecha' => now()->format('d/m/Y'),
+                'serial' => 'CERT-'.strtoupper(uniqid()),
+                'competencia' => 'Competencia Ejemplar',
+                'nota' => 'Aprobado',
+            ],
+        ]);
+    }
+}

@@ -8,6 +8,12 @@
                 <p class="mt-1 text-sm text-slate-600">Edita banco base y traducciones por idioma.</p>
             </div>
             <div class="flex flex-wrap items-center gap-2">
+                <a href="{{ route('admin.dashboard') }}" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-[var(--accent)] hover:text-[var(--accent)]">
+                    Panel
+                </a>
+                <a href="{{ route('admin.certifications.index') }}" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-[var(--accent)] hover:text-[var(--accent)]">
+                    Certificaciones
+                </a>
                 <a href="{{ route('admin.questions.create') }}" class="rounded-xl bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white transition hover:brightness-110">
                     Nueva pregunta
                 </a>
