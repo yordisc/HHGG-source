@@ -9,6 +9,8 @@ use App\Models\AuditLog;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -166,72 +168,100 @@ class UserAdminController extends Controller
     public function importCsv(Request $request): RedirectResponse
     {
         $request->validate([
-            'file' => ['required', 'file', 'mimes:csv,txt', 'max:5120'],
+            'file' => ['required', 'file', 'max:5120'],
         ]);
 
         $file = $request->file('file');
-        $path = $file->store('temp');
-        $fullPath = storage_path('app/'.$path);
+        $extension = strtolower((string) $file->getClientOriginalExtension());
+        if ($extension !== 'csv') {
+            return redirect()
+                ->route('admin.users.import.form')
+                ->withErrors(['file' => 'El archivo debe ser de tipo CSV']);
+        }
 
         $created = 0;
         $updated = 0;
         $errors = [];
+        $handle = null;
 
-        if (($handle = fopen($fullPath, 'r')) !== false) {
-            $headers = fgetcsv($handle);
+        try {
+            $fullPath = $file->getRealPath();
+            if ($fullPath === false || $fullPath === null) {
+                $fullPath = $file->path();
+            }
 
+            $handle = fopen($fullPath, 'r');
+            if ($handle === false) {
+                throw new \RuntimeException('No se pudo abrir el archivo CSV');
+            }
+
+            // Skip header row.
+            fgetcsv($handle);
+
+            $rowNumber = 1;
             while (($row = fgetcsv($handle)) !== false) {
-                if (empty($row[0]) || !isset($row[1])) {
+                $rowNumber++;
+
+                if (! isset($row[1])) {
                     continue;
                 }
 
-                try {
-                    $name = trim((string) $row[1]);
-
-                    if (empty($name)) {
-                        $errors[] = 'Fila '.($created + $updated + 1).': nombre vacío';
-                        continue;
-                    }
-
-                    $email = isset($row[2]) ? trim((string) $row[2]) : $this->generateInternalEmail($name);
-
-                    $user = User::query()->where('email', $email)->first();
-
-                    if ($user) {
-                        $user->update(['name' => $name]);
-                        $updated++;
-                    } else {
-                        User::query()->create([
-                            'name' => $name,
-                            'email' => empty($row[2]) ? $this->generateInternalEmail($name) : $email,
-                            'password' => isset($row[3]) && !empty($row[3]) ? (string) $row[3] : Str::random(16),
-                        ]);
-                        $created++;
-                    }
-                } catch (\Exception $e) {
-                    $errors[] = 'Fila '.($created + $updated + 1).': '.$e->getMessage();
+                $name = trim((string) $row[1]);
+                if ($name === '') {
+                    $errors[] = 'Fila '.$rowNumber.': nombre vacío';
+                    continue;
                 }
+
+                $providedEmail = trim((string) ($row[2] ?? ''));
+                $email = filter_var($providedEmail, FILTER_VALIDATE_EMAIL)
+                    ? $providedEmail
+                    : $this->generateInternalEmail($name);
+
+                $user = User::query()->where('email', $email)->first();
+                if ($user) {
+                    $user->update(['name' => $name]);
+                    $updated++;
+                    continue;
+                }
+
+                $plainPassword = trim((string) ($row[3] ?? ''));
+                if ($plainPassword === '') {
+                    $plainPassword = Str::random(16);
+                }
+
+                User::query()->create([
+                    'name' => $name,
+                    'email' => $email,
+                    'password' => Hash::make($plainPassword),
+                ]);
+                $created++;
             }
 
-            fclose($handle);
+            AuditLog::log('import', 'User', null, 'CSV import', [
+                'created' => $created,
+                'updated' => $updated,
+                'errors' => count($errors),
+            ]);
+
+            $message = "Importacion completada: {$created} usuarios creados, {$updated} actualizados";
+            if (! empty($errors)) {
+                $message .= '. Errores: '.implode('; ', array_slice($errors, 0, 5));
+            }
+
+            return redirect()
+                ->route('admin.users.index')
+                ->with('status', $message);
+        } catch (\Throwable $e) {
+            Log::error('CSV import failed with unexpected error', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+
+            return redirect()
+                ->route('admin.users.import.form')
+                ->with('error', 'Error inesperado al importar CSV: '.$e->getMessage());
+        } finally {
+            if (is_resource($handle)) {
+                fclose($handle);
+            }
         }
-
-        unlink($fullPath);
-
-        AuditLog::log('import', 'User', null, 'CSV import', [
-            'created' => $created,
-            'updated' => $updated,
-            'errors' => count($errors),
-        ]);
-
-        $message = "Importacion completada: {$created} usuarios creados, {$updated} actualizados";
-        if (!empty($errors)) {
-            $message .= '. Errores: '.implode('; ', array_slice($errors, 0, 5));
-        }
-
-        return redirect()
-            ->route('admin.users.index')
-            ->with('status', $message);
     }
 
     private function formViewData(User $user): array

@@ -13,6 +13,7 @@ use App\Support\CertificationValidationService;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
 class CertificationAdminController extends Controller
@@ -50,13 +51,30 @@ class CertificationAdminController extends Controller
 
     public function update(UpdateCertificationRequest $request, Certification $certification): RedirectResponse
     {
-        $data = $this->normalizeData($request->validated());
-        $oldValues = $certification->toArray();
-        $certification->update($data);
+        try {
+            $data = $this->normalizeData($request->validated());
+            
+            // Get old values before update
+            $oldValues = $certification->toArray();
+            
+            // Perform the update
+            $certification->update($data);
 
-        $changes = array_diff_assoc($data, $oldValues);
-        if (!empty($changes)) {
-            AuditLog::log('update', 'Certification', $certification->id, $certification->name, $changes);
+            // Log changes if any
+            $changes = array_diff_assoc($data, $oldValues);
+            if (!empty($changes)) {
+                try {
+                    AuditLog::log('update', 'Certification', $certification->id, $oldValues['name'] ?? $certification->name, $changes);
+                } catch (\Exception $e) {
+                    // Log audit failures but don't fail the update
+                    \Log::warning('Failed to create audit log for certification update', ['error' => $e->getMessage()]);
+                }
+            }
+        } catch (\Exception $e) {
+            \Log::error('Certification update failed', ['error' => $e->getMessage()]);
+            return redirect()
+                ->route('admin.certifications.edit', $certification)
+                ->with('error', 'Error al actualizar: '.$e->getMessage());
         }
 
         return redirect()

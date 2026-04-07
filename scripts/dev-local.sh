@@ -154,6 +154,39 @@ print_access_hint() {
   log "[INFO] URL de Vite (solo assets/HMR): ${VITE_PUBLIC_URL}"
 }
 
+normalize_hot_file_url() {
+  HOT_FILE="${PROJECT_DIR}/public/hot"
+
+  if [ ! -f "$HOT_FILE" ]; then
+    return
+  fi
+
+  CURRENT_HOT_URL="$(tr -d '\r\n' < "$HOT_FILE" 2>/dev/null || true)"
+  if [ -z "$CURRENT_HOT_URL" ]; then
+    return
+  fi
+
+  if [ "$CURRENT_HOT_URL" = "$VITE_PUBLIC_URL" ]; then
+    return
+  fi
+
+  case "$CURRENT_HOT_URL" in
+    http://0.0.0.0:*|http://127.0.0.1:*|http://localhost:*|https://*.app.github.dev*)
+      printf '%s' "$VITE_PUBLIC_URL" > "$HOT_FILE"
+      log "[INFO] Normalizando public/hot: ${CURRENT_HOT_URL} -> ${VITE_PUBLIC_URL}"
+      ;;
+  esac
+}
+
+cleanup_hot_file() {
+  HOT_FILE="${PROJECT_DIR}/public/hot"
+
+  if [ -f "$HOT_FILE" ]; then
+    rm -f "$HOT_FILE"
+    log "[INFO] Limpiando public/hot al salir."
+  fi
+}
+
 usage() {
   cat <<'EOF'
 Uso:
@@ -198,6 +231,8 @@ parse_args() {
 run_development_stack() {
   prepare_ports
   print_access_hint
+  normalize_hot_file_url
+  trap cleanup_hot_file EXIT INT TERM
 
   if should_use_pail; then
     log "[INFO] Levantando entorno de desarrollo con Pail..."
@@ -211,7 +246,7 @@ run_development_stack() {
     log "[WARN] La extension pcntl no esta disponible; se omite Pail."
   fi
   log "[INFO] Levantando entorno de desarrollo sin Pail..."
-  APP_URL="${APP_PUBLIC_URL}" npx concurrently -c "#93c5fd,#c4b5fd,#fdba74" "php artisan serve --host=0.0.0.0 --port=${APP_PORT}" "php artisan queue:listen --tries=1" "npm run dev -- --host=0.0.0.0 --port=${VITE_PORT} --strictPort" --names=server,queue,vite
+  APP_URL="${APP_PUBLIC_URL}" VITE_PUBLIC_URL="${VITE_PUBLIC_URL}" npx concurrently -c "#93c5fd,#c4b5fd,#fdba74" "php artisan serve --host=0.0.0.0 --port=${APP_PORT}" "php artisan queue:listen --tries=1" "npm run dev -- --host=0.0.0.0 --port=${VITE_PORT} --strictPort" --names=server,queue,vite
 }
 
 main() {

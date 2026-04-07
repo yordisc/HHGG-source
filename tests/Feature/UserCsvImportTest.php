@@ -11,15 +11,10 @@ class UserCsvImportTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-        session(['admin_user' => true]);
-    }
-
     public function test_import_csv_form_shows_correctly(): void
     {
-        $response = $this->get(route('admin.users.import.form'));
+        $response = $this->withSession(['admin_authenticated' => true])
+            ->get(route('admin.users.import.form'));
         $response->assertStatus(200);
         $response->assertViewIs('admin.users.import-csv');
     }
@@ -33,7 +28,8 @@ class UserCsvImportTest extends TestCase
         
         $file = new \Illuminate\Http\UploadedFile($path, 'users.csv', 'text/csv', null, true);
         
-        $response = $this->post(route('admin.users.import.csv'), ['file' => $file]);
+        $response = $this->withSession(['admin_authenticated' => true])
+            ->post(route('admin.users.import.csv'), ['file' => $file]);
         
         $response->assertRedirect(route('admin.users.index'));
         $response->assertSessionHas('status');
@@ -51,7 +47,8 @@ class UserCsvImportTest extends TestCase
         
         $file = new \Illuminate\Http\UploadedFile($path, 'users.csv', 'text/csv', null, true);
         
-        $this->post(route('admin.users.import.csv'), ['file' => $file]);
+        $this->withSession(['admin_authenticated' => true])
+            ->post(route('admin.users.import.csv'), ['file' => $file]);
         
         $this->assertDatabaseHas('audit_logs', [
             'action' => 'import',
@@ -61,7 +58,8 @@ class UserCsvImportTest extends TestCase
 
     public function test_import_csv_requires_file(): void
     {
-        $response = $this->post(route('admin.users.import.csv'), []);
+        $response = $this->withSession(['admin_authenticated' => true])
+            ->post(route('admin.users.import.csv'), []);
         $response->assertSessionHasErrors('file');
     }
 
@@ -75,7 +73,8 @@ class UserCsvImportTest extends TestCase
             true
         );
         
-        $response = $this->post(route('admin.users.import.csv'), ['file' => $file]);
+        $response = $this->withSession(['admin_authenticated' => true])
+            ->post(route('admin.users.import.csv'), ['file' => $file]);
         $response->assertSessionHasErrors('file');
     }
 

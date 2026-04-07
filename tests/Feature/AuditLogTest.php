@@ -13,28 +13,24 @@ class AuditLogTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-        session(['admin_user' => true]);
-    }
-
     public function test_audit_log_index_displays(): void
     {
         AuditLog::log('create', 'User', 1, 'Test User');
         
-        $response = $this->get(route('admin.audit.index'));
+        $response = $this->withSession(['admin_authenticated' => true])
+            ->get(route('admin.audit.index'));
         $response->assertStatus(200);
         $response->assertViewIs('admin.audit.index');
     }
 
     public function test_audit_log_appears_after_user_creation(): void
     {
-        $response = $this->post(route('admin.users.store'), [
-            'name' => 'New User',
-            'password' => 'password123',
-            'email_verified' => false,
-        ]);
+        $response = $this->withSession(['admin_authenticated' => true])
+            ->post(route('admin.users.store'), [
+                'name' => 'New User',
+                'password' => 'password123',
+                'email_verified' => false,
+            ]);
         
         $response->assertRedirect();
         
@@ -49,15 +45,19 @@ class AuditLogTest extends TestCase
     {
         $certification = Certification::factory()->create(['name' => 'Original Name']);
         
-        $response = $this->put(route('admin.certifications.update', $certification), [
-            'name' => 'Updated Name',
-            'slug' => $certification->slug,
-            'description' => $certification->description,
-            'time_limit_minutes' => $certification->time_limit_minutes,
-            'min_score_percentage' => $certification->min_score_percentage,
-            'max_score_percentage' => $certification->max_score_percentage,
-            'is_active' => $certification->is_active,
-        ]);
+        $response = $this->withSession(['admin_authenticated' => true])
+            ->put(route('admin.certifications.update', $certification), [
+                'name' => 'Updated Name',
+                'slug' => $certification->slug,
+                'description' => $certification->description,
+                'active' => $certification->active,
+                'questions_required' => $certification->questions_required,
+                'pass_score_percentage' => $certification->pass_score_percentage,
+                'cooldown_days' => $certification->cooldown_days,
+                'result_mode' => $certification->result_mode,
+                'pdf_view' => $certification->pdf_view,
+                'home_order' => $certification->home_order,
+            ]);
         
         $response->assertRedirect();
         
@@ -72,7 +72,8 @@ class AuditLogTest extends TestCase
     {
         $user = User::factory()->create(['name' => 'To Delete']);
         
-        $response = $this->delete(route('admin.users.destroy', $user));
+        $response = $this->withSession(['admin_authenticated' => true])
+            ->delete(route('admin.users.destroy', $user));
         
         $response->assertRedirect();
         
@@ -89,10 +90,11 @@ class AuditLogTest extends TestCase
         AuditLog::log('update', 'Certification', 1, 'Test');
         AuditLog::log('delete', 'User', 2, 'Test');
         
-        $response = $this->get(route('admin.audit.index', ['action' => 'create']));
+        $response = $this->withSession(['admin_authenticated' => true])
+            ->get(route('admin.audit.index', ['filter' => 'create']));
         
         $response->assertStatus(200);
-        $response->assertSee('create');
+        $response->assertSee('Crear');
     }
 
     public function test_audit_log_can_filter_by_entity(): void
@@ -100,7 +102,8 @@ class AuditLogTest extends TestCase
         AuditLog::log('create', 'User', 1, 'Test');
         AuditLog::log('create', 'Certification', 2, 'Test');
         
-        $response = $this->get(route('admin.audit.index', ['entity' => 'User']));
+        $response = $this->withSession(['admin_authenticated' => true])
+            ->get(route('admin.audit.index', ['entity' => 'User']));
         
         $response->assertStatus(200);
     }

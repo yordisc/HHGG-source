@@ -1,83 +1,138 @@
 @extends('layouts.app')
 
 @section('content')
-    <section class="mx-auto max-w-6xl rounded-3xl border border-slate-200 bg-white/95 p-6 shadow-sm sm:p-8">
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-                <h1 class="brand-title text-2xl font-bold text-[var(--ink)]">Certificaciones</h1>
-                <p class="mt-1 text-sm text-slate-600">Alta, edicion, control del catalogo y orden por arrastre.</p>
+    <section class="min-h-screen space-y-6 bg-gradient-to-br from-slate-50 via-white to-slate-50 px-4 py-8 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mx-auto max-w-7xl">
+            <div class="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-slate-900">Gestión de Certificaciones</h1>
+                    <p class="mt-2 text-slate-600">Crea, edita y organiza el catálogo completo de certificaciones</p>
+                </div>
+                <a href="{{ route('admin.certifications.create') }}" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-3 font-semibold text-white shadow-lg transition hover:shadow-xl hover:-translate-y-0.5">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    Nueva certificación
+                </a>
             </div>
-            <div class="flex flex-wrap items-center gap-2">
-                <a href="{{ route('admin.dashboard') }}" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-[var(--accent)] hover:text-[var(--accent)]">Panel</a>
-                <a href="{{ route('admin.certifications.create') }}" class="rounded-xl bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white transition hover:brightness-110">Nueva certificacion</a>
-            </div>
+
+            @if (session('status'))
+                <div class="mt-6 flex items-start gap-3 rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-emerald-50/50 p-4 shadow-sm">
+                    <svg class="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <p class="text-sm font-medium text-emerald-900">{{ session('status') }}</p>
+                </div>
+            @endif
         </div>
 
-        @if (session('status'))
-            <div class="mt-4 rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-                {{ session('status') }}
-            </div>
-        @endif
+        <!-- Tabla de Certificaciones -->
+        <div class="mx-auto max-w-7xl">
+            <form id="certifications-reorder-form" method="POST" action="{{ route('admin.certifications.reorder') }}">
+                @csrf
+                <div id="certifications-hidden-inputs" class="hidden"></div>
 
-        <form id="certifications-reorder-form" method="POST" action="{{ route('admin.certifications.reorder') }}" class="mt-6 space-y-4">
-            @csrf
-            <div id="certifications-hidden-inputs" class="hidden"></div>
-            <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                Arrastra los elementos usando el icono de la izquierda. El nuevo orden se guarda al soltar.
-            </div>
-
-            <div class="overflow-hidden rounded-2xl border border-slate-200">
-                <div class="grid grid-cols-[2.5rem_0.7fr_1.2fr_1.5fr_0.8fr_0.8fr_1.7fr] gap-0 bg-slate-50 px-4 py-3 text-left text-xs uppercase tracking-wide text-slate-600">
-                    <div></div>
-                    <div>ID</div>
-                    <div>Slug</div>
-                    <div>Nombre</div>
-                    <div>Activa</div>
-                    <div>Orden</div>
-                    <div class="text-right">Acciones</div>
+                <!-- Info -->
+                <div class="mb-6 flex items-start gap-3 rounded-xl border border-blue-200 bg-gradient-to-r from-blue-50 to-blue-50/50 p-4 shadow-sm">
+                    <svg class="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2z" clip-rule="evenodd"/></svg>
+                    <p class="text-sm text-blue-900"><strong>Tip:</strong> Arrastra las filas para reordenar. El cambio se guarda automáticamente.</p>
                 </div>
 
-                <div id="certifications-sortable" class="divide-y divide-slate-100 bg-white text-slate-700">
-                    @forelse ($certifications as $certification)
-                        <div class="certification-row grid cursor-move grid-cols-[2.5rem_0.7fr_1.2fr_1.5fr_0.8fr_0.8fr_1.7fr] items-center gap-0 px-4 py-4 transition hover:bg-slate-50" draggable="true" data-certification-id="{{ $certification->id }}">
-                            <div class="flex items-center justify-center text-slate-400" title="Arrastrar">
-                                <span class="text-lg leading-none">⋮⋮</span>
-                            </div>
-                            <div class="font-semibold">{{ $certification->id }}</div>
-                            <div>{{ $certification->slug }}</div>
-                            <div>{{ $certification->name }}</div>
-                            <div>{{ $certification->active ? 'Si' : 'No' }}</div>
-                            <div class="certification-order">{{ $certification->home_order }}</div>
-                            <div class="flex flex-wrap justify-end gap-2">
-                                <form action="{{ route('admin.certifications.toggle', $certification) }}" method="POST" class="inline">
-                                    @csrf
-                                    @method('PATCH')
-                                    <button type="submit" class="rounded-lg border px-3 py-1 text-xs font-semibold {{ $certification->active ? 'border-amber-300 text-amber-700 hover:bg-amber-50' : 'border-emerald-300 text-emerald-700 hover:bg-emerald-50' }}">
-                                        {{ $certification->active ? 'Desactivar' : 'Activar' }}
-                                    </button>
-                                </form>
-                                <a href="{{ route('admin.certifications.edit', $certification) }}" class="rounded-lg border border-slate-300 px-3 py-1 text-xs font-semibold hover:border-[var(--accent)] hover:text-[var(--accent)]">Editar</a>
-                                <form action="{{ route('admin.certifications.destroy', $certification) }}" method="POST" class="inline" onsubmit="return confirm('Deseas eliminar esta certificacion?');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="rounded-lg border border-rose-300 px-3 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-50">Eliminar</button>
-                                </form>
-                            </div>
-                        </div>
-                    @empty
-                        <div class="px-4 py-6 text-center text-slate-500">No hay certificaciones registradas.</div>
-                    @endforelse
+                <!-- Table -->
+                <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                    <div class="overflow-x-auto">
+                        <table>
+                            <thead>
+                                <tr class="border-b border-slate-200 bg-gradient-to-r from-slate-50 to-slate-50">
+                                    <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600 w-12"></th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">ID</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Slug</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Nombre</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Estado</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Orden</th>
+                                    <th class="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-600">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="certifications-sortable" class="divide-y divide-slate-100">
+                                @forelse ($certifications as $certification)
+                                    <tr class="certification-row transition hover:bg-slate-50 cursor-move" draggable="true" data-certification-id="{{ $certification->id }}">
+                                        <td class="px-6 py-4 text-slate-400 select-none" title="Arrastrar para reordenar">
+                                            <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20"><path d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-700">
+                                                {{ $certification->id }}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 font-mono text-sm text-slate-600">{{ $certification->slug }}</td>
+                                        <td class="px-6 py-4 font-medium text-slate-900">{{ $certification->name }}</td>
+                                        <td class="px-6 py-4">
+                                            @if($certification->active)
+                                                <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+                                                    <span class="h-2 w-2 rounded-full bg-emerald-600"></span>
+                                                    Activa
+                                                </span>
+                                            @else
+                                                <span class="inline-flex items-center gap-1.5 rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-600">
+                                                    <span class="h-2 w-2 rounded-full bg-slate-500"></span>
+                                                    Inactiva
+                                                </span>
+                                            @endif
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-blue-50 text-sm font-bold text-blue-700 certification-order">
+                                                {{ $certification->home_order }}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <div class="flex flex-wrap justify-end gap-2">
+                                                <form action="{{ route('admin.certifications.toggle', $certification) }}" method="POST" class="inline">
+                                                    @csrf
+                                                    @method('PATCH')
+                                                    <button type="submit" class="inline-flex items-center gap-1 rounded-lg {{ $certification->active ? 'bg-amber-50 text-amber-700 hover:bg-amber-100' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' }} px-3 py-1.5 text-xs font-semibold transition">
+                                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-4.803c1.753-2.566 4.49-4.197 7.616-4.197.88 0 1.734.122 2.555.357m5.408 7.61a1 1 0 11-2 0 1 1 0 012 0z"/></svg>
+                                                        {{ $certification->active ? 'Desactivar' : 'Activar' }}
+                                                    </button>
+                                                </form>
+                                                <a href="{{ route('admin.certifications.edit', $certification) }}" class="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 transition hover:bg-blue-100">
+                                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                                    Editar
+                                                </a>
+                                                <form action="{{ route('admin.certifications.destroy', $certification) }}" method="POST" class="inline" onsubmit="return confirm('¿Confirmas eliminar esta certificación?');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="inline-flex items-center gap-1 rounded-lg bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-100">
+                                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                        Eliminar
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="7" class="px-6 py-12">
+                                            <div class="flex flex-col items-center gap-2">
+                                                <svg class="h-12 w-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
+                                                <p class="text-slate-500">No hay certificaciones registradas</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </div>
 
-            <div class="flex items-center justify-end gap-3">
-                <button type="submit" class="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-[var(--accent)] hover:text-[var(--accent)]">
-                    Guardar orden manualmente
-                </button>
-            </div>
-        </form>
+                <!-- Save Button -->
+                <div class="mt-6 flex justify-end">
+                    <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-2.5 font-semibold text-white shadow-lg transition hover:shadow-xl">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                        Guardar orden
+                    </button>
+                </div>
+            </form>
+        </div>
 
-        <div class="mt-5">
+        <!-- Pagination -->
+        <div class="mx-auto max-w-7xl">
             {{ $certifications->links() }}
         </div>
     </section>
@@ -183,8 +238,8 @@
                 try {
                     await syncOrder();
                     const statusBox = document.createElement('div');
-                    statusBox.className = 'mt-4 rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-800';
-                    statusBox.textContent = 'Orden actualizado correctamente.';
+                    statusBox.className = 'mt-4 flex items-start gap-3 rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-emerald-50/50 p-4 shadow-sm';
+                    statusBox.innerHTML = '<svg class="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg><p class="text-sm font-medium text-emerald-900">Orden actualizado correctamente</p>';
                     form.parentElement.insertBefore(statusBox, form.nextSibling);
                     window.setTimeout(() => statusBox.remove(), 2500);
                 } catch (error) {
