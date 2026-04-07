@@ -34,6 +34,8 @@ class Certificate extends Model
         'next_available_at',
         'expires_at',
         'last_attempt_at',
+        'certificate_image_path',
+        'image_updated_at',
     ];
 
     protected function casts(): array
@@ -44,6 +46,7 @@ class Certificate extends Model
             'next_available_at' => 'datetime',
             'expires_at' => 'datetime',
             'last_attempt_at' => 'datetime',
+            'image_updated_at' => 'datetime',
             'score_numeric' => 'decimal:2',
         ];
     }
@@ -87,5 +90,30 @@ class Certificate extends Model
     public function certification(): BelongsTo
     {
         return $this->belongsTo(Certification::class);
+    }
+
+    /**
+     * Obtiene la URL pública de la imagen del certificado.
+     *
+     * @return string|null
+     */
+    public function getImageUrl(): ?string
+    {
+        if (!$this->certificate_image_path) {
+            return null;
+        }
+
+        return app(\App\Support\CertificateImageStorageService::class)
+            ->url($this->certificate_image_path);
+    }
+
+    /**
+     * Verifica si el certificado tiene una imagen asociada.
+     *
+     * @return bool
+     */
+    public function hasImage(): bool
+    {
+        return !empty($this->certificate_image_path);
     }
 }

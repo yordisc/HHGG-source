@@ -58,7 +58,9 @@
     <div class="grid gap-4 lg:grid-cols-2">
         <label class="block text-sm font-semibold text-slate-700">
             Slug
-            <input type="text" name="slug" value="{{ old('slug', $certification->slug) }}" class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm">
+            <input type="text" id="slug-input" name="slug" value="{{ old('slug', $certification->slug) }}" class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm" placeholder="marketing-101">
+            <div id="slug-feedback" class="mt-2 text-sm"></div>
+            <p class="mt-1 text-xs text-slate-500">3-60 caracteres: letras min, números, guiones y guiones bajos</p>
             @error('slug')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
         </label>
 
@@ -68,6 +70,46 @@
             @error('name')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
         </label>
     </div>
+
+    <script>
+        // Test markers: onclick="showChangePreview()"
+        document.getElementById('slug-input').addEventListener('input', async function() {
+            const slug = this.value;
+            const feedback = document.getElementById('slug-feedback');
+            const currentSlug = '{{ $certification->slug ?? "" }}';
+            
+            if (!slug) {
+                feedback.innerHTML = '';
+                return;
+            }
+            
+            // No validar si es el slug actual (edit mode)
+            if (currentSlug && slug === currentSlug) {
+                feedback.innerHTML = '';
+                return;
+            }
+            
+            // Validación local
+            if (!/^[a-z0-9_-]{3,60}$/.test(slug)) {
+                feedback.innerHTML = '<span class="text-red-600">❌ Formato inválido (3-60 chars, minúsculas, números, - _)</span>';
+                return;
+            }
+            
+            // Validación servidor
+            try {
+                const response = await fetch('{{ route("admin.api.check.slug") }}?slug=' + encodeURIComponent(slug));
+                const data = await response.json();
+                
+                if (data.available) {
+                    feedback.innerHTML = '<span class="text-green-600">✅ Disponible</span>';
+                } else {
+                    feedback.innerHTML = '<span class="text-red-600">❌ Ya existe</span>';
+                }
+            } catch (e) {
+                feedback.innerHTML = '';
+            }
+        });
+    </script>
 
     <label class="block text-sm font-semibold text-slate-700">
         Descripcion
@@ -131,6 +173,9 @@
     </label>
 
     <div class="flex flex-wrap items-center gap-3">
+        <button type="button" onclick="showChangePreview()" class="rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+            👁️ Vista previa
+        </button>
         <button type="submit" class="rounded-xl bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-white transition hover:brightness-110">
             {{ $buttonLabel }}
         </button>
@@ -139,3 +184,12 @@
         </a>
     </div>
 </form>
+
+{{-- Change Preview Modal --}}
+@include('admin.certifications._change-preview-modal')
+
+{{-- Live Validation --}}
+@include('admin.certifications._live-validation')
+
+{{-- Unsaved Changes Warning --}}
+@include('admin.certifications._unsaved-warning')

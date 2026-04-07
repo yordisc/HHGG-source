@@ -131,9 +131,9 @@ Comando:
 ## 12. Documentos complementarios
 
 Documentación vigente:
-- docs/README.md
+- docs/DOCUMENTATION_INDEX.md
 - docs/CODESPACES_PRUEBAS.md
-- docs/AGREGAR_NUEVA_CERTIFICACION.md
+- scripts/README.md
 - docs/planificacion/PLAN_ESCALABILIDAD_CERTIFICACIONES.md
 - docs/planificacion/FASE_6_LIMPIEZA_TECNICA.md
 - docs/planificacion/POLITICA_RETENCION_DATOS.md

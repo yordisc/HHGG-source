@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\Certification;
+use App\Observers\CertificationObserver;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
@@ -20,6 +22,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Register model observers
+        Certification::observe(CertificationObserver::class);
+
         $forwardedHost = request()->headers->get('x-forwarded-host');
 
         if (! empty($forwardedHost)) {

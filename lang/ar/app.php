@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'brand_name' => 'معهد الشهادات المشكوك بها',
+    'brand_name' => 'Doubtful Certifications Institute',
     'brand_tagline' => 'نمنح شهادات لما لا يجرؤ غيرنا على منحه.',
     'language_label' => 'اللغة',
     'badge_humor' => 'تقييم ساخر وشامل',

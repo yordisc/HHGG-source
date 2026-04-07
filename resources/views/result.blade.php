@@ -9,6 +9,14 @@
             <p class="mt-2 text-sm text-slate-600">{{ __('app.result_share_hint') }}</p>
         </div>
 
+        {{-- Certificate Image Display --}}
+        @if ($certificate->hasImage())
+            <div class="border-b border-slate-200 px-6 py-6 sm:px-8">
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-600 mb-4">Imagen del Certificado</p>
+                <img src="{{ $certificate->getImageUrl() }}" alt="Imagen del certificado" class="w-full h-auto rounded-xl border border-slate-200 shadow-sm">
+            </div>
+        @endif
+
         <div class="grid gap-4 px-6 py-6 sm:px-8 lg:grid-cols-[1.3fr_0.7fr]">
             <div class="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5">
                 <p class="text-xs font-semibold uppercase tracking-wide text-slate-600">{{ __('app.result_label') }}</p>

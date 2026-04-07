@@ -4,7 +4,7 @@
     <section class="mx-auto max-w-4xl rounded-3xl border border-slate-200 bg-white/95 p-6 shadow-sm sm:p-8">
         <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-                <h1 class="brand-title text-2xl font-bold text-[var(--ink)]">Editar certificacion</h1>
+                <h1 class="brand-title text-2xl font-bold text-[var(--ink)]">Editar certificacion <span class="sr-only"> * &#039;</span></h1>
                 <p class="mt-1 text-sm text-slate-600">Actualiza la configuracion funcional del catalogo.</p>
             </div>
             <a href="{{ route('admin.certifications.index') }}" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-[var(--accent)] hover:text-[var(--accent)]">
@@ -25,6 +25,15 @@
             <a href="{{ route('admin.certificates.templates.certification', $certification) }}" class="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700">
                 Editar plantilla de certificado
             </a>
+            <a href="{{ route('admin.certifications.versions', $certification) }}" class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700">
+                📋 Ver historial
+            </a>
+            <form action="{{ route('admin.certifications.duplicate', $certification) }}" method="POST" class="inline" onsubmit="return confirm('¿Clonar esta certificación? Se copiarán todas las preguntas.');">
+                @csrf
+                <button type="submit" class="rounded-xl border border-purple-300 bg-white px-4 py-2 text-sm font-semibold text-purple-700 transition hover:bg-purple-50">
+                    🔄 Clonar certificación
+                </button>
+            </form>
             <form action="{{ route('admin.certifications.test-questions', $certification) }}" method="POST" class="inline">
                 @csrf
                 <input type="hidden" name="count" value="5">
@@ -41,10 +50,23 @@
             </form>
         </div>
 
-        @include('admin.certifications._form', [
-            'action' => route('admin.certifications.update', $certification),
-            'method' => 'PUT',
-            'buttonLabel' => 'Guardar cambios',
+        <div class="grid gap-6 lg:grid-cols-3">
+            <div class="lg:col-span-2">
+                @include('admin.certifications._form', [
+                    'action' => route('admin.certifications.update', $certification),
+                    'method' => 'PUT',
+                    'buttonLabel' => 'Guardar cambios',
+                ])
+            </div>
+            <div class="lg:col-span-1">
+                @include('admin.certifications._questions-panel', [
+                    'certification' => $certification,
+                ])
+            </div>
+        </div>
+
+        @include('admin.certifications._versions', [
+            'versions' => $certification->versions()->latest('version_number')->get(),
         ])
     </section>
 @endsection

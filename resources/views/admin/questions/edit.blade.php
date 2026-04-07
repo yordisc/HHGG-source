@@ -17,7 +17,13 @@
                 <a href="{{ route('admin.questions.index') }}" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-[var(--accent)] hover:text-[var(--accent)]">
                     Volver al listado
                 </a>
-                <form action="{{ route('admin.questions.destroy', $question) }}" method="POST" onsubmit="return confirm('Deseas eliminar esta pregunta?');">
+                <form action="{{ route('admin.questions.duplicate', $question) }}" method="POST" class="inline">
+                    @csrf
+                    <button type="submit" class="rounded-xl border border-blue-300 px-4 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-50">
+                        🔄 Duplicar
+                    </button>
+                </form>
+                <form action="{{ route('admin.questions.destroy', $question) }}" method="POST" onsubmit="return confirm('Deseas eliminar esta pregunta?');" class="inline">
                     @csrf
                     @method('DELETE')
                     <button type="submit" class="rounded-xl border border-rose-300 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-50">

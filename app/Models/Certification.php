@@ -58,4 +58,30 @@ class Certification extends Model
     {
         return $this->hasOne(CertificateTemplate::class);
     }
+
+    public function versions(): HasMany
+    {
+        return $this->hasMany(CertificationVersion::class);
+    }
+
+    public function statistics(): HasMany
+    {
+        return $this->hasMany(CertificationStatistic::class);
+    }
+
+    public function getCurrentVersion(): ?CertificationVersion
+    {
+        return $this->versions()
+            ->orderBy('version_number', 'desc')
+            ->first();
+    }
+
+    public function getLatestStatistics(int $days = 30): array
+    {
+        return $this->statistics()
+            ->wherDate('date', '>=', now()->subDays($days))
+            ->orderBy('date')
+            ->get()
+            ->toArray();
+    }
 }

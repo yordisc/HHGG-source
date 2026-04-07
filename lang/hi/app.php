@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'brand_name' => 'Institute of Doubtful Certifications',
+    'brand_name' => 'Doubtful Certifications Institute',
     'brand_tagline' => 'Hum wahi certify karte hain jo koi aur nahin karta.',
     'language_label' => 'Bhasha',
     'badge_humor' => 'Satirical aur Inclusive Assessment',

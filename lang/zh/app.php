@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'brand_name' => '可疑认证研究院',
+    'brand_name' => 'Doubtful Certifications Institute',
     'brand_tagline' => '认证别人不敢认证的内容。',
     'language_label' => '语言',
     'badge_humor' => '讽刺评估与包容导向',

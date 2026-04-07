@@ -13,6 +13,10 @@
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                     Nueva pregunta
                 </a>
+                <a href="{{ route('admin.questions.builder') }}" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-3 font-semibold text-white shadow-lg transition hover:shadow-xl hover:-translate-y-0.5">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 6.732z"/></svg>
+                    Constructor visual
+                </a>
             </div>
 
             @if (session('status'))
@@ -32,7 +36,7 @@
 
         <!-- CSV Import Section -->
         <div class="mx-auto max-w-7xl">
-            <form method="POST" action="{{ route('admin.questions.import.csv') }}" enctype="multipart/form-data" class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <form method="POST" action="{{ route('admin.questions.validate.csv') }}" enctype="multipart/form-data" class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
                 @csrf
                 <h2 class="mb-4 text-lg font-bold text-slate-900">Importar preguntas desde CSV</h2>
                 <p class="mb-4 text-sm text-slate-600">Columnas requeridas: <code class="rounded bg-slate-100 px-2 py-1 font-mono text-xs">cert_type, prompt, option_1, option_2, option_3, option_4, correct_option</code></p>
@@ -40,11 +44,11 @@
                 <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
                     <div class="flex-1">
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Selecciona archivo CSV</label>
-                        <input type="file" name="csv_file" accept=".csv,text/csv" class="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
+                        <input type="file" name="csv_file" accept=".csv,text/csv" class="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200" required>
                     </div>
                     <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-2.5 font-semibold text-white shadow-sm transition hover:shadow-md">
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                        Subir CSV
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                        Vista Previa
                     </button>
                     <a href="{{ route('admin.questions.export.csv', ['cert_type' => $filterType ?: null]) }}" class="inline-flex items-center gap-2 rounded-lg bg-emerald-50 px-6 py-2.5 font-semibold text-emerald-700 shadow-sm border border-emerald-200 transition hover:bg-emerald-100">
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
@@ -60,20 +64,68 @@
 
         <!-- Filter Section -->
         <div class="mx-auto max-w-7xl">
-            <form method="GET" class="flex flex-col gap-3 sm:flex-row sm:items-end">
-                <div class="flex-1">
-                    <label class="block text-sm font-semibold text-slate-700 mb-2">Filtrar por certificación</label>
-                    <select name="cert_type" class="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
-                        <option value="">Todas las certificaciones</option>
-                        @foreach ($certifications as $slug => $name)
-                            <option value="{{ $slug }}" @selected($filterType === $slug)>{{ $slug }} - {{ $name }}</option>
-                        @endforeach
-                    </select>
+            <form method="GET" class="space-y-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+                <h3 class="text-lg font-bold text-slate-900">Filtros Avanzados</h3>
+                
+                <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+                    <!-- Búsqueda por texto -->
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Buscar pregunta</label>
+                        <input type="text" name="search" value="{{ $search }}" placeholder="Escribe para buscar..." class="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
+                    </div>
+
+                    <!-- Por certificación -->
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Certificación</label>
+                        <select name="cert_type" class="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
+                            <option value="">Todas</option>
+                            @foreach ($certifications as $slug => $name)
+                                <option value="{{ $slug }}" @selected($filterType === $slug)>{{ $slug }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <!-- Por estado -->
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Estado</label>
+                        <select name="active" class="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
+                            <option value="">Todas</option>
+                            <option value="1" @selected($filterActive === '1')>✅ Activas</option>
+                            <option value="0" @selected($filterActive === '0')>❌ Inactivas</option>
+                        </select>
+                    </div>
+
+                    <!-- Ordenamiento -->
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Ordenar por</label>
+                        <select name="sort" class="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
+                            <option value="latest" @selected($sortBy === 'latest')>Más recientes</option>
+                            <option value="oldest" @selected($sortBy === 'oldest')>Más antiguas</option>
+                            <option value="alphabetical" @selected($sortBy === 'alphabetical')>Alfabético</option>
+                        </select>
+                    </div>
+
+                    <!-- Por página -->
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Por página</label>
+                        <select name="per_page" class="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
+                            <option value="20" @selected($perPage === 20)>20</option>
+                            <option value="50" @selected($perPage === 50)>50</option>
+                            <option value="100" @selected($perPage === 100)>100</option>
+                        </select>
+                    </div>
                 </div>
-                <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-2.5 font-semibold text-white shadow-sm transition hover:shadow-md">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 000 2h14a1 1 0 100-2H3zM3 12a1 1 0 000 2h14a1 1 0 100-2H3zM3 20a1 1 0 000 2h14a1 1 0 100-2H3z"/></svg>
-                    Filtrar
-                </button>
+
+                <div class="flex items-center gap-3">
+                    <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-2.5 font-semibold text-white shadow-sm transition hover:shadow-md">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 000 2h14a1 1 0 100-2H3zM3 12a1 1 0 000 2h14a1 1 0 100-2H3zM3 20a1 1 0 000 2h14a1 1 0 100-2H3z"/></svg>
+                        Aplicar filtros
+                    </button>
+                    <a href="{{ route('admin.questions.index') }}" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-6 py-2.5 font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        Limpiar
+                    </a>
+                </div>
             </form>
         </div>
 
@@ -128,6 +180,13 @@
                                                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                                 Editar
                                             </a>
+                                            <form action="{{ route('admin.questions.duplicate', $question) }}" method="POST" class="inline">
+                                                @csrf
+                                                <button type="submit" class="inline-flex items-center gap-1 rounded-lg bg-purple-50 px-3 py-1.5 text-xs font-semibold text-purple-700 transition hover:bg-purple-100">
+                                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                                    Copiar
+                                                </button>
+                                            </form>
                                             <form action="{{ route('admin.questions.destroy', $question) }}" method="POST" class="inline" onsubmit="return confirm('¿Confirmas eliminar esta pregunta?');">
                                                 @csrf
                                                 @method('DELETE')

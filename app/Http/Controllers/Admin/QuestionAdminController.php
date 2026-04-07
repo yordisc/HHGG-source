@@ -7,8 +7,10 @@ use App\Http\Requests\ImportQuestionsCsvRequest;
 use App\Http\Requests\StoreQuestionRequest;
 use App\Http\Requests\UpdateQuestionRequest;
 use App\Models\Certification;
+use App\Models\CsvImportLog;
 use App\Models\Question;
 use App\Models\QuestionTranslation;
+use App\Support\CsvValidator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -28,28 +30,88 @@ class QuestionAdminController extends Controller
         ]);
     }
 
+    public function builder(): View
+    {
+        return view('admin.questions.builder', [
+            'certifications' => Certification::where('active', true)->get(),
+            'supportedLocales' => config('app.supported_locales', ['en']),
+            'currentLocale' => app()->getLocale(),
+        ]);
+    }
+
     public function store(StoreQuestionRequest $request): RedirectResponse
     {
         $data = $request->validated();
-        $certificationSlug = (string) $data['cert_type'];
-        $certificationId = $this->resolveCertificationId($certificationSlug);
+        
+        // Determinar certification_id
+        if (isset($data['certification_id'])) {
+            $certificationId = $data['certification_id'];
+        } else {
+            $certificationSlug = (string) $data['cert_type'];
+            $certificationId = $this->resolveCertificationId($certificationSlug);
+        }
 
-        $question = Question::create([
+        // Preparar datos base de la pregunta
+        $questionData = [
             'certification_id' => $certificationId,
             'prompt' => $data['prompt'],
-            'option_1' => $data['option_1'],
-            'option_2' => $data['option_2'],
-            'option_3' => $data['option_3'],
-            'option_4' => $data['option_4'],
             'correct_option' => $data['correct_option'],
             'active' => (bool) ($data['active'] ?? false),
-        ]);
+            'is_test_question' => (bool) ($data['is_test_question'] ?? false),
+        ];
+
+        // Agregar campos específicos del builder
+        if (isset($data['type'])) {
+            $questionData['type'] = $data['type'];
+        }
+        
+        if (isset($data['explanation'])) {
+            $questionData['explanation'] = $data['explanation'];
+        }
+        
+        if (isset($data['image_path'])) {
+            $questionData['image_path'] = $data['image_path'];
+        }
+
+        // Handle image upload
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('questions', 'public');
+            $questionData['image_path'] = $imagePath;
+        }
+
+        // Agregar opciones según el tipo
+        $type = $data['type'] ?? 'mcq_4';
+        
+        if ($type === 'true_false') {
+            $questionData['option_1'] = 'Verdadero';
+            $questionData['option_2'] = 'Falso';
+            $questionData['option_3'] = null;
+            $questionData['option_4'] = null;
+        } elseif ($type === 'fill_blank') {
+            $questionData['option_1'] = $data['option_1'] ?? '';
+            $questionData['option_2'] = null;
+            $questionData['option_3'] = null;
+            $questionData['option_4'] = null;
+        } elseif ($type === 'mcq_3') {
+            $questionData['option_1'] = $data['option_1'] ?? '';
+            $questionData['option_2'] = $data['option_2'] ?? '';
+            $questionData['option_3'] = $data['option_3'] ?? '';
+            $questionData['option_4'] = null;
+        } else {
+            // mcq_4 o matching (default)
+            $questionData['option_1'] = $data['option_1'] ?? '';
+            $questionData['option_2'] = $data['option_2'] ?? '';
+            $questionData['option_3'] = $data['option_3'] ?? '';
+            $questionData['option_4'] = $data['option_4'] ?? '';
+        }
+
+        $question = Question::create($questionData);
 
         $this->saveTranslations($question, $data['translations'] ?? []);
         $this->incrementMetric('admin.questions.created');
         Log::info('admin.questions.created', [
             'question_id' => $question->id,
-            'certification_slug' => $certificationSlug,
+            'type' => $type,
         ]);
 
         return redirect()
@@ -60,6 +122,11 @@ class QuestionAdminController extends Controller
     public function index(Request $request): View
     {
         $filterType = (string) $request->query('cert_type', '');
+        $filterActive = $request->query('active', '');
+        $search = (string) $request->query('search', '');
+        $sortBy = (string) $request->query('sort', 'latest');
+        $perPage = (int) $request->query('per_page', 20);
+
         $certifications = $this->certificationOptions();
 
         $questions = Question::query()
@@ -68,14 +135,32 @@ class QuestionAdminController extends Controller
                     $certQuery->where('slug', $filterType);
                 });
             })
+            ->when($filterActive !== '', function ($query) use ($filterActive): void {
+                $query->where('active', (bool) $filterActive);
+            })
+            ->when($search !== '', function ($query) use ($search): void {
+                $query->where('prompt', 'like', '%'.$search.'%');
+            })
             ->with('certification')
-            ->latest('id')
-            ->paginate(20)
+            ->when($sortBy === 'oldest', function ($query) {
+                $query->oldest('id');
+            })
+            ->when($sortBy === 'alphabetical', function ($query) {
+                $query->orderBy('prompt');
+            })
+            ->when($sortBy !== 'oldest' && $sortBy !== 'alphabetical', function ($query) {
+                $query->latest('id');
+            })
+            ->paginate($perPage)
             ->withQueryString();
 
         return view('admin.questions.index', [
             'questions' => $questions,
             'filterType' => $filterType,
+            'filterActive' => $filterActive,
+            'search' => $search,
+            'sortBy' => $sortBy,
+            'perPage' => $perPage,
             'certifications' => $certifications,
             'currentLocale' => app()->getLocale(),
             'supportedLocales' => config('app.supported_locales', ['en']),
@@ -292,6 +377,161 @@ class QuestionAdminController extends Controller
         return back()->with('status', "Importacion lista. Creadas: {$created}, actualizadas: {$updated}, traducciones: {$translations}, omitidas: {$skipped}.");
     }
 
+    public function confirmCsvImport(Request $request): RedirectResponse
+    {
+        $tempPath = $request->input('temp_path');
+        $certType = $request->input('cert_type');
+
+        if (!$tempPath || !file_exists(storage_path('app/'.$tempPath))) {
+            return back()->withErrors(['csv_file' => 'Archivo temporal no encontrado.']);
+        }
+
+        $file = new \Symfony\Component\HttpFoundation\File\UploadedFile(
+            storage_path('app/'.$tempPath),
+            basename($tempPath),
+            'text/csv'
+        );
+
+        try {
+            $certificationMap = Certification::query()->pluck('id', 'slug')->all();
+            $created = 0;
+            $updated = 0;
+            $translations = 0;
+            $skipped = 0;
+
+            $handle = @fopen($file->getRealPath(), 'r');
+            if (!$handle) {
+                throw new \Exception('No se puede leer el archivo CSV.');
+            }
+
+            $header = fgetcsv($handle);
+            if (!$header) {
+                throw new \Exception('El archivo CSV está vacío o es inválido.');
+            }
+
+            DB::beginTransaction();
+
+            while (($row = fgetcsv($handle)) !== false) {
+                if ($row === [null] || $row === []) {
+                    continue;
+                }
+
+                $item = array_combine($header, array_pad($row, count($header), ''));
+                if (!is_array($item)) {
+                    $skipped++;
+                    continue;
+                }
+
+                $csvCertType = trim((string) ($item['cert_type'] ?? ''));
+                $certificationId = $certificationMap[$csvCertType] ?? null;
+                if ($certificationId === null) {
+                    $skipped++;
+                    continue;
+                }
+
+                $language = mb_strtolower(trim((string) ($item['language'] ?? 'en')));
+                if ($language === '') {
+                    $language = 'en';
+                }
+
+                $questionId = (int) ($item['question_id'] ?? 0);
+                $question = $questionId > 0 ? Question::find($questionId) : null;
+
+                if ($language === 'en') {
+                    if ($question === null) {
+                        $question = Question::create([
+                            'certification_id' => $certificationId,
+                            'prompt' => (string) ($item['prompt'] ?? ''),
+                            'option_1' => (string) ($item['option_1'] ?? ''),
+                            'option_2' => (string) ($item['option_2'] ?? ''),
+                            'option_3' => (string) ($item['option_3'] ?? ''),
+                            'option_4' => (string) ($item['option_4'] ?? ''),
+                            'correct_option' => max(1, min(4, (int) ($item['correct_option'] ?? 1))),
+                            'active' => $this->toBool($item['active'] ?? '1'),
+                        ]);
+                        $created++;
+                    } else {
+                        $question->update([
+                            'certification_id' => $certificationId,
+                            'prompt' => (string) ($item['prompt'] ?? $question->prompt),
+                            'option_1' => (string) ($item['option_1'] ?? $question->option_1),
+                            'option_2' => (string) ($item['option_2'] ?? $question->option_2),
+                            'option_3' => (string) ($item['option_3'] ?? $question->option_3),
+                            'option_4' => (string) ($item['option_4'] ?? $question->option_4),
+                            'correct_option' => max(1, min(4, (int) ($item['correct_option'] ?? $question->correct_option))),
+                            'active' => array_key_exists('active', $item) ? $this->toBool($item['active']) : $question->active,
+                        ]);
+                        $updated++;
+                    }
+                    continue;
+                }
+
+                if ($question === null) {
+                    $skipped++;
+                    continue;
+                }
+
+                QuestionTranslation::query()->updateOrCreate(
+                    [
+                        'question_id' => $question->id,
+                        'language' => $language,
+                    ],
+                    [
+                        'prompt' => trim((string) ($item['prompt'] ?? '')) ?: $question->prompt,
+                        'option_1' => trim((string) ($item['option_1'] ?? '')) ?: $question->option_1,
+                        'option_2' => trim((string) ($item['option_2'] ?? '')) ?: $question->option_2,
+                        'option_3' => trim((string) ($item['option_3'] ?? '')) ?: $question->option_3,
+                        'option_4' => trim((string) ($item['option_4'] ?? '')) ?: $question->option_4,
+                    ]
+                );
+                $translations++;
+            }
+
+            fclose($handle);
+            DB::commit();
+
+            // Registrar log de importación
+            CsvImportLog::create([
+                'filename' => $file->getClientOriginalName(),
+                'file_size_bytes' => $file->getSize(),
+                'total_rows' => $created + $updated + $skipped,
+                'created_count' => $created,
+                'updated_count' => $updated,
+                'translation_count' => $translations,
+                'skipped_count' => $skipped,
+                'errors' => [],
+                'status' => 'success',
+                'preview_rows' => null,
+            ]);
+
+            // Limpiar archivo temporal
+            @unlink(storage_path('app/'.$tempPath));
+
+            $this->incrementMetric('admin.questions.import_csv.completed');
+            Log::info('admin.questions.import_csv.completed', [
+                'created' => $created,
+                'updated' => $updated,
+                'translations' => $translations,
+                'skipped' => $skipped,
+            ]);
+
+            return redirect()
+                ->route('admin.questions.index')
+                ->with('status', "✅ Importación completada. Creadas: {$created}, actualizadas: {$updated}, traducciones: {$translations}, omitidas: {$skipped}.");
+        } catch (\Throwable $exception) {
+            DB::rollBack();
+            @unlink(storage_path('app/'.$tempPath));
+
+            Log::error('admin.questions.import_csv.failed', [
+                'message' => $exception->getMessage(),
+            ]);
+
+            return back()->withErrors([
+                'csv_file' => 'Error en importación: '.$exception->getMessage(),
+            ]);
+        }
+    }
+
     public function exportCsv(Request $request): StreamedResponse
     {
         $filterType = (string) $request->query('cert_type', '');
@@ -390,6 +630,59 @@ class QuestionAdminController extends Controller
             ->where('slug', $slug)
             ->firstOrFail()
             ->id;
+    }
+
+    public function duplicate(Question $question): RedirectResponse
+    {
+        try {
+            $newQuestion = $question->replicate();
+            $newQuestion->save();
+
+            foreach ($question->translations as $translation) {
+                $newTranslation = $translation->replicate();
+                $newTranslation->question_id = $newQuestion->id;
+                $newTranslation->save();
+            }
+
+            $this->incrementMetric('admin.questions.duplicated');
+            Log::info('admin.questions.duplicated', [
+                'original_id' => $question->id,
+                'duplicate_id' => $newQuestion->id,
+            ]);
+
+            return redirect()
+                ->route('admin.questions.edit', $newQuestion)
+                ->with('status', 'Pregunta duplicada correctamente. Puedes editar la copia.');
+        } catch (\Exception $e) {
+            Log::error('admin.questions.duplicate.failed', [
+                'question_id' => $question->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return back()->with('error', 'Error al duplicar la pregunta: '.$e->getMessage());
+        }
+    }
+
+    public function validateCsv(Request $request)
+    {
+        $file = $request->file('csv_file');
+
+        if (!$file) {
+            return back()->withErrors(['csv_file' => 'No se recibió archivo CSV.']);
+        }
+
+        $validator = new CsvValidator();
+        $result = $validator->validate($file);
+
+        // Guardar archivo temporalmente para confirmación
+        $tempPath = $file->store('csv-temp');
+
+        return view('admin.questions.csv-preview', [
+            'result' => $result,
+            'tempPath' => $tempPath,
+            'fileName' => $file->getClientOriginalName(),
+            'certifications' => $this->certificationOptions(),
+        ]);
     }
 
     public function downloadTemplateCsv(): StreamedResponse

@@ -19,6 +19,9 @@ class Question extends Model
         'option_3',
         'option_4',
         'correct_option',
+        'type',
+        'explanation',
+        'image_path',
         'active',
         'is_test_question',
     ];
@@ -29,6 +32,26 @@ class Question extends Model
             'active' => 'boolean',
             'is_test_question' => 'boolean',
         ];
+    }
+
+    public function setOption1Attribute($value): void
+    {
+        $this->attributes['option_1'] = $value ?? '';
+    }
+
+    public function setOption2Attribute($value): void
+    {
+        $this->attributes['option_2'] = $value ?? '';
+    }
+
+    public function setOption3Attribute($value): void
+    {
+        $this->attributes['option_3'] = $value ?? '';
+    }
+
+    public function setOption4Attribute($value): void
+    {
+        $this->attributes['option_4'] = $value ?? '';
     }
 
     public function scopeTestQuestions($query)

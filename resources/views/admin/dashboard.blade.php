@@ -100,6 +100,125 @@
             </div>
         </div>
 
+        <!-- Performance Stats: Pass Rate & Completions -->
+        <div class="mx-auto max-w-7xl">
+            <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                <div class="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md">
+                    <div class="bg-gradient-to-br from-green-50 to-transparent p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-slate-600">Tasa de Aprobación</p>
+                                <p class="mt-2 text-3xl font-bold text-slate-900">{{ $averagePassRate }}%</p>
+                            </div>
+                            <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-green-100 to-green-50 sm:h-10 sm:w-10">
+                                <svg class="ui-icon text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                            </div>
+                        </div>
+                        <p class="mt-3 text-xs text-slate-500">Últimos 30 días</p>
+                    </div>
+                </div>
+
+                <div class="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md">
+                    <div class="bg-gradient-to-br from-blue-50 to-transparent p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-slate-600">Intentos</p>
+                                <p class="mt-2 text-3xl font-bold text-slate-900">{{ $totalAttempts }}</p>
+                            </div>
+                            <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-100 to-blue-50 sm:h-10 sm:w-10">
+                                <svg class="ui-icon text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </div>
+                        </div>
+                        <p class="mt-3 text-xs text-slate-500">Exámenes iniciados</p>
+                    </div>
+                </div>
+
+                <div class="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md">
+                    <div class="bg-gradient-to-br from-emerald-50 to-transparent p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-slate-600">Completados</p>
+                                <p class="mt-2 text-3xl font-bold text-slate-900">{{ $totalCompletions }}</p>
+                            </div>
+                            <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-100 to-emerald-50 sm:h-10 sm:w-10">
+                                <svg class="ui-icon text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            </div>
+                        </div>
+                        <p class="mt-3 text-xs text-slate-500">Exámenes finalizados</p>
+                    </div>
+                </div>
+
+                <div class="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md">
+                    <div class="bg-gradient-to-br from-red-50 to-transparent p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-slate-600">Abandonos</p>
+                                <p class="mt-2 text-3xl font-bold text-slate-900">{{ $abandonmentRate }}%</p>
+                            </div>
+                            <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-red-100 to-red-50 sm:h-10 sm:w-10">
+                                <svg class="ui-icon text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                            </div>
+                        </div>
+                        <p class="mt-3 text-xs text-slate-500">Incompletos / Totales</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="mx-auto max-w-7xl">
+            <div class="grid gap-8 lg:grid-cols-2">
+                <!-- Attempts vs Completions Chart -->
+                <div class="rounded-2xl border border-slate-200 bg-white shadow-sm">
+                    <div class="border-b border-slate-200 px-6 py-4">
+                        <h2 class="text-lg font-bold text-slate-900">Actividad - Últimos 30 días</h2>
+                        <p class="mt-1 text-sm text-slate-600">Intentos vs Completaciones</p>
+                    </div>
+                    <div class="p-6">
+                        <canvas id="attemptsChart" height="300"></canvas>
+                    </div>
+                </div>
+
+                <!-- Pass Rate by Certification -->
+                <div class="rounded-2xl border border-slate-200 bg-white shadow-sm">
+                    <div class="border-b border-slate-200 px-6 py-4">
+                        <h2 class="text-lg font-bold text-slate-900">Performance por Certificación</h2>
+                        <p class="mt-1 text-sm text-slate-600">Tasa de aprobación (top 8)</p>
+                    </div>
+                    <div class="p-6">
+                        <canvas id="passRateChart" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="mx-auto max-w-7xl">
+            <div class="grid gap-8 lg:grid-cols-2">
+                <!-- Attempts vs Completions Chart -->
+                <div class="rounded-2xl border border-slate-200 bg-white shadow-sm">
+                    <div class="border-b border-slate-200 px-6 py-4">
+                        <h2 class="text-lg font-bold text-slate-900">📊 Actividad - Últimos 30 días</h2>
+                        <p class="mt-1 text-sm text-slate-600">Intentos vs Completaciones</p>
+                    </div>
+                    <div class="p-6">
+                        <canvas id="attemptsChart" height="300" width="400"></canvas>
+                    </div>
+                </div>
+
+                <!-- Pass Rate by Certification -->
+                <div class="rounded-2xl border border-slate-200 bg-white shadow-sm">
+                    <div class="border-b border-slate-200 px-6 py-4">
+                        <h2 class="text-lg font-bold text-slate-900">📈 Performance por Certificación</h2>
+                        <p class="mt-1 text-sm text-slate-600">Tasa de aprobación (top 8)</p>
+                    </div>
+                    <div class="p-6">
+                        <canvas id="passRateChart" height="300" width="400"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Main Content Grid -->
         <div class="mx-auto max-w-7xl">
             <div class="grid gap-8 lg:grid-cols-3">
@@ -204,4 +323,122 @@
             </div>
         </div>
     </section>
+
+    <!-- Chart.js Library y Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        // Gráfico de Intentos vs Completaciones
+        const attemptsCtx = document.getElementById('attemptsChart')?.getContext('2d');
+        if (attemptsCtx) {
+            new Chart(attemptsCtx, {
+                type: 'line',
+                data: {
+                    labels: {{ $chartDates }},
+                    datasets: [
+                        {
+                            label: 'Intentos',
+                            data: {{ $chartAttempts }},
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#3b82f6',
+                            pointBorderColor: '#ffffff',
+                            pointBorderWidth: 2,
+                        },
+                        {
+                            label: 'Completaciones',
+                            data: {{ $chartCompletions }},
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#10b981',
+                            pointBorderColor: '#ffffff',
+                            pointBorderWidth: 2,
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 15,
+                                font: { size: 12, weight: 'bold' }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Gráfico de Pass Rate por Certificación
+        const passRateCtx = document.getElementById('passRateChart')?.getContext('2d');
+        if (passRateCtx) {
+            new Chart(passRateCtx, {
+                type: 'bar',
+                data: {
+                    labels: {{ $certNames }},
+                    datasets: [{
+                        label: 'Tasa de Aprobación (%)',
+                        data: {{ $certPassRates }},
+                        backgroundColor: [
+                            '#10b981', '#3b82f6', '#f59e0b', '#ef4444',
+                            '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'
+                        ],
+                        borderRadius: 8,
+                        borderSkipped: false,
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.parsed.x.toFixed(1) + '%';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            max: 100,
+                            grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        },
+                        y: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
 @endsection

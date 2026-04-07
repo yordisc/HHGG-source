@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Models\Certificate;
 use App\Models\Certification;
 
 class CertificationValidationService
@@ -9,7 +10,7 @@ class CertificationValidationService
     /**
      * @return array{
      *   ready: bool,
-     *   summary: array{total_questions:int, active_questions:int, required_questions:int, supported_locales: array<int, string>},
+     *   summary: array{total_questions:int, active_questions:int, required_questions:int, supported_locales: array<int, string>, active_attempts: int},
      *   warnings: array<int, string>
      * }
      */
@@ -22,7 +23,14 @@ class CertificationValidationService
         $questions = $certification->questions;
         $activeQuestions = $questions->where('active', true);
         $requiredQuestions = (int) ($certification->questions_required ?: 0);
+        $activeAttempts = Certificate::where('certification_id', $certification->id)
+            ->whereNull('completed_at')
+            ->count();
         $warnings = [];
+
+        if ($activeAttempts > 0) {
+            $warnings[] = "⚠️ Hay {$activeAttempts} intento(s) en curso. Los cambios sensibles (scoring, cooldown, result_mode) serán aplicados solo a nuevos intentos.";
+        }
 
         if ($questions->isEmpty()) {
             $warnings[] = 'La certificacion no tiene preguntas registradas.';
@@ -73,6 +81,7 @@ class CertificationValidationService
                 'active_questions' => $activeQuestions->count(),
                 'required_questions' => $requiredQuestions,
                 'supported_locales' => $supportedLocales,
+                'active_attempts' => $activeAttempts,
             ],
             'warnings' => $warnings,
         ];

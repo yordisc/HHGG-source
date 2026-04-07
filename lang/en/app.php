@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'brand_name' => 'Instituto de Certificaciones Dudosas',
+    'brand_name' => 'Doubtful Certifications Institute',
     'brand_tagline' => 'We certify what nobody else dares to certify.',
     'language_label' => 'Language',
     'badge_humor' => 'Satirical and Inclusive Assessment',

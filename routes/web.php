@@ -7,7 +7,9 @@ use App\Http\Controllers\Admin\CertificateTemplateController;
 use App\Http\Controllers\Admin\CertificationAdminController;
 use App\Http\Controllers\Admin\QuestionAdminController;
 use App\Http\Controllers\Admin\UserAdminController;
+use App\Http\Controllers\Api\CertificationApiController;
 use App\Http\Controllers\CertificateController;
+use App\Http\Controllers\CertificateImageController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\QuizController;
 use Illuminate\Http\RedirectResponse;
@@ -29,6 +31,8 @@ Route::get('/exam/{certType}', [QuizController::class, 'show'])->name('quiz.show
 Route::get('/result/{serial}', [CertificateController::class, 'result'])->name('result.show');
 Route::get('/cert/{serial}', [CertificateController::class, 'show'])->name('cert.show');
 Route::get('/cert/{serial}/pdf', [CertificateController::class, 'downloadPdf'])->name('cert.pdf');
+Route::post('/cert/{serial}/image', [CertificateImageController::class, 'store'])->name('cert.image.store');
+Route::delete('/cert/{serial}/image', [CertificateImageController::class, 'delete'])->name('cert.image.delete');
 
 Route::get('/locale/{locale}', function (Request $request, string $locale): RedirectResponse {
     $supported = config('app.supported_locales', ['en']);
@@ -50,8 +54,18 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/logout', [AdminAuthController::class, 'logout'])->name('logout');
 
         Route::resource('certifications', CertificationAdminController::class)->except(['show']);
+        Route::post('/certifications/{certification}/duplicate', [CertificationAdminController::class, 'duplicate'])
+            ->name('certifications.duplicate');
+        Route::get('/certifications/{certification}/versions', [CertificationAdminController::class, 'showVersions'])
+            ->name('certifications.versions');
+        Route::post('/certifications/{certification}/versions/{version}/rollback', [CertificationAdminController::class, 'rollbackVersion'])
+            ->name('certifications.rollback-version');
         Route::post('/certifications/reorder', [CertificationAdminController::class, 'reorder'])
             ->name('certifications.reorder');
+        Route::get('/certifications-wizard/drafts', [CertificationAdminController::class, 'wizardDrafts'])
+            ->name('certifications.wizard.drafts');
+        Route::post('/certifications-wizard/autosave', [CertificationAdminController::class, 'wizardAutoSave'])
+            ->name('certifications.wizard.autosave');
         Route::get('/certifications/wizard/{step?}', [CertificationAdminController::class, 'wizard'])
             ->whereNumber('step')
             ->name('certifications.wizard');
@@ -68,6 +82,21 @@ Route::prefix('admin')->name('admin.')->group(function () {
             ->name('certifications.test-questions.clear');
         Route::patch('/certifications/{certification}/toggle', [CertificationAdminController::class, 'toggle'])
             ->name('certifications.toggle');
+        Route::get('/api/check-slug', [CertificationAdminController::class, 'checkSlug'])
+            ->name('api.check.slug');
+
+        // API Endpoints for certification editing
+        Route::prefix('api')->name('api.certifications.')->group(function () {
+            Route::get('/certifications/{certification}/available-questions', 
+                [CertificationApiController::class, 'availableQuestions'])
+                ->name('available-questions');
+            Route::get('/certifications/{certification}/active-attempts',
+                [CertificationApiController::class, 'activeAttempts'])
+                ->name('active-attempts');
+            Route::get('/certifications/{certification}/versions/{versionId}/compare',
+                [CertificationApiController::class, 'compareVersions'])
+                ->name('versions.compare');
+        });
 
         Route::prefix('certificates/templates')->name('certificates.templates.')->group(function () {
             Route::get('/', [CertificateTemplateController::class, 'index'])->name('index');
@@ -100,14 +129,31 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         Route::prefix('questions')->name('questions.')->group(function () {
             Route::get('/', [QuestionAdminController::class, 'index'])->name('index');
+            Route::get('/builder', [QuestionAdminController::class, 'builder'])->name('builder');
             Route::get('/create', [QuestionAdminController::class, 'create'])->name('create');
             Route::post('/', [QuestionAdminController::class, 'store'])->name('store');
+            Route::post('/validate-csv', [QuestionAdminController::class, 'validateCsv'])->name('validate.csv');
+            Route::post('/confirm-csv', [QuestionAdminController::class, 'confirmCsvImport'])->name('confirm.csv');
             Route::post('/import-csv', [QuestionAdminController::class, 'importCsv'])->name('import.csv');
             Route::get('/export-csv', [QuestionAdminController::class, 'exportCsv'])->name('export.csv');
             Route::get('/template-csv', [QuestionAdminController::class, 'downloadTemplateCsv'])->name('template.csv');
             Route::get('/{question}/edit', [QuestionAdminController::class, 'edit'])->name('edit');
             Route::put('/{question}', [QuestionAdminController::class, 'update'])->name('update');
             Route::delete('/{question}', [QuestionAdminController::class, 'destroy'])->name('destroy');
+            Route::post('/{question}/duplicate', [QuestionAdminController::class, 'duplicate'])->name('duplicate');
         });
     });
+});
+
+// Backward-compatible named API routes expected by some tests.
+Route::middleware('admin.auth')->prefix('admin/api')->name('api.certifications.')->group(function () {
+    Route::get('/certifications/{certification}/available-questions',
+        [CertificationApiController::class, 'availableQuestions'])
+        ->name('available-questions');
+    Route::get('/certifications/{certification}/active-attempts',
+        [CertificationApiController::class, 'activeAttempts'])
+        ->name('active-attempts');
+    Route::get('/certifications/{certification}/versions/{versionId}/compare',
+        [CertificationApiController::class, 'compareVersions'])
+        ->name('versions.compare');
 });
