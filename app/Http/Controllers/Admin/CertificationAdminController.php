@@ -566,7 +566,40 @@ class CertificationAdminController extends Controller
             'settings' => array_key_exists('settings', $data)
                 ? $settings
                 : $existingSettings,
+            // Phase 3: Expiry & Retention
+            'expiry_mode' => trim((string) ($data['expiry_mode'] ?? 'indefinite')),
+            'expiry_days' => isset($data['expiry_days']) ? (int) $data['expiry_days'] : null,
+            'allow_certificate_download_after_deactivation' => (bool) ($data['allow_certificate_download_after_deactivation'] ?? true),
+            'manual_user_data_purge_enabled' => (bool) ($data['manual_user_data_purge_enabled'] ?? true),
+            'require_question_bank_for_activation' => (bool) ($data['require_question_bank_for_activation'] ?? true),
+            // Phase 3: Randomization
+            'shuffle_questions' => (bool) ($data['shuffle_questions'] ?? true),
+            'shuffle_options' => (bool) ($data['shuffle_options'] ?? true),
+            // Phase 3: Auto-rules
+            'auto_result_rule_mode' => trim((string) ($data['auto_result_rule_mode'] ?? 'none')),
+            'auto_result_rule_config' => $this->decodeAutoRuleConfig($data['auto_result_rule_config'] ?? null),
         ];
+    }
+
+    private function decodeAutoRuleConfig(mixed $value): ?array
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        if (is_array($value)) {
+            return $value;
+        }
+
+        $raw = trim((string) $value);
+
+        if ($raw === '') {
+            return null;
+        }
+
+        $decoded = json_decode($raw, true);
+
+        return is_array($decoded) ? $decoded : null;
     }
 
     private function decodeSettings(mixed $value): ?array

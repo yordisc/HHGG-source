@@ -167,6 +167,99 @@
         @error('settings')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
     </label>
 
+    {{-- Phase 3: Caducidad --}}
+    <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <h3 class="mb-4 text-sm font-bold text-slate-800">⏰ Caducidad de Certificaciones</h3>
+        <div class="grid gap-4 sm:grid-cols-2">
+            <label class="block text-sm font-semibold text-slate-700">
+                Modo de caducidad
+                <select name="expiry_mode" class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm">
+                    <option value="indefinite" @selected(old('expiry_mode', $certification->expiry_mode ?? 'indefinite') === 'indefinite')>Indefinida</option>
+                    <option value="fixed" @selected(old('expiry_mode', $certification->expiry_mode ?? 'indefinite') === 'fixed')>Fija (con días)</option>
+                </select>
+                @error('expiry_mode')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+            </label>
+
+            <label class="block text-sm font-semibold text-slate-700">
+                Días de vigencia
+                <input type="number" min="1" max="3650" name="expiry_days" value="{{ old('expiry_days', $certification->expiry_days) }}" class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm" placeholder="365">
+                <p class="mt-1 text-xs text-slate-500">Solo aplica si el modo es "Fija"</p>
+                @error('expiry_days')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+            </label>
+        </div>
+
+        <label class="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-slate-700">
+            <input type="hidden" name="allow_certificate_download_after_deactivation" value="0">
+            <input type="checkbox" name="allow_certificate_download_after_deactivation" value="1" @checked(old('allow_certificate_download_after_deactivation', $certification->allow_certificate_download_after_deactivation ?? true))>
+            Permitir descarga de certificados tras desactivación
+        </label>
+        @error('allow_certificate_download_after_deactivation')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+    </div>
+
+    {{-- Phase 3: Retención --}}
+    <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <h3 class="mb-4 text-sm font-bold text-slate-800">🗑️ Retención de Datos de Usuario</h3>
+        <label class="inline-flex items-center gap-2 text-sm font-semibold text-slate-700">
+            <input type="hidden" name="manual_user_data_purge_enabled" value="0">
+            <input type="checkbox" name="manual_user_data_purge_enabled" value="1" @checked(old('manual_user_data_purge_enabled', $certification->manual_user_data_purge_enabled ?? true))>
+            Permitir purga manual de datos de usuarios
+        </label>
+        <p class="mt-2 text-xs text-slate-600">Cuando está habilitado, los administradores pueden eliminar manualmente datos de usuarios aunque la certificación no haya expirado.</p>
+        @error('manual_user_data_purge_enabled')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+    </div>
+
+    {{-- Phase 3: Randomización --}}
+    <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <h3 class="mb-4 text-sm font-bold text-slate-800">🔀 Randomización</h3>
+        <div class="flex flex-col gap-3">
+            <label class="inline-flex items-center gap-2 text-sm font-semibold text-slate-700">
+                <input type="hidden" name="shuffle_questions" value="0">
+                <input type="checkbox" name="shuffle_questions" value="1" @checked(old('shuffle_questions', $certification->shuffle_questions ?? true))>
+                Mezclar preguntas en cada intento
+            </label>
+
+            <label class="inline-flex items-center gap-2 text-sm font-semibold text-slate-700">
+                <input type="hidden" name="shuffle_options" value="0">
+                <input type="checkbox" name="shuffle_options" value="1" @checked(old('shuffle_options', $certification->shuffle_options ?? true))>
+                Mezclar opciones de respuesta
+            </label>
+        </div>
+        @error('shuffle_questions')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+        @error('shuffle_options')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+    </div>
+
+    {{-- Phase 3: Banco de preguntas --}}
+    <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <h3 class="mb-4 text-sm font-bold text-slate-800">🏦 Banco de Preguntas</h3>
+        <label class="inline-flex items-center gap-2 text-sm font-semibold text-slate-700">
+            <input type="hidden" name="require_question_bank_for_activation" value="0">
+            <input type="checkbox" name="require_question_bank_for_activation" value="1" @checked(old('require_question_bank_for_activation', $certification->require_question_bank_for_activation ?? true))>
+            Requerir banco mínimo para activación
+        </label>
+        <p class="mt-2 text-xs text-slate-600">Si está habilitado, no se puede activar la certificación sin al menos un banco de preguntas válido.</p>
+        @error('require_question_bank_for_activation')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+    </div>
+
+    {{-- Phase 3: Reglas automáticas --}}
+    <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <h3 class="mb-4 text-sm font-bold text-slate-800">🤖 Reglas Automáticas de Aprobado/Desaprobado</h3>
+        <label class="block text-sm font-semibold text-slate-700">
+            Modo de reglas automáticas
+            <select name="auto_result_rule_mode" class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm">
+                <option value="none" @selected(old('auto_result_rule_mode', $certification->auto_result_rule_mode ?? 'none') === 'none')>Sin reglas</option>
+                <option value="name_rule" @selected(old('auto_result_rule_mode', $certification->auto_result_rule_mode ?? 'none') === 'name_rule')>Reglas por nombre/apellido</option>
+            </select>
+            @error('auto_result_rule_mode')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+        </label>
+
+        <label class="mt-4 block text-sm font-semibold text-slate-700">
+            Configuración de reglas (JSON)
+            <textarea name="auto_result_rule_config" rows="6" class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 font-mono text-xs" placeholder='{"rules": [{"name_pattern": "Juan", "last_name_pattern": "Pérez", "decision": "pass", "description": "Aprobación automática"}]}'>{{ old('auto_result_rule_config', is_array($certification->auto_result_rule_config ?? null) ? json_encode($certification->auto_result_rule_config, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) : ($certification->auto_result_rule_config ?? '')) }}</textarea>
+            <p class="mt-1 text-xs text-slate-500">Define reglas como un array de objetos con name_pattern, last_name_pattern, decision ('pass'/'fail') y description.</p>
+            @error('auto_result_rule_config')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+        </label>
+    </div>
+
     <label class="inline-flex items-center gap-2 text-sm font-semibold text-slate-700">
         <input type="checkbox" name="active" value="1" @checked(old('active', $certification->active ?? false))>
         Activa

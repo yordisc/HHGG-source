@@ -20,6 +20,18 @@ class StoreCertificationRequest extends UpdateCertificationRequest
             'pdf_view' => ['nullable', 'string', 'max:120'],
             'home_order' => ['required', 'integer', 'min:0', 'max:9999'],
             'settings' => ['nullable', 'json'],
+            // Phase 3: Expiry & Retention
+            'expiry_mode' => ['nullable', 'string', Rule::in(['indefinite', 'fixed'])],
+            'expiry_days' => ['nullable', 'integer', 'min:1', 'max:3650'],
+            'allow_certificate_download_after_deactivation' => ['nullable', 'boolean'],
+            'manual_user_data_purge_enabled' => ['nullable', 'boolean'],
+            'require_question_bank_for_activation' => ['nullable', 'boolean'],
+            // Phase 3: Randomization
+            'shuffle_questions' => ['nullable', 'boolean'],
+            'shuffle_options' => ['nullable', 'boolean'],
+            // Phase 3: Auto-rules
+            'auto_result_rule_mode' => ['nullable', 'string', Rule::in(['none', 'name_rule'])],
+            'auto_result_rule_config' => ['nullable', 'json'],
         ];
     }
 }

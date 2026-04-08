@@ -32,6 +32,32 @@
                         @endforeach
                     </select>
                 </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-700">Tipo de Pregunta</label>
+                    <select name="type" class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-2 text-sm">
+                        <option value="mcq_4" @selected(old('type', 'mcq_4') === 'mcq_4')>4 opciones (MCQ-4)</option>
+                        <option value="mcq_2" @selected(old('type', 'mcq_4') === 'mcq_2')>2 opciones (MCQ-2)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid gap-4 sm:grid-cols-3">
+                <div>
+                    <label class="text-xs font-semibold text-slate-700">Peso (Ponderación)</label>
+                    <input type="number" name="weight" step="0.0001" min="0.0001" max="99999.9999" value="{{ old('weight', 1.0) }}" class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-2 text-sm">
+                    <p class="mt-1 text-xs text-slate-500">Default: 1.0</p>
+                </div>
+
+                <div>
+                    <label class="text-xs font-semibold text-slate-700">Muerte Súbita</label>
+                    <select name="sudden_death_mode" class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-2 text-sm">
+                        <option value="none" @selected(old('sudden_death_mode', 'none') === 'none')>Sin muerte súbita</option>
+                        <option value="fail_if_wrong" @selected(old('sudden_death_mode', 'none') === 'fail_if_wrong')>Falla si es incorrecta</option>
+                        <option value="pass_if_correct" @selected(old('sudden_death_mode', 'none') === 'pass_if_correct')>Pasa si es correcta</option>
+                    </select>
+                    <p class="mt-1 text-xs text-slate-500">No visible en examen</p>
+                </div>
+
                 <div class="flex items-end">
                     <label class="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-2 text-sm">
                         <input type="checkbox" name="active" value="1" @checked(old('active', true))>

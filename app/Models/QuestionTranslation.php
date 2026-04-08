@@ -13,12 +13,23 @@ class QuestionTranslation extends Model
     protected $fillable = [
         'question_id',
         'language',
+        'locale',
         'prompt',
         'option_1',
         'option_2',
         'option_3',
         'option_4',
     ];
+
+    public function setLocaleAttribute(?string $value): void
+    {
+        $this->attributes['language'] = $value;
+    }
+
+    public function getLocaleAttribute(): ?string
+    {
+        return $this->attributes['language'] ?? null;
+    }
 
     public function question(): BelongsTo
     {

@@ -65,6 +65,14 @@ class QuestionAdminController extends Controller
             $questionData['type'] = $data['type'];
         }
         
+        if (isset($data['weight'])) {
+            $questionData['weight'] = (float) $data['weight'];
+        }
+        
+        if (isset($data['sudden_death_mode'])) {
+            $questionData['sudden_death_mode'] = $data['sudden_death_mode'];
+        }
+        
         if (isset($data['explanation'])) {
             $questionData['explanation'] = $data['explanation'];
         }
@@ -82,23 +90,13 @@ class QuestionAdminController extends Controller
         // Agregar opciones según el tipo
         $type = $data['type'] ?? 'mcq_4';
         
-        if ($type === 'true_false') {
-            $questionData['option_1'] = 'Verdadero';
-            $questionData['option_2'] = 'Falso';
-            $questionData['option_3'] = null;
-            $questionData['option_4'] = null;
-        } elseif ($type === 'fill_blank') {
-            $questionData['option_1'] = $data['option_1'] ?? '';
-            $questionData['option_2'] = null;
-            $questionData['option_3'] = null;
-            $questionData['option_4'] = null;
-        } elseif ($type === 'mcq_3') {
+        if ($type === 'mcq_2') {
             $questionData['option_1'] = $data['option_1'] ?? '';
             $questionData['option_2'] = $data['option_2'] ?? '';
-            $questionData['option_3'] = $data['option_3'] ?? '';
+            $questionData['option_3'] = null;
             $questionData['option_4'] = null;
         } else {
-            // mcq_4 o matching (default)
+            // mcq_4 (default)
             $questionData['option_1'] = $data['option_1'] ?? '';
             $questionData['option_2'] = $data['option_2'] ?? '';
             $questionData['option_3'] = $data['option_3'] ?? '';
@@ -194,6 +192,9 @@ class QuestionAdminController extends Controller
             'option_3' => $data['option_3'],
             'option_4' => $data['option_4'],
             'correct_option' => $data['correct_option'],
+            'type' => $data['type'] ?? 'mcq_4',
+            'weight' => isset($data['weight']) ? (float) $data['weight'] : 1.0,
+            'sudden_death_mode' => $data['sudden_death_mode'] ?? 'none',
             'active' => (bool) ($data['active'] ?? false),
         ]);
 

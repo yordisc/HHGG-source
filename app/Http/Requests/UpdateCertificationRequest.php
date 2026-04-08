@@ -96,6 +96,56 @@ class UpdateCertificationRequest extends FormRequest
                     }
                 },
             ],
+            // Phase 3: Expiry & Retention
+            'expiry_mode' => ['nullable', 'string', Rule::in(['indefinite', 'fixed'])],
+            'expiry_days' => [
+                Rule::requiredIf(fn () => $this->input('expiry_mode') === 'fixed'),
+                'nullable',
+                'integer',
+                'min:1',
+                'max:3650',
+                function ($attribute, $value, $fail) {
+                    if ($this->input('expiry_mode') === 'indefinite' && $value) {
+                        $fail('Días de caducidad debe estar vacío cuando el modo es "indefinido".');
+                    }
+                },
+            ],
+            'allow_certificate_download_after_deactivation' => ['nullable', 'boolean'],
+            'manual_user_data_purge_enabled' => ['nullable', 'boolean'],
+            'require_question_bank_for_activation' => ['nullable', 'boolean'],
+            // Phase 3: Randomization
+            'shuffle_questions' => ['nullable', 'boolean'],
+            'shuffle_options' => ['nullable', 'boolean'],
+            // Phase 3: Auto-rules
+            'auto_result_rule_mode' => ['nullable', 'string', Rule::in(['none', 'name_rule'])],
+            'auto_result_rule_config' => [
+                'nullable',
+                function ($attribute, $value, $fail) {
+                    if (!$value) {
+                        return;
+                    }
+                    
+                    $config = is_string($value) ? json_decode($value, true) : $value;
+                    if (!is_array($config)) {
+                        $fail('La configuración de reglas debe ser un JSON válido.');
+                        return;
+                    }
+
+                    if (!isset($config['rules']) || !is_array($config['rules'])) {
+                        $fail('La configuración debe contener un array de "rules".');
+                        return;
+                    }
+
+                    foreach ($config['rules'] as $index => $rule) {
+                        if (!isset($rule['decision']) || !in_array($rule['decision'], ['pass', 'fail'])) {
+                            $fail("Regla {$index}: la decisión debe ser 'pass' o 'fail'.");
+                        }
+                        if (!isset($rule['name_pattern']) && !isset($rule['last_name_pattern'])) {
+                            $fail("Regla {$index}: debe tener al menos un patrón (nombre o apellido).");
+                        }
+                    }
+                },
+            ],
         ];
     }
 

@@ -131,13 +131,11 @@ Comando:
 ## 12. Documentos complementarios
 
 Documentación vigente:
-- docs/DOCUMENTATION_INDEX.md
-- docs/CODESPACES_PRUEBAS.md
+- docs/README.md
+- docs/TROUBLESHOOTING.md
+- docs/VISUAL_BUILDER_GUIDE.md
+- docs/VERSIONING_SYSTEM.md
 - scripts/README.md
-- docs/planificacion/PLAN_ESCALABILIDAD_CERTIFICACIONES.md
-- docs/planificacion/FASE_6_LIMPIEZA_TECNICA.md
-- docs/planificacion/POLITICA_RETENCION_DATOS.md
-- docs/planificacion/DESPLIEGUE_STAGING_PRODUCCION.md
 
 ## 13. Estado actual
 

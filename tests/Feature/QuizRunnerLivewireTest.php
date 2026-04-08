@@ -6,6 +6,7 @@ use App\Livewire\QuizRunner;
 use App\Models\Certificate;
 use App\Models\Certification;
 use App\Models\Question;
+use App\Models\QuestionTranslation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -90,7 +91,7 @@ class QuizRunnerLivewireTest extends TestCase
             'home_order' => 10,
         ]);
 
-        Question::query()->create([
+        $question = Question::query()->create([
             'certification_id' => $certification->id,
             'prompt' => 'Question one',
             'option_1' => 'A',
@@ -99,6 +100,16 @@ class QuizRunnerLivewireTest extends TestCase
             'option_4' => 'D',
             'correct_option' => 1,
             'active' => true,
+        ]);
+
+        QuestionTranslation::query()->create([
+            'question_id' => $question->id,
+            'language' => app()->getLocale(),
+            'prompt' => 'Question one',
+            'option_1' => 'A',
+            'option_2' => 'B',
+            'option_3' => 'C',
+            'option_4' => 'D',
         ]);
 
         session([

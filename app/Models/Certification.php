@@ -23,6 +23,18 @@ class Certification extends Model
         'pdf_view',
         'home_order',
         'settings',
+        // Expiry & Retention
+        'expiry_mode',
+        'expiry_days',
+        'allow_certificate_download_after_deactivation',
+        'manual_user_data_purge_enabled',
+        'require_question_bank_for_activation',
+        // Randomization
+        'shuffle_questions',
+        'shuffle_options',
+        // Auto-rules
+        'auto_result_rule_mode',
+        'auto_result_rule_config',
     ];
 
     protected function casts(): array
@@ -31,6 +43,12 @@ class Certification extends Model
             'active' => 'boolean',
             'pass_score_percentage' => 'decimal:2',
             'settings' => 'array',
+            'allow_certificate_download_after_deactivation' => 'boolean',
+            'manual_user_data_purge_enabled' => 'boolean',
+            'require_question_bank_for_activation' => 'boolean',
+            'shuffle_questions' => 'boolean',
+            'shuffle_options' => 'boolean',
+            'auto_result_rule_config' => 'array',
         ];
     }
 

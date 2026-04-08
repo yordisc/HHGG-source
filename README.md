@@ -121,14 +121,12 @@ En produccion, ejecutar schedule:run cada minuto via cron.
 
 ## Documentacion
 
-- Indice general: docs/DOCUMENTATION_INDEX.md
+- Indice general: docs/README.md
 - Documento detallado: docs/PROYECTO_DETALLADO.md
-- Operacion local: docs/CODESPACES_PRUEBAS.md
+- Guia de troubleshooting: docs/TROUBLESHOOTING.md
+- Guia visual del builder: docs/VISUAL_BUILDER_GUIDE.md
+- Sistema de versionado: docs/VERSIONING_SYSTEM.md
 - Alta de nuevas certificaciones: scripts/README.md
-- Plan de escalabilidad: docs/planificacion/PLAN_ESCALABILIDAD_CERTIFICACIONES.md
-- Fase 6 (limpieza legacy): docs/planificacion/FASE_6_LIMPIEZA_TECNICA.md
-- Retencion de datos: docs/planificacion/POLITICA_RETENCION_DATOS.md
-- Despliegue staging/produccion: docs/planificacion/DESPLIEGUE_STAGING_PRODUCCION.md
 
 ## Calidad y pruebas
 

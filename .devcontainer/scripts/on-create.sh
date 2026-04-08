@@ -22,6 +22,7 @@ sudo apt-get install -y -qq \
   php8.4-curl \
   php8.4-mbstring \
   php8.4-mysql \
+  php8.4-sqlite3 \
   php8.4-gd \
   php8.4-zip \
   php8.4-intl \
@@ -32,6 +33,35 @@ sudo apt-get install -y -qq \
   unzip
 
 echo "   ✓ Extensiones PHP instaladas"
+
+# ─── 1.1 Herramientas para tests y cobertura ───────────────────────────────
+echo ""
+echo "► Configurando herramientas para tests/cobertura..."
+
+# phpdbg suele permitir coverage sin Xdebug/PCOV.
+sudo apt-get install -y -qq php8.4-phpdbg || true
+
+# Intentar instalar Xdebug para cobertura en CLI.
+sudo apt-get install -y -qq php8.4-xdebug || true
+
+if php -m | grep -qi '^xdebug$'; then
+  XDEBUG_CLI_INI="/etc/php/8.4/cli/conf.d/99-xdebug-coverage.ini"
+  if [ ! -f "$XDEBUG_CLI_INI" ]; then
+    echo "xdebug.mode=coverage" | sudo tee "$XDEBUG_CLI_INI" >/dev/null
+  fi
+fi
+
+if command -v phpdbg >/dev/null 2>&1; then
+  echo "   ✓ phpdbg disponible para cobertura"
+else
+  echo "   ⚠ phpdbg no disponible"
+fi
+
+if php -m | grep -qi '^xdebug$'; then
+  echo "   ✓ xdebug disponible para cobertura"
+else
+  echo "   ⚠ xdebug no disponible (se podrá usar phpdbg si existe)"
+fi
 
 # ─── 2. Verificar que Composer está disponible ──────────────────────────────
 echo ""

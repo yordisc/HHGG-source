@@ -5,6 +5,7 @@ This guide covers common issues and their solutions when using the certification
 ## Table of Contents
 
 - [Common Issues](#common-issues)
+- [Testing Issues](#testing-issues)
 - [Form & Validation Issues](#form--validation-issues)
 - [Save & Update Issues](#save--update-issues)
 - [Version & History Issues](#version--history-issues)
@@ -12,6 +13,58 @@ This guide covers common issues and their solutions when using the certification
 - [API Issues](#api-issues)
 - [Database Issues](#database-issues)
 - [Getting Help](#getting-help)
+
+---
+
+## Testing Issues
+
+### Issue: `Unknown option --no-header`
+
+**Symptom:** PHPUnit 11 reports unknown option when running `php artisan test --no-header`.
+
+**Cause:** `--no-header` is not available in this PHPUnit version.
+
+**Solution:**
+
+```bash
+php artisan test
+php artisan test tests/Unit
+php artisan test tests/Feature
+```
+
+### Issue: Coverage driver not available
+
+**Symptom:** `Code coverage driver not available. Did you install Xdebug or PCOV?`
+
+**Cause:** No coverage engine enabled in CLI.
+
+**Solution options:**
+
+```bash
+# Option 1: phpdbg
+phpdbg -qrr artisan test --coverage
+
+# Option 2: Xdebug
+XDEBUG_MODE=coverage php artisan test --coverage
+
+# Option 3: PCOV
+php -d pcov.enabled=1 artisan test --coverage
+```
+
+### Issue: SQLite says "no such table"
+
+**Symptom:** During tests, model factories fail with missing table errors.
+
+**Cause:** The test class is hitting DB without reset/migration lifecycle.
+
+**Solution:**
+
+1. Add `RefreshDatabase` to the test class.
+2. Re-run the failing test file only.
+
+```bash
+php artisan test tests/Feature/SomeFailingTest.php
+```
 
 ---
 

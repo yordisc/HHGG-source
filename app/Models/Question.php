@@ -24,6 +24,10 @@ class Question extends Model
         'image_path',
         'active',
         'is_test_question',
+        // Weighted scoring
+        'weight',
+        // Sudden death
+        'sudden_death_mode',
     ];
 
     protected function casts(): array
@@ -31,6 +35,7 @@ class Question extends Model
         return [
             'active' => 'boolean',
             'is_test_question' => 'boolean',
+            'weight' => 'decimal:4',
         ];
     }
 

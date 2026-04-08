@@ -36,6 +36,11 @@ class Certificate extends Model
         'last_attempt_at',
         'certificate_image_path',
         'image_updated_at',
+        // Expiry & Decision
+        'certification_expires_at',
+        'download_expires_at',
+        'result_decision_source',
+        'result_decision_reason',
     ];
 
     protected function casts(): array
@@ -47,6 +52,8 @@ class Certificate extends Model
             'expires_at' => 'datetime',
             'last_attempt_at' => 'datetime',
             'image_updated_at' => 'datetime',
+            'certification_expires_at' => 'datetime',
+            'download_expires_at' => 'datetime',
             'score_numeric' => 'decimal:2',
         ];
     }

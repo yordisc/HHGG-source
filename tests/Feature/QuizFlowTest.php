@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Certification;
 use App\Models\Question;
+use App\Models\QuestionTranslation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -73,7 +74,7 @@ class QuizFlowTest extends TestCase
     public function test_quiz_show_returns_ok_when_candidate_session_exists(): void
     {
         for ($i = 1; $i <= 30; $i++) {
-            Question::create([
+            $question = Question::create([
                 'certification_id' => $this->heteroCertificationId,
                 'prompt' => 'Question '.$i,
                 'option_1' => 'A',
@@ -83,9 +84,19 @@ class QuizFlowTest extends TestCase
                 'correct_option' => 1,
                 'active' => true,
             ]);
+
+            QuestionTranslation::create([
+                'question_id' => $question->id,
+                'language' => app()->getLocale(),
+                'prompt' => 'Question '.$i,
+                'option_1' => 'A',
+                'option_2' => 'B',
+                'option_3' => 'C',
+                'option_4' => 'D',
+            ]);
         }
 
-        session([
+        $response = $this->withSession([
             'quiz_candidate.hetero' => [
                 'first_name' => 'Ana',
                 'last_name' => 'Lopez',
@@ -98,9 +109,7 @@ class QuizFlowTest extends TestCase
                 'document_hash' => bcrypt('ABC12345'),
                 'started_at' => now()->toISOString(),
             ],
-        ]);
-
-        $response = $this->get(route('quiz.show', ['certType' => 'hetero']));
+        ])->get(route('quiz.show', ['certType' => 'hetero']));
         $response->assertOk();
     }
 }
