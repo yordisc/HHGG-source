@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Certificate;
 use App\Models\Certification;
+use App\Support\CertificateIntegrityService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -14,6 +15,7 @@ class CertificatePresentationContractTest extends TestCase
     public function test_result_page_contains_linkedin_contract_parameters(): void
     {
         $certificate = $this->createCertificate();
+        $verificationUrl = app(CertificateIntegrityService::class)->verificationUrl($certificate);
 
         $response = $this->get(route('result.show', ['serial' => $certificate->serial]));
 
@@ -21,6 +23,7 @@ class CertificatePresentationContractTest extends TestCase
         $response->assertSee('https://www.linkedin.com/profile/add?', false);
         $response->assertSee('startTask=CERTIFICATION_NAME', false);
         $response->assertSee('certId='.$certificate->serial, false);
+        $response->assertSee($verificationUrl, false);
 
         $organizationId = trim((string) env('LINKEDIN_ORG_ID', ''));
         if ($organizationId === '') {
@@ -43,6 +46,99 @@ class CertificatePresentationContractTest extends TestCase
 
         $raw = (string) $response->getContent();
         $this->assertStringStartsWith('%PDF', $raw);
+    }
+
+    public function test_signed_verification_route_accepts_valid_token(): void
+    {
+        $certificate = $this->createCertificate();
+        $token = app(CertificateIntegrityService::class)->verificationToken($certificate);
+
+        $response = $this->get(route('cert.verify', [
+            'serial' => $certificate->serial,
+            'token' => $token,
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('Verificación firmada válida.', false);
+    }
+
+    public function test_signed_verification_route_rejects_invalid_token(): void
+    {
+        $certificate = $this->createCertificate();
+
+        $response = $this->get(route('cert.verify', [
+            'serial' => $certificate->serial,
+            'token' => 'token-invalido',
+        ]));
+
+        $response->assertForbidden();
+    }
+
+    public function test_signed_verification_route_returns_gone_for_revoked_certificate(): void
+    {
+        $certificate = $this->createCertificate();
+        $certificate->update([
+            'revoked_at' => now(),
+            'revoked_reason' => 'Revocación de prueba',
+        ]);
+
+        $token = app(CertificateIntegrityService::class)->verificationToken($certificate);
+
+        $response = $this->get(route('cert.verify', [
+            'serial' => $certificate->serial,
+            'token' => $token,
+        ]));
+
+        $response->assertStatus(410);
+    }
+
+    public function test_signed_verification_route_returns_structured_json_when_requested(): void
+    {
+        $certificate = $this->createCertificate();
+        $token = app(CertificateIntegrityService::class)->verificationToken($certificate);
+
+        $response = $this->getJson(route('cert.verify', [
+            'serial' => $certificate->serial,
+            'token' => $token,
+            'format' => 'json',
+        ]));
+
+        $response->assertOk();
+        $response->assertJson([
+            'verified' => true,
+            'serial' => $certificate->serial,
+            'status' => 'active',
+        ]);
+        $response->assertJsonStructure([
+            'verification_checked_at',
+            'integrity_hash',
+            'certificate' => ['full_name', 'result_key', 'issued_at', 'expires_at'],
+        ]);
+    }
+
+    public function test_signed_verification_json_includes_revocation_reason(): void
+    {
+        $certificate = $this->createCertificate();
+        $certificate->update([
+            'revoked_at' => now(),
+            'revoked_reason' => 'Fraude documental detectado',
+        ]);
+
+        $token = app(CertificateIntegrityService::class)->verificationToken($certificate);
+
+        $response = $this->getJson(route('cert.verify', [
+            'serial' => $certificate->serial,
+            'token' => $token,
+            'format' => 'json',
+        ]));
+
+        $response->assertStatus(410);
+        $response->assertJson([
+            'verified' => false,
+            'error' => 'certificate_revoked',
+            'revoked_reason' => 'Fraude documental detectado',
+            'status' => 'revoked',
+        ]);
     }
 
     private function createCertificate(): Certificate

@@ -4,8 +4,8 @@
     <section class="mx-auto max-w-4xl rounded-3xl border border-slate-200 bg-white/95 p-6 shadow-sm sm:p-8">
         <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-                <h1 class="brand-title text-2xl font-bold text-[var(--ink)]">Editar certificacion <span class="sr-only"> * &#039;</span></h1>
-                <p class="mt-1 text-sm text-slate-600">Actualiza la configuracion funcional del catalogo.</p>
+                <h1 class="brand-title text-2xl font-bold text-[var(--ink)]">Editar certificación</h1>
+                <p class="mt-1 text-sm text-slate-600">Configura reglas, banco de preguntas, presentación y plantillas desde un solo lugar.</p>
             </div>
             <a href="{{ route('admin.certifications.index') }}" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-[var(--accent)] hover:text-[var(--accent)]">
                 Volver al listado
@@ -15,6 +15,18 @@
         @if (session('status'))
             <div class="mb-4 rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
                 {{ session('status') }}
+            </div>
+        @endif
+
+        @if (session('warning'))
+            <div class="mb-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                {{ session('warning') }}
+            </div>
+        @endif
+
+        @if (session('error'))
+            <div class="mb-4 rounded-xl border border-rose-300 bg-rose-50 px-4 py-3 text-sm text-rose-900">
+                {{ session('error') }}
             </div>
         @endif
 
@@ -38,10 +50,10 @@
                 @csrf
                 <input type="hidden" name="count" value="5">
                 <button type="submit" class="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-[var(--accent)] hover:text-[var(--accent)]">
-                    Agregar 5 preguntas de prueba
+                    Agregar 5 preguntas de prueba (si no hay banco)
                 </button>
             </form>
-            <form action="{{ route('admin.certifications.test-questions.clear', $certification) }}" method="POST" class="inline" onsubmit="return confirm('Se eliminaran todas las preguntas de prueba de esta certificacion. ¿Continuar?');">
+            <form action="{{ route('admin.certifications.test-questions.clear', $certification) }}" method="POST" class="inline" onsubmit="return confirm('Se eliminarán todas las preguntas de prueba de esta certificación. ¿Continuar?');">
                 @csrf
                 @method('DELETE')
                 <button type="submit" class="rounded-xl border border-rose-300 bg-white px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-50">
@@ -62,6 +74,13 @@
                 @include('admin.certifications._questions-panel', [
                     'certification' => $certification,
                 ])
+
+                <div class="mt-6">
+                    @include('admin.certifications._certificates-panel', [
+                        'certification' => $certification,
+                        'recentCertificates' => $recentCertificates,
+                    ])
+                </div>
             </div>
         </div>
 

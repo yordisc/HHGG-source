@@ -7,6 +7,14 @@
             <h1 class="brand-title mt-2 text-3xl font-bold text-[var(--ink)] sm:text-4xl">{{ __('app.result_title') }}</h1>
             <p class="mt-2 max-w-2xl text-sm text-slate-700 sm:text-base">{{ __('app.result_subtitle') }}</p>
             <p class="mt-2 text-sm text-slate-600">{{ __('app.result_share_hint') }}</p>
+            @if ($certificate->revoked_at)
+                <div class="mt-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-800">
+                    Este certificado fue revocado el {{ $certificate->revoked_at->format('Y-m-d H:i') }}.
+                    @if ($certificate->revoked_reason)
+                        <p class="mt-1 font-normal">Motivo: {{ $certificate->revoked_reason }}</p>
+                    @endif
+                </div>
+            @endif
         </div>
 
         {{-- Certificate Image Display --}}
@@ -28,6 +36,9 @@
             <div class="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm">
                 <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('app.certificate_actions_hint') }}</p>
                 <div class="mt-4 grid gap-3">
+                    <a href="{{ $verificationUrl }}" class="rounded-full border border-emerald-400 bg-emerald-50 px-4 py-3 text-center text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100">
+                        Verificar autenticidad firmada
+                    </a>
                     <a href="{{ route('cert.show', ['serial' => $certificate->serial]) }}" class="rounded-full border border-slate-400 px-4 py-3 text-center text-sm font-semibold text-slate-700 transition hover:border-[var(--accent)] hover:text-[var(--accent)]">
                         {{ __('app.view_certificate') }}
                     </a>
@@ -37,6 +48,10 @@
                     <a href="{{ $linkedinUrl }}" target="_blank" rel="noopener noreferrer" class="rounded-full border border-slate-400 bg-white px-4 py-3 text-center text-sm font-semibold text-slate-700 transition hover:border-[var(--accent)] hover:text-[var(--accent)]">
                         {{ __('app.add_to_linkedin') }}
                     </a>
+                </div>
+                <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3 text-center">
+                    <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">QR de verificación</p>
+                    <img src="{{ $verificationQrUrl }}" alt="QR de verificación" class="mx-auto mt-2 h-28 w-28 rounded-lg border border-slate-200 bg-white p-1">
                 </div>
             </div>
         </div>

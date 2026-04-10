@@ -30,6 +30,12 @@ QUESTION_OPTION_3=()
 QUESTION_OPTION_4=()
 QUESTION_CORRECT_OPTIONS=()
 CURRENT_STEP=1
+NON_INTERACTIVE=0
+PDF_VIEW="pdf.certificate"
+HOME_ORDER=100
+ACTIVE=1
+SETTINGS_JSON=""
+AUTO_CREATE_TEST_QUESTIONS=0
 
 ################################################################################
 # Funciones Auxiliares
@@ -55,6 +61,159 @@ print_warning() {
 
 print_info() {
     echo -e "${BLUE}ℹ $1${NC}"
+}
+
+print_usage() {
+    cat <<EOF
+Uso:
+  ./scripts/create-certification.sh
+
+Modo por argumentos:
+  ./scripts/create-certification.sh \
+    --slug <slug> \
+    --name <nombre> \
+    [--description <texto>] \
+    [--questions-required <1-255>] \
+    [--pass-score <0-100>] \
+    [--cooldown-days <0-365>] \
+    [--result-mode <binary_threshold|custom|generic>] \
+    [--pdf-view <vista_blade>] \
+    [--home-order <0-9999>] \
+    [--settings-json '<json>'] \
+    [--active|--inactive] \
+    [--with-test-questions <1-20>] \
+    [--yes]
+
+Ejemplo:
+  ./scripts/create-certification.sh --slug marketing-2026 --name "Marketing 2026" --questions-required 20 --pass-score 70 --with-test-questions 5 --yes
+EOF
+}
+
+parse_args() {
+    if [ $# -eq 0 ]; then
+        return
+    fi
+
+    NON_INTERACTIVE=1
+
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --slug)
+                CERT_SLUG="$2"
+                shift 2
+                ;;
+            --name)
+                CERT_NAME="$2"
+                shift 2
+                ;;
+            --description)
+                CERT_DESC="$2"
+                shift 2
+                ;;
+            --questions-required)
+                QUESTIONS_REQUIRED="$2"
+                shift 2
+                ;;
+            --pass-score)
+                PASS_SCORE="$2"
+                shift 2
+                ;;
+            --cooldown-days)
+                COOLDOWN_DAYS="$2"
+                shift 2
+                ;;
+            --result-mode)
+                RESULT_MODE="$2"
+                shift 2
+                ;;
+            --pdf-view)
+                PDF_VIEW="$2"
+                shift 2
+                ;;
+            --home-order)
+                HOME_ORDER="$2"
+                shift 2
+                ;;
+            --settings-json)
+                SETTINGS_JSON="$2"
+                shift 2
+                ;;
+            --active)
+                ACTIVE=1
+                shift
+                ;;
+            --inactive)
+                ACTIVE=0
+                shift
+                ;;
+            --with-test-questions)
+                AUTO_CREATE_TEST_QUESTIONS="$2"
+                shift 2
+                ;;
+            --yes)
+                AUTO_CONFIRM=1
+                shift
+                ;;
+            --help|-h)
+                print_usage
+                exit 0
+                ;;
+            *)
+                print_error "Argumento no reconocido: $1"
+                print_usage
+                exit 1
+                ;;
+        esac
+    done
+}
+
+validate_non_interactive_inputs() {
+    if [ -z "$CERT_SLUG" ] || [ -z "$CERT_NAME" ]; then
+        print_error "En modo por argumentos, --slug y --name son obligatorios"
+        exit 1
+    fi
+
+    if ! is_valid_slug "$CERT_SLUG"; then
+        print_error "Slug inválido"
+        exit 1
+    fi
+
+    if ! is_slug_unique "$CERT_SLUG"; then
+        print_error "El slug ya existe"
+        exit 1
+    fi
+
+    if ! [[ "$QUESTIONS_REQUIRED" =~ ^[0-9]+$ ]] || [ "$QUESTIONS_REQUIRED" -lt 1 ] || [ "$QUESTIONS_REQUIRED" -gt 255 ]; then
+        print_error "--questions-required debe estar entre 1 y 255"
+        exit 1
+    fi
+
+    if ! [[ "$PASS_SCORE" =~ ^[0-9]+(\.[0-9]{1,2})?$ ]] || ! awk "BEGIN { exit !($PASS_SCORE >= 0 && $PASS_SCORE <= 100) }"; then
+        print_error "--pass-score debe estar entre 0 y 100"
+        exit 1
+    fi
+
+    if ! [[ "$COOLDOWN_DAYS" =~ ^[0-9]+$ ]] || [ "$COOLDOWN_DAYS" -lt 0 ] || [ "$COOLDOWN_DAYS" -gt 365 ]; then
+        print_error "--cooldown-days debe estar entre 0 y 365"
+        exit 1
+    fi
+
+    if [[ "$RESULT_MODE" != "binary_threshold" && "$RESULT_MODE" != "custom" && "$RESULT_MODE" != "generic" ]]; then
+        print_error "--result-mode debe ser binary_threshold, custom o generic"
+        exit 1
+    fi
+
+    if [ -n "$SETTINGS_JSON" ]; then
+        if ! echo "$SETTINGS_JSON" | php -r 'json_decode(stream_get_contents(STDIN), true); exit(json_last_error() === JSON_ERROR_NONE ? 0 : 1);'; then
+            print_error "--settings-json no es JSON válido"
+            exit 1
+        fi
+    fi
+
+    if ! [[ "$AUTO_CREATE_TEST_QUESTIONS" =~ ^[0-9]+$ ]] || [ "$AUTO_CREATE_TEST_QUESTIONS" -lt 0 ] || [ "$AUTO_CREATE_TEST_QUESTIONS" -gt 20 ]; then
+        print_error "--with-test-questions debe estar entre 0 y 20"
+        exit 1
+    fi
 }
 
 # Validar que estamos en la raíz del proyecto
@@ -290,9 +449,16 @@ show_summary() {
     echo "  % de aprobación:      $PASS_SCORE%"
     echo "  Cooldown:             $COOLDOWN_DAYS días"
     echo "  Modo de resultado:    $RESULT_MODE"
+    echo "  Vista PDF:            $PDF_VIEW"
+    echo "  Orden home:           $HOME_ORDER"
+    echo "  Activa:               $ACTIVE"
+    echo "  Settings JSON:        ${SETTINGS_JSON:-<vacío>}"
     echo ""
     echo -e "${BLUE}Preguntas:${NC}"
     echo "  Total:                ${#QUESTIONS_ARRAY[@]}"
+    if [ "$AUTO_CREATE_TEST_QUESTIONS" -gt 0 ]; then
+        echo "  Test automáticas:     $AUTO_CREATE_TEST_QUESTIONS"
+    fi
     echo ""
 }
 
@@ -308,7 +474,13 @@ create_certification() {
     CERT_PASS_SCORE_ENV="$PASS_SCORE" \
     CERT_COOLDOWN_DAYS_ENV="$COOLDOWN_DAYS" \
     CERT_RESULT_MODE_ENV="$RESULT_MODE" \
+    CERT_PDF_VIEW_ENV="$PDF_VIEW" \
+    CERT_HOME_ORDER_ENV="$HOME_ORDER" \
+    CERT_ACTIVE_ENV="$ACTIVE" \
+    CERT_SETTINGS_JSON_ENV="$SETTINGS_JSON" \
     php artisan tinker --execute "
+    \$settings = getenv('CERT_SETTINGS_JSON_ENV');
+    \$settings = \$settings !== '' ? json_decode(\$settings, true) : null;
     \$certification = \App\Models\Certification::create([
         'slug' => getenv('CERT_SLUG_ENV'),
         'name' => getenv('CERT_NAME_ENV'),
@@ -317,8 +489,10 @@ create_certification() {
         'pass_score_percentage' => (float) getenv('CERT_PASS_SCORE_ENV'),
         'cooldown_days' => (int) getenv('CERT_COOLDOWN_DAYS_ENV'),
         'result_mode' => getenv('CERT_RESULT_MODE_ENV'),
-        'active' => true,
-        'home_order' => 100,
+        'pdf_view' => getenv('CERT_PDF_VIEW_ENV'),
+        'active' => (bool) getenv('CERT_ACTIVE_ENV'),
+        'home_order' => (int) getenv('CERT_HOME_ORDER_ENV'),
+        'settings' => \$settings,
     ]);
     
     echo 'CERT_CREATED:' . \$certification->id;
@@ -334,6 +508,36 @@ create_certification() {
     fi
     
     print_success "Certificación creada con ID: $cert_id"
+
+    if [ "$AUTO_CREATE_TEST_QUESTIONS" -gt 0 ]; then
+        print_info "Creando $AUTO_CREATE_TEST_QUESTIONS preguntas de prueba..."
+        CERT_ID_ENV="$cert_id" CERT_QTY_ENV="$AUTO_CREATE_TEST_QUESTIONS" php artisan tinker --execute "
+        \$count = (int) getenv('CERT_QTY_ENV');
+        for (\$i = 1; \$i <= \$count; \$i++) {
+            \$correct = random_int(1, 4);
+            \$opts = [
+                1 => 'Opcion A ' . \$i,
+                2 => 'Opcion B ' . \$i,
+                3 => 'Opcion C ' . \$i,
+                4 => 'Opcion D ' . \$i,
+            ];
+            \$opts[\$correct] = 'Respuesta correcta ' . \$i;
+
+            \App\Models\Question::create([
+                'certification_id' => (int) getenv('CERT_ID_ENV'),
+                'prompt' => 'Pregunta de prueba ' . \$i,
+                'option_1' => \$opts[1],
+                'option_2' => \$opts[2],
+                'option_3' => \$opts[3],
+                'option_4' => \$opts[4],
+                'correct_option' => \$correct,
+                'active' => true,
+                'is_test_question' => true,
+            ]);
+        }
+        " > /dev/null 2>&1
+        print_success "Preguntas de prueba creadas: $AUTO_CREATE_TEST_QUESTIONS"
+    fi
     
     # Crear preguntas
     if [ ${#QUESTIONS_ARRAY[@]} -gt 0 ]; then
@@ -460,6 +664,8 @@ show_final_message() {
 ################################################################################
 
 main() {
+    parse_args "$@"
+
     clear
     print_header "CREAR NUEVA CERTIFICACIÓN/CURSO"
     
@@ -473,7 +679,22 @@ main() {
     check_database_connection
     echo ""
     
-    # Recolectar datos
+    if [ "$NON_INTERACTIVE" -eq 1 ]; then
+        validate_non_interactive_inputs
+        show_summary
+
+        if [ "${AUTO_CONFIRM:-0}" -eq 1 ]; then
+            create_certification
+            show_final_message
+            return
+        fi
+
+        confirm_and_create
+        show_final_message
+        return
+    fi
+
+    # Recolectar datos (modo interactivo)
     input_slug
     input_name
     input_description
@@ -500,4 +721,4 @@ main() {
 }
 
 # Ejecutar
-main
+main "$@"

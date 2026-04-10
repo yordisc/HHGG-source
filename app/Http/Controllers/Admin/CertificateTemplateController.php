@@ -194,6 +194,9 @@ class CertificateTemplateController extends Controller
                 'serial' => 'CERT-'.strtoupper(uniqid()),
                 'competencia' => 'Competencia Ejemplar',
                 'nota' => 'Aprobado',
+                'verificacion_url' => url('/cert/verify/CERT-DEMO/TOKEN-DEMO'),
+                'verificacion_qr' => 'https://quickchart.io/qr?size=220&text='.urlencode(url('/cert/verify/CERT-DEMO/TOKEN-DEMO')),
+                'integridad_hash' => hash('sha256', 'CERT-DEMO-INTEGRIDAD'),
             ],
         ]);
     }

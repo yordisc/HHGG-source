@@ -5,7 +5,7 @@
         <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
                 <h1 class="brand-title text-2xl font-bold text-[var(--ink)]">Nuevo usuario</h1>
-                <p class="mt-1 text-sm text-slate-600">Crea una cuenta del sistema desde el panel.</p>
+                <p class="mt-1 text-sm text-slate-600">Crea una cuenta individual. Para muchas cuentas, usa Importar CSV.</p>
             </div>
             <a href="{{ route('admin.dashboard') }}" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-[var(--accent)] hover:text-[var(--accent)]">
                 Panel

@@ -40,6 +40,7 @@
                 @csrf
                 <h2 class="mb-4 text-lg font-bold text-slate-900">Importar preguntas desde CSV</h2>
                 <p class="mb-4 text-sm text-slate-600">Columnas requeridas: <code class="rounded bg-slate-100 px-2 py-1 font-mono text-xs">cert_type, prompt, option_1, option_2, option_3, option_4, correct_option</code></p>
+                <p class="mb-4 text-xs text-slate-500">Sugerido: primero usa Plantilla, luego Vista previa, y finalmente confirma la importación.</p>
                 
                 <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
                     <div class="flex-1">
@@ -48,7 +49,7 @@
                     </div>
                     <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-2.5 font-semibold text-white shadow-sm transition hover:shadow-md">
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                        Vista Previa
+                        Vista previa
                     </button>
                     <a href="{{ route('admin.questions.export.csv', ['cert_type' => $filterType ?: null]) }}" class="inline-flex items-center gap-2 rounded-lg bg-emerald-50 px-6 py-2.5 font-semibold text-emerald-700 shadow-sm border border-emerald-200 transition hover:bg-emerald-100">
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
@@ -66,6 +67,7 @@
         <div class="mx-auto max-w-7xl">
             <form method="GET" class="space-y-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
                 <h3 class="text-lg font-bold text-slate-900">Filtros Avanzados</h3>
+                <p class="text-xs text-slate-500">Combina búsqueda, certificación y estado para ubicar preguntas rápido antes de editar o eliminar.</p>
                 
                 <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
                     <!-- Búsqueda por texto -->
@@ -196,6 +198,7 @@
                                                 </button>
                                             </form>
                                         </div>
+                                        <p class="mt-2 text-right text-[11px] text-slate-500">Editar: cambia contenido. Copiar: crea variante. Eliminar: borra permanentemente.</p>
                                     </td>
                                 </tr>
                             @empty

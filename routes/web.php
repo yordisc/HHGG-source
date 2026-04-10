@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AdminAuthController;
+use App\Http\Controllers\Admin\CertificateAdminController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\CertificateTemplateController;
@@ -30,9 +31,14 @@ Route::get('/exam/{certType}', [QuizController::class, 'show'])->name('quiz.show
 
 Route::get('/result/{serial}', [CertificateController::class, 'result'])->name('result.show');
 Route::get('/cert/{serial}', [CertificateController::class, 'show'])->name('cert.show');
+Route::get('/cert/verify/{serial}/{token}', [CertificateController::class, 'verify'])->name('cert.verify');
 Route::get('/cert/{serial}/pdf', [CertificateController::class, 'downloadPdf'])->name('cert.pdf');
-Route::post('/cert/{serial}/image', [CertificateImageController::class, 'store'])->name('cert.image.store');
-Route::delete('/cert/{serial}/image', [CertificateImageController::class, 'delete'])->name('cert.image.delete');
+Route::post('/cert/{serial}/image', [CertificateImageController::class, 'store'])
+    ->middleware('admin.auth')
+    ->name('cert.image.store');
+Route::delete('/cert/{serial}/image', [CertificateImageController::class, 'delete'])
+    ->middleware('admin.auth')
+    ->name('cert.image.delete');
 
 Route::get('/locale/{locale}', function (Request $request, string $locale): RedirectResponse {
     $supported = config('app.supported_locales', ['en']);
@@ -52,6 +58,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::middleware('admin.auth')->group(function () {
         Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
         Route::post('/logout', [AdminAuthController::class, 'logout'])->name('logout');
+        Route::get('/certificates', [CertificateAdminController::class, 'index'])->name('certificates.index');
+        Route::get('/certificates/export-csv', [CertificateAdminController::class, 'exportCsv'])->name('certificates.export.csv');
+        Route::get('/certificates/api', [CertificateAdminController::class, 'apiIndex'])->name('certificates.api.index');
 
         Route::resource('certifications', CertificationAdminController::class)->except(['show']);
         Route::post('/certifications/{certification}/duplicate', [CertificationAdminController::class, 'duplicate'])
@@ -82,6 +91,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
             ->name('certifications.test-questions.clear');
         Route::patch('/certifications/{certification}/toggle', [CertificationAdminController::class, 'toggle'])
             ->name('certifications.toggle');
+        Route::post('/certifications/{certification}/certificates/{certificate}/revoke', [CertificationAdminController::class, 'revokeCertificate'])
+            ->name('certifications.certificates.revoke');
+        Route::post('/certifications/{certification}/certificates/{certificate}/restore', [CertificationAdminController::class, 'restoreCertificate'])
+            ->name('certifications.certificates.restore');
         Route::get('/api/check-slug', [CertificationAdminController::class, 'checkSlug'])
             ->name('api.check.slug');
 

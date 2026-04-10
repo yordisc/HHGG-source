@@ -8,6 +8,7 @@
             <div>
                 <h1 class="text-3xl font-bold text-slate-900">Importar Usuarios</h1>
                 <p class="mt-2 text-slate-600">Carga masiva de usuarios mediante archivo CSV</p>
+                <p class="mt-1 text-xs text-slate-500">Flujo recomendado: descargar plantilla -> completar -> importar -> revisar resumen.</p>
             </div>
             <a href="{{ route('admin.users.index') }}" class="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-2.5 font-semibold text-slate-700 shadow-sm transition hover:border-slate-400 hover:bg-slate-50">
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
@@ -39,6 +40,7 @@
                 <div class="border-b border-slate-200 bg-gradient-to-r from-slate-50 to-slate-50 px-6 py-6">
                     <h2 class="text-lg font-bold text-slate-900">Cargar archivo CSV</h2>
                     <p class="mt-1 text-sm text-slate-600">Selecciona un archivo para importar usuarios</p>
+                    <p class="mt-1 text-xs text-slate-500">Acepta CSV/TXT separado por comas.</p>
                 </div>
                 
                 <form action="{{ route('admin.users.import.csv') }}" method="POST" enctype="multipart/form-data" class="space-y-6 p-6">
@@ -74,6 +76,7 @@
                         <pre class="text-xs bg-white rounded border border-blue-200 overflow-x-auto p-3 text-blue-900">1,Juan Pérez,juan@example.com,password123
 2,María García,,generada_automaticamente
 3,Pedro López</pre>
+                        <p class="mt-2 text-xs text-blue-700">Si no envías email o contraseña, el sistema los genera automáticamente.</p>
                     </div>
 
                     <!-- Actions -->
@@ -134,6 +137,9 @@
                     </p>
                     <p class="text-amber-900">
                         Puedes descargar la plantilla con todos los usuarios actuales y modificarla para actualizaciones rápidas.
+                    </p>
+                    <p class="text-amber-900">
+                        Recomendación: prueba primero con 2-3 filas para validar el formato antes de una carga masiva.
                     </p>
                 </div>
             </div>

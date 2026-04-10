@@ -160,7 +160,7 @@ class CertificationQuestionsPanelTest extends TestCase
 
         $response->assertSuccessful();
         $response->assertSeeText('updateStatusBadge');
-        $response->assertSeeText('✅ OK');
+        $response->assertSeeText('OK (');
     }
 
     public function test_panel_shows_exact_match_warning(): void
@@ -186,7 +186,7 @@ class CertificationQuestionsPanelTest extends TestCase
 
         $response->assertSuccessful();
         $response->assertSeeText('Cantidad exacta');
-        $response->assertSeeText('⚠️ Exacto');
+        $response->assertSeeText('Exacto (');
     }
 
     public function test_panel_shows_no_questions_message(): void
@@ -325,7 +325,7 @@ class CertificationQuestionsPanelTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        $response->assertSeeText('🔄 Recargar');
+        $response->assertSeeText('Recargar');
         $response->assertSeeText('reloadQuestionsPanel');
     }
 
@@ -335,7 +335,7 @@ class CertificationQuestionsPanelTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        $response->assertSeeText('Cómo funciona');
+        $response->assertSeeText('funciona');
         $response->assertSeeText('preguntas activas');
         $response->assertSeeText('Preguntas requeridas');
     }

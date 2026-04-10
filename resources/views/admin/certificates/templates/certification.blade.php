@@ -29,6 +29,7 @@
 
             <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <label class="inline-flex items-center gap-3 text-sm font-semibold text-slate-700">
+                    <input type="hidden" name="use_custom" value="0">
                     <input type="checkbox" name="use_custom" value="1" @checked($customTemplate !== null) id="use-custom-toggle">
                     Crear plantilla personalizada para esta certificación
                 </label>
@@ -40,6 +41,7 @@
                     <p class="font-semibold">Variables disponibles:</p>
                     <ul class="mt-2 space-y-1 font-mono text-xs">
                         <li>• <code class="text-yellow-600">{{'{{'}}nombre{{'}}'}}</code> • <code class="text-yellow-600">{{'{{'}}fecha{{'}}'}}</code> • <code class="text-yellow-600">{{'{{'}}serial{{'}}'}}</code></li>
+                        <li>• <code class="text-yellow-600">{{'{{'}}verificacion_url{{'}}'}}</code> • <code class="text-yellow-600">{{'{{'}}verificacion_qr{{'}}'}}</code> • <code class="text-yellow-600">{{'{{'}}integridad_hash{{'}}'}}</code></li>
                     </ul>
                 </div>
 

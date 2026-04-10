@@ -12,11 +12,13 @@
         <label class="block text-sm font-semibold text-slate-700">
             Nombre
             <input type="text" name="name" value="{{ old('name', $user->name) }}" class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm">
+            <p class="mt-1 text-xs text-slate-500">Usa nombre completo para facilitar búsqueda y auditoría.</p>
             @error('name')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
         </label>
 
         <div class="rounded-xl border border-dashed border-slate-300 px-4 py-3 text-sm text-slate-600">
             El correo se genera automaticamente para el sistema.
+            <p class="mt-1 text-xs text-slate-500">Formato esperado interno: `usuario{id}@sistema.local`.</p>
         </div>
     </div>
 
@@ -24,6 +26,7 @@
         <label class="block text-sm font-semibold text-slate-700">
             {{ $isEdit ? 'Nueva contraseña (opcional)' : 'Contraseña' }}
             <input type="password" name="password" class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm" autocomplete="new-password">
+            <p class="mt-1 text-xs text-slate-500">{{ $isEdit ? 'Si lo dejas vacío, se mantiene la contraseña actual.' : 'Define una contraseña inicial segura.' }}</p>
             @error('password')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
         </label>
 

@@ -8,6 +8,7 @@
                 <div>
                     <h1 class="bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-3xl font-bold text-transparent">Panel Admin</h1>
                     <p class="mt-2 text-lg text-slate-600">Administración centralizada de certificaciones, preguntas y usuarios</p>
+                    <p class="mt-1 text-xs text-slate-500">Revisa métricas, entra a los módulos y ejecuta tareas rápidas desde esta pantalla.</p>
                 </div>
                 <div class="flex flex-wrap items-center gap-3">
                     <a href="{{ route('admin.certifications.create') }}" class="ui-btn-compact bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md hover:shadow-lg hover:-translate-y-0.5">
@@ -192,33 +193,6 @@
             </div>
         </div>
 
-        <!-- Charts Section -->
-        <div class="mx-auto max-w-7xl">
-            <div class="grid gap-8 lg:grid-cols-2">
-                <!-- Attempts vs Completions Chart -->
-                <div class="rounded-2xl border border-slate-200 bg-white shadow-sm">
-                    <div class="border-b border-slate-200 px-6 py-4">
-                        <h2 class="text-lg font-bold text-slate-900">📊 Actividad - Últimos 30 días</h2>
-                        <p class="mt-1 text-sm text-slate-600">Intentos vs Completaciones</p>
-                    </div>
-                    <div class="p-6">
-                        <canvas id="attemptsChart" height="300" width="400"></canvas>
-                    </div>
-                </div>
-
-                <!-- Pass Rate by Certification -->
-                <div class="rounded-2xl border border-slate-200 bg-white shadow-sm">
-                    <div class="border-b border-slate-200 px-6 py-4">
-                        <h2 class="text-lg font-bold text-slate-900">📈 Performance por Certificación</h2>
-                        <p class="mt-1 text-sm text-slate-600">Tasa de aprobación (top 8)</p>
-                    </div>
-                    <div class="p-6">
-                        <canvas id="passRateChart" height="300" width="400"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- Main Content Grid -->
         <div class="mx-auto max-w-7xl">
             <div class="grid gap-8 lg:grid-cols-3">
@@ -240,6 +214,7 @@
                                         <svg class="ui-icon text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"/></svg>
                                     </div>
                                 </div>
+                                <p class="mt-3 text-xs text-slate-500">Incluye asistente, editor avanzado y orden de home.</p>
                             </a>
                             <a href="{{ route('admin.questions.index') }}" class="group rounded-xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4 transition hover:border-purple-300 hover:shadow-md">
                                 <div class="flex items-start justify-between">
@@ -251,6 +226,7 @@
                                         <svg class="ui-icon text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.797 0 5.028 2.236 5.028 5s-2.231 5-5.028 5c-1.743 0-3.223-.835-3.772-2m0 0V5m0 10V9"/></svg>
                                     </div>
                                 </div>
+                                <p class="mt-3 text-xs text-slate-500">Incluye constructor visual, CSV y traducciones.</p>
                             </a>
                             <a href="{{ route('admin.users.index') }}" class="group rounded-xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4 transition hover:border-amber-300 hover:shadow-md">
                                 <div class="flex items-start justify-between">
@@ -262,6 +238,7 @@
                                         <svg class="ui-icon text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
                                     </div>
                                 </div>
+                                <p class="mt-3 text-xs text-slate-500">Creación manual, importación y exportación masiva.</p>
                             </a>
                             <a href="{{ route('admin.audit.index') }}" class="group rounded-xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4 transition hover:border-indigo-300 hover:shadow-md">
                                 <div class="flex items-start justify-between">
@@ -282,6 +259,17 @@
                                     </div>
                                     <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-100 group-hover:bg-rose-200 sm:h-8 sm:w-8">
                                         <svg class="ui-icon text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1m2-1v2.5M4 7l2 1m-2-1l2-1m-2 1v2.5"/></svg>
+                                    </div>
+                                </div>
+                            </a>
+                            <a href="{{ route('admin.certificates.index') }}" class="group rounded-xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4 transition hover:border-emerald-300 hover:shadow-md">
+                                <div class="flex items-start justify-between">
+                                    <div>
+                                        <p class="font-semibold text-slate-900">Certificados</p>
+                                        <p class="mt-1 text-sm text-slate-600">Listar, filtrar y revocar</p>
+                                    </div>
+                                    <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-100 group-hover:bg-emerald-200 sm:h-8 sm:w-8">
+                                        <svg class="ui-icon text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                                     </div>
                                 </div>
                             </a>

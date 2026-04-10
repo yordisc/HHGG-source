@@ -174,6 +174,11 @@
                 if (!response.ok) {
                     throw new Error('No fue posible guardar el orden.');
                 }
+
+                const payload = await response.json().catch(() => ({}));
+                if (payload && payload.success === false) {
+                    throw new Error(payload.message || 'No fue posible guardar el orden.');
+                }
             };
 
             const populateHiddenInputs = () => {

@@ -19,11 +19,11 @@
         <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <p class="text-sm font-semibold text-slate-900">Revision automatica de la certificacion</p>
-                    <p class="text-xs text-slate-600">Resumen rapido para detectar problemas antes de publicar o probar.</p>
+                    <p class="text-sm font-semibold text-slate-900">Revisión automática de la certificación</p>
+                    <p class="text-xs text-slate-600">Resumen rápido para detectar problemas antes de publicar o probar.</p>
                 </div>
                 <span class="inline-flex rounded-full px-3 py-1 text-xs font-semibold {{ !empty($diagnostics['ready']) ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' }}">
-                    {{ !empty($diagnostics['ready']) ? 'Lista para pruebas' : 'Requiere atencion' }}
+                    {{ !empty($diagnostics['ready']) ? 'Lista para pruebas' : 'Requiere atención' }}
                 </span>
             </div>
 
@@ -112,7 +112,7 @@
     </script>
 
     <label class="block text-sm font-semibold text-slate-700">
-        Descripcion
+        Descripción
         <textarea name="description" rows="4" class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm">{{ old('description', $certification->description) }}</textarea>
         @error('description')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
     </label>
@@ -125,13 +125,13 @@
         </label>
 
         <label class="block text-sm font-semibold text-slate-700">
-            % de aprobacion
+            % de aprobación
             <input type="number" min="0" max="100" step="0.01" name="pass_score_percentage" value="{{ old('pass_score_percentage', $certification->pass_score_percentage) }}" class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm">
             @error('pass_score_percentage')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
         </label>
 
         <label class="block text-sm font-semibold text-slate-700">
-            Dias de cooldown
+            Días de cooldown
             <input type="number" min="0" name="cooldown_days" value="{{ old('cooldown_days', $certification->cooldown_days) }}" class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm">
             @error('cooldown_days')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
         </label>
@@ -145,12 +145,14 @@
                     <option value="{{ $value }}" @selected(old('result_mode', $certification->result_mode) === $value)>{{ $label }}</option>
                 @endforeach
             </select>
+            <p class="mt-1 text-xs text-slate-500"><code>binary_threshold</code>: evalúa por porcentaje. <code>custom</code>: usa reglas y configuración JSON. <code>generic</code>: resultado simple.</p>
             @error('result_mode')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
         </label>
 
         <label class="block text-sm font-semibold text-slate-700">
             Vista PDF
             <input type="text" name="pdf_view" value="{{ old('pdf_view', $certification->pdf_view) }}" class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm">
+            <p class="mt-1 text-xs text-slate-500">Sección de presentación: indica la vista Blade que genera el certificado PDF (ej: <code>pdf.certificate</code>).</p>
             @error('pdf_view')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
         </label>
 
@@ -163,7 +165,8 @@
 
     <label class="block text-sm font-semibold text-slate-700">
         Settings JSON
-        <textarea name="settings" rows="6" class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 font-mono text-xs">{{ old('settings', $settingsValue) }}</textarea>
+        <textarea name="settings" rows="6" class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 font-mono text-xs" placeholder='{"theme":"default","show_score":true,"max_attempts":3}'>{{ old('settings', $settingsValue) }}</textarea>
+        <p class="mt-1 text-xs text-slate-500">Solo JSON válido. Si no lo necesitas, puedes dejarlo vacío.</p>
         @error('settings')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
     </label>
 
@@ -255,7 +258,7 @@
         <label class="mt-4 block text-sm font-semibold text-slate-700">
             Configuración de reglas (JSON)
             <textarea name="auto_result_rule_config" rows="6" class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 font-mono text-xs" placeholder='{"rules": [{"name_pattern": "Juan", "last_name_pattern": "Pérez", "decision": "pass", "description": "Aprobación automática"}]}'>{{ old('auto_result_rule_config', is_array($certification->auto_result_rule_config ?? null) ? json_encode($certification->auto_result_rule_config, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) : ($certification->auto_result_rule_config ?? '')) }}</textarea>
-            <p class="mt-1 text-xs text-slate-500">Define reglas como un array de objetos con name_pattern, last_name_pattern, decision ('pass'/'fail') y description.</p>
+            <p class="mt-1 text-xs text-slate-500">Define `rules` como array de objetos con: `name_pattern`, `last_name_pattern`, `decision` (`pass` o `fail`) y `description`.</p>
             @error('auto_result_rule_config')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
         </label>
     </div>

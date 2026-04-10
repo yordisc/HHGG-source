@@ -27,8 +27,29 @@
             <p>{{ __('app.serial', [], 'en') }}: {{ $certificate->serial }}</p>
             <p>{{ __('app.country', [], 'en') }}: {{ $certificate->country }}</p>
             <p>{{ __('app.valid_until', [], 'en') }}: {{ $certificate->expires_at?->format('Y-m-d') }}</p>
-            <p>{{ __('cert.disclaimer_pdf', [], 'en') }}</p>
+            @if ($certificate->revoked_at)
+                <p>Revoked at: {{ $certificate->revoked_at->format('Y-m-d H:i') }}</p>
+                @if ($certificate->revoked_reason)
+                    <p>Revocation reason: {{ $certificate->revoked_reason }}</p>
+                @endif
+            @endif
+            @if (!empty($verificationUrl))
+                <p>Verification URL: {{ $verificationUrl }}</p>
+            @endif
+            @if (!empty($integrityHash))
+                <p>Integrity hash: {{ $integrityHash }}</p>
+            @endif
+            @if (($showLegalDisclaimer ?? true) === true)
+                <p>{{ __('cert.disclaimer_pdf', [], 'en') }}</p>
+            @endif
         </div>
+
+        @if (!empty($verificationQrUrl))
+            <div class="meta" style="margin-top: 14px;">
+                <p>Verification QR</p>
+                <img src="{{ $verificationQrUrl }}" alt="Verification QR" style="width: 90px; height: 90px;">
+            </div>
+        @endif
     </div>
 </body>
 </html>

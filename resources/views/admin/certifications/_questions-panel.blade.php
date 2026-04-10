@@ -1,8 +1,8 @@
 {{-- Questions Panel for Certification Editing --}}
-<div id="questionsPanel" class="rounded-2xl border border-slate-200 bg-gradient-to-br from-blue-50 to-slate-50 p-6">
+<div id="questionsPanel" class="rounded-2xl border border-slate-200 bg-gradient-to-br from-blue-50 to-slate-50 p-5 sm:p-6">
     <div class="mb-4 flex items-center justify-between">
         <div>
-            <h3 class="text-lg font-bold text-slate-900">📋 Estado de Preguntas</h3>
+            <h3 class="text-lg font-bold text-slate-900">Estado de Preguntas</h3>
             <p class="text-xs text-slate-600 mt-1">Validación en vivo del contenido disponible</p>
         </div>
         <button type="button" onclick="reloadQuestionsPanel()" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 transition">
@@ -11,14 +11,14 @@
     </div>
 
     {{-- Statistics --}}
-    <div class="grid gap-3 sm:grid-cols-3 mb-4">
-        <div class="rounded-xl bg-white px-4 py-3 border border-blue-200 shadow-sm">
+    <div class="mb-4 grid gap-3 sm:grid-cols-3 items-stretch">
+        <div class="rounded-xl bg-white px-4 py-3 border border-blue-200 shadow-sm min-h-[104px]">
             <p class="text-xs uppercase tracking-wide text-blue-600 font-semibold">Activas</p>
             <p id="totalActiveQuestions" class="text-2xl font-bold text-blue-900 mt-1">0</p>
             <p class="text-xs text-blue-700 mt-1">disponibles para usar</p>
         </div>
 
-        <div class="rounded-xl bg-white px-4 py-3 border border-slate-200 shadow-sm">
+        <div class="rounded-xl bg-white px-4 py-3 border border-slate-200 shadow-sm min-h-[104px]">
             <p class="text-xs uppercase tracking-wide text-slate-600 font-semibold">Requeridas</p>
             <div class="flex items-baseline gap-2 mt-1">
                 <p id="requiredInput" class="text-2xl font-bold text-slate-900">0</p>
@@ -26,11 +26,11 @@
             </div>
         </div>
 
-        <div class="rounded-xl bg-white px-4 py-3 border border-slate-200 shadow-sm">
+        <div class="rounded-xl bg-white px-4 py-3 border border-slate-200 shadow-sm min-h-[104px]">
             <p class="text-xs uppercase tracking-wide text-slate-600 font-semibold">Estado</p>
-            <p id="statusBadge" class="text-sm font-bold mt-2">
+            <p id="statusBadge" class="mt-2 text-sm font-bold break-words">
                 <span class="inline-flex items-center rounded-full bg-yellow-100 px-3 py-1 text-yellow-800">
-                    ⏳ Cargando...
+                    Cargando...
                 </span>
             </p>
         </div>
@@ -49,14 +49,14 @@
 
         <div id="questionsList" class="max-h-48 overflow-y-auto">
             <div class="px-4 py-8 text-center">
-                <p class="text-sm text-slate-500">⏳ Cargando preguntas...</p>
+                <p class="text-sm text-slate-500">Cargando preguntas...</p>
             </div>
         </div>
     </div>
 
     {{-- Info Footer --}}
     <div class="mt-4 rounded-lg bg-blue-50 border border-blue-200 px-3 py-2 text-xs text-blue-800">
-        <p class="font-semibold mb-1">💡 Cómo funciona</p>
+        <p class="font-semibold mb-1">Cómo funciona</p>
         <ul class="space-y-1 text-blue-700">
             <li>• Se muestran solo <strong>preguntas activas</strong> para esta certificación</li>
             <li>• Si cambias el valor de "Preguntas requeridas", la validación se actualiza automáticamente</li>
@@ -116,9 +116,9 @@
         let html = '';
 
         if (active === 0) {
-            html = '<span class="inline-flex items-center rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-800">❌ Sin preguntas</span>';
+            html = '<span class="inline-flex items-center rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-800">Sin preguntas</span>';
         } else if (active < required) {
-            html = `<span class="inline-flex items-center rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-800">❌ Insuficientes (${active}/${required})</span>`;
+            html = `<span class="inline-flex items-center rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-800">Insuficientes (${active}/${required})</span>`;
         } else if (active === required) {
             html = `<span class="inline-flex items-center rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold text-yellow-800">⚠️ Exacto (${active}/${required})</span>`;
         } else {
@@ -145,14 +145,14 @@
 
         if (required === 0) {
             // No requirement set
-            html = '<p class="font-semibold mb-1">⚠️ Sin requerimiento de preguntas</p>';
+            html = '<p class="font-semibold mb-1">Sin requerimiento de preguntas</p>';
             html += '<p class="text-xs">Establece "Preguntas requeridas" para habilitar la validación.</p>';
             bgColor = 'bg-yellow-50 border-yellow-200';
             textColor = 'text-yellow-800';
         } else if (active < required) {
             // Not enough
             const missing = required - active;
-            html = `<p class="font-semibold mb-1">❌ Preguntas insuficientes</p>`;
+            html = `<p class="font-semibold mb-1">Preguntas insuficientes</p>`;
             html += `<p class="text-xs">Necesitas <strong>${required}</strong> preguntas pero solo tienes <strong>${active}</strong> activas. `;
             html += `Te faltan <strong>${missing}</strong> pregunta${missing > 1 ? 's' : ''}.`;
             html += `</p>`;
@@ -160,7 +160,7 @@
             textColor = 'text-red-800';
         } else if (active === required) {
             // Exactly matching
-            html = `<p class="font-semibold mb-1">⚠️ Cantidad exacta</p>`;
+            html = `<p class="font-semibold mb-1">Cantidad exacta</p>`;
             html += `<p class="text-xs">Tienes exactamente ${required} preguntas requeridas. Considera tener unas de más por si necesitas deshabilitar alguna.</p>`;
             bgColor = 'bg-yellow-50 border-yellow-200';
             textColor = 'text-yellow-800';
@@ -175,7 +175,7 @@
         const list = document.getElementById('questionsList');
 
         if (cachedQuestions.length === 0) {
-            list.innerHTML = '<div class="px-4 py-8 text-center"><p class="text-sm text-red-600">❌ No hay preguntas activas en esta certificación</p></div>';
+            list.innerHTML = '<div class="px-4 py-8 text-center"><p class="text-sm text-red-600">No hay preguntas activas en esta certificación</p></div>';
             return;
         }
 
@@ -192,7 +192,7 @@
                             <div class="mt-1 flex items-center gap-2 text-xs text-slate-500">
                                 <span class="inline-block bg-slate-100 px-2 py-1 rounded">${typeLabel}</span>
                                 <span>ID: ${q.id}</span>
-                                ${translationCount > 1 ? `<span class="text-green-600">🌐 ${translationCount} idiomas</span>` : ''}
+                                ${translationCount > 1 ? `<span class="text-green-600">${translationCount} idiomas</span>` : ''}
                             </div>
                         </div>
                         <span class="text-lg text-slate-400 ml-2">#${idx + 1}</span>
@@ -218,14 +218,14 @@
 
     function showPanelError(message) {
         const list = document.getElementById('questionsList');
-        list.innerHTML = `<div class="px-4 py-8 text-center"><p class="text-sm text-red-600">⚠️ ${message}</p></div>`;
+        list.innerHTML = `<div class="px-4 py-8 text-center"><p class="text-sm text-red-600">${message}</p></div>`;
         
         const badge = document.getElementById('statusBadge');
-        badge.innerHTML = '<span class="inline-flex items-center rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-800">❌ Error cargando</span>';
+        badge.innerHTML = '<span class="inline-flex items-center rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-800">Error cargando</span>';
     }
 
     function reloadQuestionsPanel() {
-        document.getElementById('questionsList').innerHTML = '<div class="px-4 py-8 text-center"><p class="text-sm text-slate-500">⏳ Recargando...</p></div>';
+        document.getElementById('questionsList').innerHTML = '<div class="px-4 py-8 text-center"><p class="text-sm text-slate-500">Recargando...</p></div>';
         loadQuestionsData();
     }
 

@@ -7,6 +7,7 @@
     <div class="mb-8">
         <h1 class="text-3xl font-bold text-gray-900">📥 Importar Preguntas desde CSV</h1>
         <p class="text-gray-600 mt-2">Sube un archivo CSV para crear o actualizar preguntas en lote</p>
+        <p class="text-xs text-gray-500 mt-1">Flujo recomendado: plantilla -> completar datos -> validar vista previa -> confirmar importación.</p>
     </div>
 
     @if ($errors->any())
@@ -69,6 +70,7 @@
                 <pre>,hhgc,en,What is your name?,Alice,Bob,Charlie,Diana,1,1
 ,hhgc,es,¿Cuál es tu nombre?,Alicia,Roberto,Carlos,Diana,1,1</pre>
             </div>
+            <p class="mt-3 text-xs text-blue-700">Consejo: crea primero la fila en `en` (base), luego agrega traducciones con el mismo `question_id`.</p>
         </div>
 
         <!-- Guía de uso -->
@@ -82,6 +84,7 @@
                 <li><strong>5.</strong> Sube el archivo aquí</li>
                 <li><strong>6.</strong> Revisa la vista previa y confirma</li>
             </ol>
+            <p class="mt-3 text-xs text-green-700">Si hay errores, corrige el CSV y vuelve a cargarlo; no confirmes con advertencias críticas.</p>
         </div>
     </div>
 

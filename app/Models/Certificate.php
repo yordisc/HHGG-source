@@ -36,6 +36,10 @@ class Certificate extends Model
         'last_attempt_at',
         'certificate_image_path',
         'image_updated_at',
+        'content_hash',
+        'verification_token_hash',
+        'revoked_at',
+        'revoked_reason',
         // Expiry & Decision
         'certification_expires_at',
         'download_expires_at',
@@ -52,6 +56,7 @@ class Certificate extends Model
             'expires_at' => 'datetime',
             'last_attempt_at' => 'datetime',
             'image_updated_at' => 'datetime',
+            'revoked_at' => 'datetime',
             'certification_expires_at' => 'datetime',
             'download_expires_at' => 'datetime',
             'score_numeric' => 'decimal:2',

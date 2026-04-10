@@ -29,6 +29,9 @@
                     <li>• <code class="text-yellow-600">{{'{{'}}serial{{'}}'}}</code> - Número de serie único</li>
                     <li>• <code class="text-yellow-600">{{'{{'}}competencia{{'}}'}}</code> - Nombre de la competencia</li>
                     <li>• <code class="text-yellow-600">{{'{{'}}nota{{'}}'}}</code> - Resultado (Aprobado, Desaprobado, etc.)</li>
+                    <li>• <code class="text-yellow-600">{{'{{'}}verificacion_url{{'}}'}}</code> - URL firmada de verificación</li>
+                    <li>• <code class="text-yellow-600">{{'{{'}}verificacion_qr{{'}}'}}</code> - URL de imagen QR para mostrar en plantilla</li>
+                    <li>• <code class="text-yellow-600">{{'{{'}}integridad_hash{{'}}'}}</code> - Hash de integridad del certificado</li>
                 </ul>
             </div>
 

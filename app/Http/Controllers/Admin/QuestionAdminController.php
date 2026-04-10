@@ -16,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -184,6 +185,19 @@ class QuestionAdminController extends Controller
         $certificationSlug = (string) $data['cert_type'];
         $certificationId = $this->resolveCertificationId($certificationSlug);
 
+        $imagePath = $question->image_path;
+        if (!empty($data['remove_image']) && $imagePath) {
+            Storage::disk('public')->delete($imagePath);
+            $imagePath = null;
+        }
+
+        if ($request->hasFile('image')) {
+            if ($imagePath) {
+                Storage::disk('public')->delete($imagePath);
+            }
+            $imagePath = $request->file('image')->store('questions', 'public');
+        }
+
         $question->update([
             'certification_id' => $certificationId,
             'prompt' => $data['prompt'],
@@ -195,6 +209,7 @@ class QuestionAdminController extends Controller
             'type' => $data['type'] ?? 'mcq_4',
             'weight' => isset($data['weight']) ? (float) $data['weight'] : 1.0,
             'sudden_death_mode' => $data['sudden_death_mode'] ?? 'none',
+            'image_path' => $imagePath,
             'active' => (bool) ($data['active'] ?? false),
         ]);
 

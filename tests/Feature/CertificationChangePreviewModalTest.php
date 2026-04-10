@@ -74,7 +74,7 @@ class CertificationChangePreviewModalTest extends TestCase
         $response->assertSuccessful();
         
         // Check for preview button
-        $response->assertSeeText('👁️ Vista previa');
+        $response->assertSeeText('Vista previa');
     }
 
     public function test_modal_javascript_is_loaded(): void
@@ -117,7 +117,7 @@ class CertificationChangePreviewModalTest extends TestCase
         
         // Check that sensitive field detection is present
         $response->assertSeeText('sensitive');
-        $response->assertSeeText('⚠️ Cambio sensible');
+        $response->assertSeeText('Cambio sensible');
     }
 
     public function test_modal_change_tracking_setup(): void

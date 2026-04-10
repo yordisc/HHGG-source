@@ -20,7 +20,7 @@
             </div>
         </div>
 
-        <form method="POST" action="{{ route('admin.questions.store') }}" class="mt-6 space-y-6">
+        <form method="POST" action="{{ route('admin.questions.store') }}" class="mt-6 space-y-6" enctype="multipart/form-data">
             @csrf
 
             <div class="grid gap-4 sm:grid-cols-2">
@@ -77,6 +77,11 @@
                     <input name="option_2" value="{{ old('option_2') }}" placeholder="Opcion 2" class="rounded-xl border border-slate-300 px-4 py-2 text-sm">
                     <input name="option_3" value="{{ old('option_3') }}" placeholder="Opcion 3" class="rounded-xl border border-slate-300 px-4 py-2 text-sm">
                     <input name="option_4" value="{{ old('option_4') }}" placeholder="Opcion 4" class="rounded-xl border border-slate-300 px-4 py-2 text-sm">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-700">Imagen (opcional)</label>
+                    <input type="file" name="image" accept="image/jpeg,image/png,image/webp,image/gif" class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-2 text-sm">
+                    @error('image')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
                 </div>
                 <div>
                     <label class="text-xs font-semibold text-slate-700">Respuesta correcta (1-4)</label>

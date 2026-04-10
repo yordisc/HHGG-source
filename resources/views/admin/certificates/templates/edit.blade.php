@@ -9,7 +9,7 @@
             </div>
             <div class="flex flex-wrap items-center gap-2">
                 <a href="{{ route('admin.certificates.templates.preview', $template) }}" target="_blank" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-[var(--accent)] hover:text-[var(--accent)]">
-                    Preview
+                    Vista previa
                 </a>
                 <a href="{{ route('admin.certificates.templates.index') }}" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-[var(--accent)] hover:text-[var(--accent)]">
                     Volver
@@ -31,6 +31,7 @@
                 <p class="font-semibold">Variables disponibles:</p>
                 <ul class="mt-2 space-y-1 font-mono text-xs">
                     <li>• <code class="text-yellow-600">{{'{{'}}nombre{{'}}'}}</code> • <code class="text-yellow-600">{{'{{'}}fecha{{'}}'}}</code> • <code class="text-yellow-600">{{'{{'}}serial{{'}}'}}</code> • <code class="text-yellow-600">{{'{{'}}competencia{{'}}'}}</code> • <code class="text-yellow-600">{{'{{'}}nota{{'}}'}}</code></li>
+                    <li>• <code class="text-yellow-600">{{'{{'}}verificacion_url{{'}}'}}</code> • <code class="text-yellow-600">{{'{{'}}verificacion_qr{{'}}'}}</code> • <code class="text-yellow-600">{{'{{'}}integridad_hash{{'}}'}}</code></li>
                 </ul>
             </div>
 

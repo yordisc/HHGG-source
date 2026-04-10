@@ -54,6 +54,9 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
+    // demo: mantiene mensajes lúdicos y disclaimer; official: oculta disclaimer legal en PDF oficial.
+    'certificate_mode' => env('CERTIFICATE_MODE', 'demo'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone

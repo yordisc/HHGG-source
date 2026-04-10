@@ -130,7 +130,7 @@ class CertificationAdminController extends Controller
             ->with('status', $certification->active ? 'Certificacion activada correctamente.' : 'Certificacion desactivada correctamente.');
     }
 
-    public function reorder(Request $request): RedirectResponse
+    public function reorder(Request $request): RedirectResponse|JsonResponse
     {
         $data = $request->validate([
             'certifications' => ['required', 'array', 'min:1'],
@@ -147,6 +147,13 @@ class CertificationAdminController extends Controller
             }
         });
 
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Orden de certificaciones actualizado correctamente.',
+            ]);
+        }
+
         return redirect()
             ->route('admin.certifications.index')
             ->with('status', 'Orden de certificaciones actualizado correctamente.');
@@ -159,7 +166,10 @@ class CertificationAdminController extends Controller
         // Obtener draft existente o crear uno nuevo
         $draft = CertificationDraft::query()
             ->where('user_id', auth()->id())
-            ->whereNull('expires_at')
+            ->where(function ($query): void {
+                $query->whereNull('expires_at')
+                    ->orWhere('expires_at', '>', now());
+            })
             ->orderByDesc('created_at')
             ->first();
 
@@ -187,6 +197,7 @@ class CertificationAdminController extends Controller
             'step' => $step,
             'draft' => $draft,
             'draftId' => $draft->id,
+            'draftSettings' => is_array($draft->settings) ? $draft->settings : [],
             'resultModes' => $this->resultModes(),
             'currentLocale' => app()->getLocale(),
             'supportedLocales' => config('app.supported_locales', ['en']),
@@ -225,6 +236,8 @@ class CertificationAdminController extends Controller
             }
         }
 
+        $nextSettings = $this->mergeWizardSettings($draft, $data);
+
         // Actualizar draft con los nuevos datos
         $draftData = [
             'slug' => $data['slug'] ?? $draft->slug,
@@ -237,7 +250,7 @@ class CertificationAdminController extends Controller
             'pdf_view' => $data['pdf_view'] ?? $draft->pdf_view,
             'home_order' => $data['home_order'] ?? $draft->home_order,
             'current_step' => $step,
-            'settings' => json_encode($data['settings'] ?? []),
+            'settings' => $nextSettings,
         ];
 
         $draft->update($draftData);
@@ -245,7 +258,21 @@ class CertificationAdminController extends Controller
         // Si es el último paso, crear la certificación
         if ($step === 5) {
             try {
-                $payload = array_merge($draftData, $data);
+                $payload = array_merge(
+                    $draft->only([
+                        'slug',
+                        'name',
+                        'description',
+                        'questions_required',
+                        'pass_score_percentage',
+                        'cooldown_days',
+                        'result_mode',
+                        'pdf_view',
+                        'home_order',
+                    ]),
+                    is_array($draft->settings) ? $draft->settings : [],
+                    $data
+                );
                 $certification = Certification::query()->create($this->normalizeData($payload));
                 
                 // Eliminar draft
@@ -284,7 +311,11 @@ class CertificationAdminController extends Controller
         // Eliminar el draft actual (para reiniciar desde el wizard)
         $draft = CertificationDraft::query()
             ->where('user_id', auth()->id())
-            ->whereNull('expires_at')
+            ->where(function ($query): void {
+                $query->whereNull('expires_at')
+                    ->orWhere('expires_at', '>', now());
+            })
+            ->latest('updated_at')
             ->first();
 
         if ($draft) {
@@ -307,7 +338,7 @@ class CertificationAdminController extends Controller
                 ->where('user_id', auth()->id())
                 ->findOrFail($draftId);
 
-            // Actualizar solo los campos proporcionados
+            // Actualizar campos directos del draft
             $updateData = [];
             if (isset($data['name'])) $updateData['name'] = $data['name'];
             if (isset($data['slug'])) $updateData['slug'] = $data['slug'];
@@ -318,6 +349,24 @@ class CertificationAdminController extends Controller
             if (isset($data['result_mode'])) $updateData['result_mode'] = $data['result_mode'];
             if (isset($data['pdf_view'])) $updateData['pdf_view'] = $data['pdf_view'];
             if (isset($data['home_order'])) $updateData['home_order'] = $data['home_order'];
+            if (! isset($updateData['current_step'])) {
+                $updateData['current_step'] = (int) $step;
+            }
+
+            // Guardar opciones avanzadas dentro de settings del draft
+            $settings = is_array($draft->settings) ? $draft->settings : [];
+            if (array_key_exists('settings', $data)) {
+                $decodedSettings = $this->decodeSettings($data['settings']);
+                $settings = is_array($decodedSettings) ? array_merge($settings, $decodedSettings) : $settings;
+            }
+
+            foreach ($this->wizardAdvancedSettingKeys() as $key) {
+                if (array_key_exists($key, $data)) {
+                    $settings[$key] = $data[$key];
+                }
+            }
+
+            $updateData['settings'] = $settings;
 
             if (!empty($updateData)) {
                 $draft->update($updateData);
@@ -470,16 +519,84 @@ class CertificationAdminController extends Controller
             ->with('status', "Se eliminaron {$deleted} preguntas de prueba.");
     }
 
+    public function revokeCertificate(Request $request, Certification $certification, Certificate $certificate): RedirectResponse
+    {
+        if ((int) $certificate->certification_id !== (int) $certification->id) {
+            abort(404);
+        }
+
+        $data = $request->validate([
+            'reason' => ['required', 'string', 'max:500'],
+        ]);
+
+        if ($certificate->revoked_at !== null) {
+            return redirect()
+                ->route('admin.certifications.edit', $certification)
+                ->with('warning', 'Este certificado ya estaba revocado.');
+        }
+
+        $certificate->update([
+            'revoked_at' => now(),
+            'revoked_reason' => trim((string) $data['reason']),
+        ]);
+
+        AuditLog::log('revoke', 'Certificate', $certificate->id, $certificate->serial, [
+            'certification_id' => $certification->id,
+            'reason' => $certificate->revoked_reason,
+            'revoked_at' => $certificate->revoked_at?->toDateTimeString(),
+        ]);
+
+        return redirect()
+            ->route('admin.certifications.edit', $certification)
+            ->with('status', 'Certificado revocado correctamente.');
+    }
+
+    public function restoreCertificate(Certification $certification, Certificate $certificate): RedirectResponse
+    {
+        if ((int) $certificate->certification_id !== (int) $certification->id) {
+            abort(404);
+        }
+
+        if ($certificate->revoked_at === null) {
+            return redirect()
+                ->route('admin.certifications.edit', $certification)
+                ->with('warning', 'El certificado ya estaba activo.');
+        }
+
+        $previousRevokedAt = $certificate->revoked_at?->toDateTimeString();
+        $previousReason = $certificate->revoked_reason;
+
+        $certificate->update([
+            'revoked_at' => null,
+            'revoked_reason' => null,
+        ]);
+
+        AuditLog::log('restore', 'Certificate', $certificate->id, $certificate->serial, [
+            'certification_id' => $certification->id,
+            'previous_revoked_at' => $previousRevokedAt,
+            'previous_reason' => $previousReason,
+        ]);
+
+        return redirect()
+            ->route('admin.certifications.edit', $certification)
+            ->with('status', 'Certificado restaurado correctamente.');
+    }
+
     private function formViewData(Certification $certification): array
     {
         $diagnostics = $certification->exists
             ? app(CertificationValidationService::class)->review($certification)
             : [];
 
+        $recentCertificates = $certification->exists
+            ? $certification->certificates()->latest('issued_at')->latest('id')->limit(8)->get()
+            : collect();
+
         return [
             'certification' => $certification,
             'resultModes' => $this->resultModes(),
             'diagnostics' => $diagnostics,
+            'recentCertificates' => $recentCertificates,
             'currentLocale' => app()->getLocale(),
             'supportedLocales' => config('app.supported_locales', ['en']),
         ];
@@ -693,14 +810,59 @@ class CertificationAdminController extends Controller
             3 => [
                 'cooldown_days' => ['required', 'integer', 'min:0', 'max:3650'],
                 'result_mode' => ['required', 'string', 'in:binary_threshold,custom,generic'],
+                'auto_result_rule_mode' => ['nullable', 'string', 'in:none,name_rule'],
+                'auto_result_rule_config' => ['nullable', 'json'],
             ],
             4 => [
                 'pdf_view' => ['nullable', 'string', 'max:120'],
                 'home_order' => ['required', 'integer', 'min:0', 'max:9999'],
                 'active' => ['nullable', 'boolean'],
                 'settings' => ['nullable', 'json'],
+                'expiry_mode' => ['nullable', 'string', 'in:indefinite,fixed'],
+                'expiry_days' => ['nullable', 'integer', 'min:1', 'max:3650'],
+                'allow_certificate_download_after_deactivation' => ['nullable', 'boolean'],
+                'manual_user_data_purge_enabled' => ['nullable', 'boolean'],
+                'require_question_bank_for_activation' => ['nullable', 'boolean'],
+                'shuffle_questions' => ['nullable', 'boolean'],
+                'shuffle_options' => ['nullable', 'boolean'],
             ],
             5 => [],
         };
+    }
+
+    private function wizardAdvancedSettingKeys(): array
+    {
+        return [
+            'active',
+            'expiry_mode',
+            'expiry_days',
+            'allow_certificate_download_after_deactivation',
+            'manual_user_data_purge_enabled',
+            'require_question_bank_for_activation',
+            'shuffle_questions',
+            'shuffle_options',
+            'auto_result_rule_mode',
+            'auto_result_rule_config',
+        ];
+    }
+
+    private function mergeWizardSettings(CertificationDraft $draft, array $stepData): array
+    {
+        $settings = is_array($draft->settings) ? $draft->settings : [];
+
+        if (array_key_exists('settings', $stepData)) {
+            $decodedSettings = $this->decodeSettings($stepData['settings']);
+            if (is_array($decodedSettings)) {
+                $settings = array_merge($settings, $decodedSettings);
+            }
+        }
+
+        foreach ($this->wizardAdvancedSettingKeys() as $key) {
+            if (array_key_exists($key, $stepData)) {
+                $settings[$key] = $stepData[$key];
+            }
+        }
+
+        return $settings;
     }
 }

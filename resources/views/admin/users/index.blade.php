@@ -8,6 +8,7 @@
                 <div>
                     <h1 class="text-3xl font-bold text-slate-900">Gestión de Usuarios</h1>
                     <p class="mt-2 text-slate-600">Crea, edita y gestiona cuentas de usuario del sistema</p>
+                    <p class="mt-1 text-xs text-slate-500">Usa importación para cargas masivas y exportación para respaldos o actualizaciones.</p>
                 </div>
                 <div class="flex flex-wrap items-center gap-3">
                     <a href="{{ route('admin.users.import.form') }}" class="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-2.5 font-semibold text-slate-700 shadow-sm transition hover:border-blue-500 hover:bg-blue-50 hover:text-blue-600">
@@ -110,6 +111,7 @@
                                             </button>
                                         </form>
                                     </div>
+                                    <p class="mt-2 text-right text-[11px] text-slate-500">Editar: actualiza datos. Eliminar: quita el usuario del sistema.</p>
                                 </td>
                             </tr>
                         @empty

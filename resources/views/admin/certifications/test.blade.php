@@ -5,9 +5,25 @@
         <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
                 <h1 class="brand-title text-2xl font-bold text-[var(--ink)]">Prueba de funcionamiento</h1>
-                <p class="mt-1 text-sm text-slate-600">Revision en español para verificar que la certificacion esta lista.</p>
+                <p class="mt-1 text-sm text-slate-600">Revisión en español para verificar que la certificación está lista.</p>
             </div>
-            <a href="{{ route('admin.certifications.edit', $certification) }}" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-[var(--accent)] hover:text-[var(--accent)]">Volver a la certificacion</a>
+            <div class="flex flex-wrap items-center gap-2">
+                @if (($diagnostics['summary']['active_questions'] ?? 0) >= ($diagnostics['summary']['required_questions'] ?? 0) && ($diagnostics['summary']['required_questions'] ?? 0) > 0)
+                    <a href="{{ route('quiz.register', ['certType' => $certification->slug]) }}" target="_blank" class="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800">
+                        Iniciar prueba real
+                    </a>
+                @else
+                    <form action="{{ route('admin.certifications.test-questions', $certification) }}" method="POST" class="inline">
+                        @csrf
+                        <input type="hidden" name="count" value="5">
+                        <button type="submit" class="rounded-xl bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700">
+                            Agregar 5 preguntas de prueba
+                        </button>
+                    </form>
+                @endif
+
+                <a href="{{ route('admin.certifications.edit', $certification) }}" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-[var(--accent)] hover:text-[var(--accent)]">Volver a la certificación</a>
+            </div>
         </div>
 
         <div class="grid gap-4 lg:grid-cols-3">
@@ -36,7 +52,13 @@
             </div>
         @else
             <div class="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
-                La certificacion esta lista para pruebas.
+                La certificación está lista para pruebas.
+            </div>
+        @endif
+
+        @if (($diagnostics['summary']['active_questions'] ?? 0) < ($diagnostics['summary']['required_questions'] ?? 0))
+            <div class="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                No hay banco suficiente para ejecutar la prueba completa. Puedes agregar 5 preguntas de prueba con el botón superior.
             </div>
         @endif
 

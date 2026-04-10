@@ -35,6 +35,7 @@ class UpdateQuestionRequest extends FormRequest
             'explanation' => ['nullable', 'string'],
             'image' => ['nullable', 'image', 'max:5120'],
             'image_path' => ['nullable', 'string'],
+            'remove_image' => ['nullable', 'boolean'],
             'active' => ['nullable', 'boolean'],
             'is_test_question' => ['nullable', 'boolean'],
             'translations' => ['nullable', 'array'],

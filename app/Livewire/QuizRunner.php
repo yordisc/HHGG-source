@@ -366,6 +366,12 @@ class QuizRunner extends Component
             'result_decision_reason' => $deathResult['reason'],
         ]);
 
+        $integrity = app(\App\Support\CertificateIntegrityService::class);
+        $certificate->update([
+            'content_hash' => $integrity->contentHash($certificate),
+            'verification_token_hash' => $integrity->verificationTokenHash($certificate),
+        ]);
+
         $this->incrementMetric('quiz.completed');
         $this->incrementMetric('quiz.completed.'.$decision);
         $this->incrementMetric('quiz.completed.sudden_death');
@@ -464,6 +470,12 @@ class QuizRunner extends Component
             'download_expires_at' => $downloadExpiresAt,
             'result_decision_source' => $resultDecisionSource,
             'result_decision_reason' => $resultDecisionReason,
+        ]);
+
+        $integrity = app(\App\Support\CertificateIntegrityService::class);
+        $certificate->update([
+            'content_hash' => $integrity->contentHash($certificate),
+            'verification_token_hash' => $integrity->verificationTokenHash($certificate),
         ]);
 
         $this->incrementMetric('quiz.completed');

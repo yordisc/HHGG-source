@@ -5,7 +5,7 @@
         <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
                 <h1 class="brand-title text-2xl font-bold text-[var(--ink)]">Editar usuario</h1>
-                <p class="mt-1 text-sm text-slate-600">Actualiza datos y estado de verificacion de la cuenta.</p>
+                <p class="mt-1 text-sm text-slate-600">Actualiza nombre, contraseña y estado de verificación de la cuenta.</p>
             </div>
             <a href="{{ route('admin.users.index') }}" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-[var(--accent)] hover:text-[var(--accent)]">
                 Volver al listado

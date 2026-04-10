@@ -16,12 +16,13 @@
             </div>
 
             <!-- Main content -->
-            <form action="{{ route('admin.questions.store') }}" method="POST" class="grid gap-6 lg:grid-cols-3">
+            <form action="{{ route('admin.questions.store') }}" method="POST" enctype="multipart/form-data" class="grid gap-6 lg:grid-cols-3">
                 @csrf
 
                 <!-- Left sidebar - Certification selector -->
                 <div class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
                     <h3 class="font-semibold text-slate-900">Paso 1: Selecciona certificación</h3>
+                    <p class="mt-1 text-xs text-slate-500">La pregunta quedará asignada al banco de esta certificación.</p>
                     <label class="mt-4 block text-sm font-semibold text-slate-700">
                         Certificación
                         <select name="certification_id" id="certificationSelect" required class="mt-2 w-full rounded-lg border border-slate-300 px-4 py-3 text-sm">
@@ -36,6 +37,7 @@
                     <!-- Type selector -->
                     <div class="mt-6 border-t border-slate-200 pt-6">
                         <h3 class="font-semibold text-slate-900">Paso 2: Tipo de pregunta</h3>
+                        <p class="mt-1 text-xs text-slate-500">El tipo define cuántas opciones verás y cómo se evalúa la respuesta.</p>
                         
                         <div class="mt-4 space-y-3">
                             <label class="flex cursor-pointer items-center gap-3 rounded-lg border-2 border-slate-200 p-4 transition hover:border-blue-300 peer-checked:border-blue-500 peer-checked:bg-blue-50">
@@ -90,6 +92,7 @@
                         <label class="block text-sm font-semibold text-slate-700">
                             Pregunta (Texto)
                             <textarea name="prompt" id="promptField" rows="3" placeholder="Escribe el enunciado de la pregunta aquí..." required class="mt-2 w-full rounded-lg border border-slate-300 px-4 py-3 text-sm">{{ old('prompt') }}</textarea>
+                            <p class="mt-1 text-xs text-slate-500">Recomendado: una sola idea por pregunta y redaccion clara.</p>
                             @error('prompt')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
                         </label>
 
@@ -103,6 +106,7 @@
                                 <input type="hidden" name="image_path" id="imagePath">
                                 <button type="button" onclick="document.getElementById('imageInput').click()" class="mt-3 text-blue-600 underline hover:text-blue-700">Seleccionar imagen</button>
                             </div>
+                            <p class="mt-1 text-xs text-slate-500">Usa imagen solo si aporta contexto real a la pregunta.</p>
                             <img id="imagePreview" src="" alt="Image preview" class="mt-3 hidden max-h-48 rounded-lg border border-slate-200">
                         </label>
 
@@ -119,9 +123,19 @@
                         <!-- This will be dynamically populated by JavaScript -->
                     </div>
 
+                    <div class="rounded-lg border border-blue-200 bg-blue-50 p-4 text-xs text-blue-900">
+                        <p class="font-semibold">Tips rápidos</p>
+                        <ul class="mt-2 space-y-1">
+                            <li>1) Marca solo una "Respuesta correcta".</li>
+                            <li>2) Evita opciones ambiguas o repetidas.</li>
+                            <li>3) Verifica la vista previa antes de guardar.</li>
+                        </ul>
+                    </div>
+
                     <!-- Settings -->
                     <div class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
                         <h3 class="mb-4 font-semibold text-slate-900">Paso 4: Configuración</h3>
+                        <p class="mb-3 text-xs text-slate-500">Define si se publica de inmediato y si es pregunta de prueba.</p>
                         
                         <label class="inline-flex items-center gap-2 text-sm font-semibold text-slate-700">
                             <input type="hidden" name="active" value="0">
@@ -154,6 +168,7 @@
     <div class="fixed bottom-0 left-0 right-0 border-t border-slate-200 bg-white p-6 shadow-2xl">
         <div class="mx-auto max-w-6xl">
             <h3 class="font-semibold text-slate-900 mb-4">Vista previa de la pregunta</h3>
+            <p class="mb-3 text-xs text-slate-500">Esta vista previa es orientativa; valida visualmente el enunciado y la respuesta correcta.</p>
             <div id="previewPanel" class="rounded-lg border border-slate-200 bg-slate-50 p-6 text-sm text-slate-700">
                 <p class="font-semibold"><span id="previewPrompt">Escribe tu pregunta aquí...</span></p>
                 <div id="previewOptions" class="mt-4 space-y-2"></div>
