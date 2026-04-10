@@ -3,7 +3,6 @@ set -eu
 
 PROJECT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
 ENV_FILE="$PROJECT_DIR/.env"
-SQLITE_DB="$PROJECT_DIR/database/database.sqlite"
 SUDO=""
 
 log() {
@@ -46,43 +45,30 @@ run_privileged() {
     return
   fi
 
-  fail "Se requieren privilegios de administrador para instalar dependencias del sistema. Ejecuta el script con sudo o instala php-sqlite3 manualmente."
+  fail "Se requieren privilegios de administrador para instalar dependencias del sistema. Ejecuta el script con sudo o instala php-mysql manualmente."
 }
 
-has_sqlite_driver() {
-  php -m 2>/dev/null | grep -qi '^pdo_sqlite$'
+has_mysql_driver() {
+  php -m 2>/dev/null | grep -qi '^pdo_mysql$'
 }
 
-install_sqlite_driver() {
-  if has_sqlite_driver; then
-    log "[INFO] Driver PDO SQLite ya disponible."
+install_mysql_driver() {
+  if has_mysql_driver; then
+    log "[INFO] Driver PDO MySQL ya disponible."
     return
   fi
 
-  log "[INFO] Falta el driver PDO SQLite; intentando instalarlo..."
+  log "[INFO] Falta el driver PDO MySQL; intentando instalarlo..."
 
-  if command -v apk >/dev/null 2>&1; then
-    run_privileged apk add --no-cache php-pdo_sqlite php-sqlite3 sqlite
-  elif command -v apt-get >/dev/null 2>&1; then
-    run_privileged apt-get update -y
-
-    php_version="$(php -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;' 2>/dev/null || true)"
-    if [ -n "$php_version" ] && run_privileged apt-get install -y "php${php_version}-sqlite3" sqlite3; then
-      :
-    elif run_privileged apt-get install -y php-sqlite3 sqlite3; then
-      :
-    else
-      fail "No se pudo instalar el paquete de SQLite. En Debian/Ubuntu prueba: sudo apt-get install php-sqlite3 sqlite3"
-    fi
-  else
-    fail "No se detectó apk ni apt-get. Instala manualmente el driver PDO SQLite para PHP."
+  if ! command -v apt-get >/dev/null 2>&1; then
+    fail "Este flujo está pensado para Debian/apt. Si necesitas otra base, usa el Dockerfile correspondiente."
   fi
 
-  if ! has_sqlite_driver; then
-    fail "El driver PDO SQLite sigue sin estar disponible después de la instalación. Verifica tu instalación de PHP."
+  if ! has_mysql_driver; then
+    fail "El driver PDO MySQL debe venir preinstalado en la imagen del devcontainer. Rebuild de la imagen requerido."
   fi
 
-  log "[OK] Driver PDO SQLite instalado correctamente."
+  log "[OK] Driver PDO MySQL instalado correctamente."
 }
 
 ensure_env_file() {
@@ -99,11 +85,15 @@ ensure_app_key() {
   fi
 }
 
-ensure_sqlite_database() {
-  mkdir -p "$PROJECT_DIR/database"
-  if [ ! -f "$SQLITE_DB" ]; then
-    log "[INFO] Creando base SQLite local..."
-    : > "$SQLITE_DB"
+ensure_mysql_database() {
+  if ! command -v mysql >/dev/null 2>&1; then
+    log "[WARN] mysql client no disponible; se asume que la base certificados_dev ya existe."
+    return
+  fi
+
+  log "[INFO] Verificando que MySQL responda..."
+  if ! mysql -h "${DB_HOST:-127.0.0.1}" -P "${DB_PORT:-3306}" -u "${DB_USERNAME:-laravel}" -p"${DB_PASSWORD:-secret}" -e 'SELECT 1;' >/dev/null 2>&1; then
+    log "[WARN] No se pudo validar MySQL con las credenciales del proyecto. Asegura que el servidor y la base certificados_dev existan."
   fi
 }
 
@@ -124,13 +114,17 @@ install_node_dependencies() {
 }
 
 run_migrations_and_seeders() {
-  log "[INFO] Ejecutando migraciones y seeders en SQLite local..."
+  log "[INFO] Ejecutando migraciones y seeders en MySQL local..."
   APP_ENV=local \
-  DB_CONNECTION=sqlite \
-  DB_DATABASE="$SQLITE_DB" \
-  CACHE_STORE=file \
-  SESSION_DRIVER=file \
-  QUEUE_CONNECTION=sync \
+  DB_CONNECTION=mysql \
+  DB_HOST="${DB_HOST:-127.0.0.1}" \
+  DB_PORT="${DB_PORT:-3306}" \
+  DB_DATABASE="${DB_DATABASE:-certificados_dev}" \
+  DB_USERNAME="${DB_USERNAME:-laravel}" \
+  DB_PASSWORD="${DB_PASSWORD:-secret}" \
+  CACHE_STORE=database \
+  SESSION_DRIVER=database \
+  QUEUE_CONNECTION=database \
   MAIL_MAILER=log \
   ADMIN_ACCESS_KEY="${ADMIN_ACCESS_KEY:-test-admin-key}" \
   php artisan migrate --seed --force
@@ -151,13 +145,13 @@ main() {
   require_cmd php
   require_cmd composer
   require_cmd npm
-  install_sqlite_driver
+  install_mysql_driver
 
   ensure_env_file
   install_php_dependencies
   install_node_dependencies
   ensure_app_key
-  ensure_sqlite_database
+  ensure_mysql_database
   run_migrations_and_seeders
   run_tests
 

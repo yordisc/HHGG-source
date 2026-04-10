@@ -1,6 +1,8 @@
 {
     "name": "Instituto de Certificaciones Dudosas — Laravel 11",
-    "image": "mcr.microsoft.com/devcontainers/php:8.4-bullseye",
+    "build": {
+        "dockerfile": "Dockerfile"
+    },
 
     // ─── Servicios adicionales ──────────────────────────────────────────────────
     "features": {

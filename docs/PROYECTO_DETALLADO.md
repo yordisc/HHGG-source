@@ -30,7 +30,7 @@ CertificacionHHGG es una aplicación Laravel 11 + Livewire que permite:
 - UI interactiva: Livewire 4
 - Frontend build: Vite + Tailwind (npm)
 - PDF: barryvdh/laravel-dompdf
-- Persistencia: MySQL/MariaDB o SQLite según entorno
+- Persistencia: MySQL
 - Despliegue objetivo: Railway/Nixpacks
 
 ## 4. Estructura principal
@@ -42,13 +42,14 @@ CertificacionHHGG es una aplicación Laravel 11 + Livewire que permite:
 - database/migrations: schema operativo del MVP.
 - database/seeders: preguntas base + traducciones iniciales.
 - resources/views: flujo público + admin + PDF.
-- lang/*/app.php: interfaz multilenguaje.
+- lang/\*/app.php: interfaz multilenguaje.
 - routes/web.php: rutas públicas y admin.
 - routes/console.php: scheduler diario.
 
 ## 5. Modelo de datos (resumen)
 
 ### certificates
+
 - serial, cert_type, result_key
 - first_name, last_name, country
 - document_hash, doc_lookup_hash, doc_partial
@@ -56,15 +57,18 @@ CertificacionHHGG es una aplicación Laravel 11 + Livewire que permite:
 - issued_at, expires_at, last_attempt_at
 
 ### questions
+
 - cert_type, prompt
 - option_1..option_4, correct_option
 - active
 
 ### question_translations
+
 - question_id, language
 - prompt, option_1..option_4
 
 ### rate_limits
+
 - identifier_hash, scope, attempted_at
 
 ## 6. Seguridad y privacidad
@@ -79,9 +83,11 @@ CertificacionHHGG es una aplicación Laravel 11 + Livewire que permite:
 ## 7. i18n y contenido
 
 Idiomas soportados:
+
 - en, es, pt, zh, hi, ar, fr
 
 Estrategia:
+
 - Interfaz con archivos lang/{locale}/app.php
 - Preguntas traducidas desde DB con fallback
 - Selector manual de idioma por ruta
@@ -90,21 +96,23 @@ Estrategia:
 ## 8. Operación y mantenimiento
 
 - Limpieza diaria de certificados expirados:
-  - comando: php artisan certificates:clean
-  - scheduler: routes/console.php
+    - comando: php artisan certificates:clean
+    - scheduler: routes/console.php
 - Observabilidad básica por logs y métricas en cache.
 - Scripts locales:
-  - scripts/local-test.sh (validación, migraciones, seeders y tests)
-  - scripts/dev-local.sh (arranque del stack de desarrollo)
-  - scripts/setup-local.sh (bootstrap inicial)
+    - scripts/local-test.sh (validación, migraciones, seeders y tests)
+    - scripts/dev-local.sh (arranque del stack de desarrollo)
+    - scripts/setup-local.sh (bootstrap inicial)
 
 ## 9. Backoffice admin
 
 Rutas base:
+
 - /admin/login
 - /admin/questions
 
 Capacidades:
+
 - CRUD de preguntas
 - Gestion de traducciones por idioma
 - Importar CSV
@@ -114,10 +122,12 @@ Capacidades:
 ## 10. Pruebas
 
 Cobertura implementada:
+
 - Feature: home/search/admin/quiz/cert/PDF
 - Unit: comportamiento del modelo Certificate
 
 Comando:
+
 - php artisan test
 
 ## 11. Variables de entorno clave
@@ -131,6 +141,7 @@ Comando:
 ## 12. Documentos complementarios
 
 Documentación vigente:
+
 - docs/README.md
 - docs/TROUBLESHOOTING.md
 - docs/VISUAL_BUILDER_GUIDE.md
@@ -143,4 +154,3 @@ Documentación vigente:
 - Arquitectura de certificaciones escalable implementada (catálogo + servicios).
 - Home/admin dinámicos por certificaciones activas en BD.
 - Seguridad base, observabilidad y documentación operativa listas.
-

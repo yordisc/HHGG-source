@@ -30,7 +30,7 @@ No es una certificacion real ni sustituye evaluaciones medicas, psicologicas o l
 - Laravel 11
 - Livewire 4
 - Tailwind CSS + Vite
-- MySQL/MariaDB (SQLite en desarrollo si aplica)
+- MySQL
 - barryvdh/laravel-dompdf
 
 ## Inicio rapido local
@@ -41,7 +41,7 @@ Para preparar el entorno y validar la suite en un solo paso:
 sh scripts/local-test.sh
 ```
 
-El script instala dependencias, crea `.env` si falta, usa SQLite local, ejecuta migraciones y seeders, y lanza `php artisan test`.
+El script instala dependencias, crea `.env` si falta, usa MySQL local, ejecuta migraciones y seeders, y lanza `php artisan test`.
 
 Para levantar el stack de desarrollo de inmediato:
 
@@ -49,7 +49,7 @@ Para levantar el stack de desarrollo de inmediato:
 sh scripts/dev-local.sh
 ```
 
-Ese comando arranca `php artisan serve`, `queue:listen` y `npm run dev`. Si quieres validar antes de levantarlo, usa `sh scripts/dev-local.sh --all`.
+Ese comando arranca `php artisan serve`, `queue:listen` y `npm run dev`. Si no tienes el driver `pdo_mysql`, instala soporte MySQL para PHP antes de arrancarlo. Si quieres validar antes de levantarlo, usa `sh scripts/dev-local.sh --all`.
 
 Tambien puedes usar el modo de desarrollo con validacion previa:
 

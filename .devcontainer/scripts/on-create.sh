@@ -28,31 +28,69 @@ run_privileged() {
   fi
 }
 
+has_mysql_driver() {
+  php -m 2>/dev/null | grep -qi '^pdo_mysql$'
+}
+
+disable_broken_apt_sources() {
+  for source_file in /etc/apt/sources.list.d/* /etc/apt/sources.list; do
+    [ -e "$source_file" ] || continue
+
+    if grep -qi 'dl.yarnpkg.com/debian' "$source_file" 2>/dev/null; then
+      echo "   • Desactivando repositorio roto de Yarn: $(basename "$source_file")"
+      run_privileged sed -i 's|^deb \(.*dl\.yarnpkg\.com/debian.*\)$|# disabled by on-create.sh: deb \1|g' "$source_file"
+    fi
+  done
+}
+
+install_mysql_server() {
+  echo "   • Instalando servidor y cliente MySQL..."
+  if ! run_privileged env DEBIAN_FRONTEND=noninteractive apt-get update; then
+    echo "   ⚠ No se pudo actualizar apt antes de instalar MySQL"
+    MYSQL_READY=0
+    return 1
+  fi
+
+  if ! run_privileged env DEBIAN_FRONTEND=noninteractive apt-get install -y default-mysql-server default-mysql-client; then
+    echo "   ⚠ Fallo al instalar el servidor/cliente MySQL"
+    MYSQL_READY=0
+    return 1
+  fi
+}
+
+install_mysql_php_driver() {
+  if has_mysql_driver; then
+    echo "   ✓ Driver PDO MySQL ya disponible"
+    return 0
+  fi
+
+  echo "   ⚠ El driver PDO MySQL no esta disponible en la imagen del contenedor"
+  echo "   • Rebuild necesario: revisa .devcontainer/Dockerfile"
+  return 1
+}
+
 install_mysql() {
   echo "► Instalando soporte MySQL para Codespaces..."
 
   if command -v apt-get >/dev/null 2>&1; then
-    if ! run_privileged apt-get update -y; then
-      echo "   ⚠ Sin privilegios para apt-get update. Continuando sin instalar MySQL."
-      MYSQL_READY=0
+    disable_broken_apt_sources
+    if ! install_mysql_server; then
       return 0
     fi
 
-    if ! run_privileged env DEBIAN_FRONTEND=noninteractive apt-get install -y \
-      default-mysql-server default-mysql-client php-mysql; then
-      echo "   ⚠ Fallo al instalar MySQL con apt. Continuando sin MySQL local."
-      MYSQL_READY=0
-      return 0
-    fi
-  elif command -v apk >/dev/null 2>&1; then
-    if ! run_privileged apk add --no-cache mariadb mariadb-client php82-mysqli php82-pdo_mysql \
-      && ! run_privileged apk add --no-cache mariadb mariadb-client php-mysqli php-pdo_mysql; then
-      echo "   ⚠ Fallo al instalar MariaDB con apk. Continuando sin MySQL local."
+    if ! install_mysql_php_driver; then
+      echo "   ⚠ Fallo al instalar el driver PDO MySQL"
       MYSQL_READY=0
       return 0
     fi
   else
-    echo "   ⚠ No se pudo detectar gestor de paquetes para instalar MySQL"
+    echo "   ⚠ Este contenedor solo soporta Debian/apt para el setup inicial"
+    MYSQL_READY=0
+    return 0
+  fi
+
+  if ! has_mysql_driver; then
+    echo "   ⚠ El driver PDO MySQL no quedo disponible tras la instalacion"
     MYSQL_READY=0
     return 0
   fi
@@ -175,6 +213,10 @@ cleanup() {
 
 echo "► Preparando entorno..."
 install_mysql
+if [ "$MYSQL_READY" -ne 1 ]; then
+  echo "   ✗ No se pudo preparar MySQL local; abortando setup inicial."
+  exit 1
+fi
 start_mysql_service
 wait_for_mysql
 ensure_env

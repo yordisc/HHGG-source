@@ -39,6 +39,43 @@ require_cmd() {
   fi
 }
 
+run_privileged() {
+  if [ "$(id -u)" -eq 0 ]; then
+    "$@"
+    return
+  fi
+
+  if command -v sudo >/dev/null 2>&1; then
+    sudo "$@"
+    return
+  fi
+
+  fail "Se requieren privilegios de administrador para instalar el driver PDO MySQL o ejecuta el comando con sudo."
+}
+
+has_mysql_driver() {
+  php -r 'exit(extension_loaded("pdo_mysql") ? 0 : 1);' >/dev/null 2>&1
+}
+
+install_mysql_driver() {
+  if has_mysql_driver; then
+    log "[INFO] Driver PDO MySQL ya disponible."
+    return
+  fi
+
+  log "[INFO] Falta el driver PDO MySQL; intentando instalarlo..."
+
+  if ! command -v apt-get >/dev/null 2>&1; then
+    fail "Este flujo está pensado para Debian/apt. Si necesitas otra base, usa el Dockerfile correspondiente."
+  fi
+
+  if ! has_mysql_driver; then
+    fail "El driver PDO MySQL debe venir preinstalado en la imagen del devcontainer. Rebuild de la imagen requerido."
+  fi
+
+  log "[OK] Driver PDO MySQL instalado correctamente."
+}
+
 ensure_env_file() {
   if [ ! -f "$ENV_FILE" ]; then
     log "[INFO] Creando .env desde .env.example..."
@@ -367,6 +404,7 @@ main() {
   require_cmd php
   require_cmd composer
   require_cmd npm
+  install_mysql_driver
 
   if [ "$MODE" = "serve" ]; then
     prepare_application_state

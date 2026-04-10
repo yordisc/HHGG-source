@@ -51,18 +51,19 @@ XDEBUG_MODE=coverage php artisan test --coverage
 php -d pcov.enabled=1 artisan test --coverage
 ```
 
-### Issue: SQLite says "no such table"
+### Issue: MySQL says "Access denied for user"
 
-**Symptom:** During tests, model factories fail with missing table errors.
+**Symptom:** During tests or local execution, the application cannot authenticate against MySQL.
 
-**Cause:** The test class is hitting DB without reset/migration lifecycle.
+**Cause:** The MySQL credentials or database name do not match the local environment.
 
 **Solution:**
 
-1. Add `RefreshDatabase` to the test class.
-2. Re-run the failing test file only.
+1. Verify `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME` and `DB_PASSWORD`.
+2. Confirm the MySQL server is running and the database exists.
 
 ```bash
+php artisan migrate --force
 php artisan test tests/Feature/SomeFailingTest.php
 ```
 
@@ -72,9 +73,10 @@ php artisan test tests/Feature/SomeFailingTest.php
 
 ### Issue 1: Unsaved Indicator Won't Go Away
 
-**Symptom:** The asterisk (*) in the title persists even after saving
+**Symptom:** The asterisk (\*) in the title persists even after saving
 
 **Possible Causes:**
+
 1. Browser cache not cleared
 2. Form state not properly reset
 3. JavaScript error preventing reset
@@ -96,7 +98,7 @@ F12 → Console → Look for red errors
 
 ```javascript
 // In browser console, check the form state:
-document.querySelector('form').reset();
+document.querySelector("form").reset();
 window.location.reload();
 ```
 
@@ -109,40 +111,40 @@ window.location.reload();
 **Solution:**
 
 1. **Check for validation errors in the form:**
-   - Red error messages under fields
-   - Look for JSON syntax errors in settings field
+    - Red error messages under fields
+    - Look for JSON syntax errors in settings field
 
 2. **Common validation failures:**
 
-   ```
-   ❌ name field empty
-      → Type a certification name
-   
-   ❌ questions_required > 50
-      → Must be between 1-50
-   
-   ❌ pass_score_percentage not 0-100
-      → Enter a percentage between 0 and 100
-   
-   ❌ settings field has invalid JSON
-      → Check syntax: missing commas, quotes
-   ```
+    ```
+    ❌ name field empty
+       → Type a certification name
+
+    ❌ questions_required > 50
+       → Must be between 1-50
+
+    ❌ pass_score_percentage not 0-100
+       → Enter a percentage between 0 and 100
+
+    ❌ settings field has invalid JSON
+       → Check syntax: missing commas, quotes
+    ```
 
 3. **To debug validation:**
 
-   ```javascript
-   // In browser console
-   // Check what validation is failing
-   const form = document.querySelector('form');
-   console.log(form.checkValidity()); // true/false
-   
-   // List invalid fields
-   Array.from(form.elements).forEach(el => {
-     if (!el.checkValidity()) {
-       console.log(`Invalid: ${el.name}`, el.validationMessage);
-     }
-   });
-   ```
+    ```javascript
+    // In browser console
+    // Check what validation is failing
+    const form = document.querySelector("form");
+    console.log(form.checkValidity()); // true/false
+
+    // List invalid fields
+    Array.from(form.elements).forEach((el) => {
+        if (!el.checkValidity()) {
+            console.log(`Invalid: ${el.name}`, el.validationMessage);
+        }
+    });
+    ```
 
 ---
 
@@ -185,24 +187,26 @@ window.location.reload();
 **Solution:**
 
 1. **Check if JavaScript includes are enabled:**
-   ```bash
-   # View source (Ctrl+U)
-   # Look for: <script src="/js/..."></script>
-   ```
+
+    ```bash
+    # View source (Ctrl+U)
+    # Look for: <script src="/js/..."></script>
+    ```
 
 2. **Clear browser cache:**
-   ```bash
-   # Hard refresh
-   Ctrl+Shift+R
-   
-   # Or delete site data
-   Dev Tools → Application → Cookies/Storage → Delete
-   ```
+
+    ```bash
+    # Hard refresh
+    Ctrl+Shift+R
+
+    # Or delete site data
+    Dev Tools → Application → Cookies/Storage → Delete
+    ```
 
 3. **Check browser console for errors:**
-   ```
-   F12 → Console → Look for red error messages
-   ```
+    ```
+    F12 → Console → Look for red error messages
+    ```
 
 ---
 
@@ -230,12 +234,12 @@ window.location.reload();
 
 ```javascript
 // Paste this in browser console
-const json = document.getElementById('settings').value;
+const json = document.getElementById("settings").value;
 try {
-  JSON.parse(json);
-  console.log("✓ Valid JSON");
-} catch(e) {
-  console.log("✗ Invalid JSON:", e.message);
+    JSON.parse(json);
+    console.log("✓ Valid JSON");
+} catch (e) {
+    console.log("✗ Invalid JSON:", e.message);
 }
 ```
 
@@ -252,20 +256,22 @@ try {
 **Solution:**
 
 1. **Reload page:**
-   ```
-   F5 or Cmd+R
-   ```
+
+    ```
+    F5 or Cmd+R
+    ```
 
 2. **Check if questions are actually assigned:**
-   ```
-   Dev Tools → Network → Look for /admin/api/certifications/{id}/available-questions
-   Response should show assigned questions
-   ```
+
+    ```
+    Dev Tools → Network → Look for /admin/api/certifications/{id}/available-questions
+    Response should show assigned questions
+    ```
 
 3. **Manually update questions:**
-   - Click checkboxes in questions list
-   - Watch the count update
-   - If still not updating, refresh page
+    - Click checkboxes in questions list
+    - Watch the count update
+    - If still not updating, refresh page
 
 ---
 
@@ -278,6 +284,7 @@ try {
 **What This Means:** Users are currently taking the certification
 
 **Reason:** Changing critical settings while users are mid-quiz:
+
 - Affects which questions they see
 - Could invalidate their progress
 - System prevents this by default
@@ -285,6 +292,7 @@ try {
 **Solutions:**
 
 **Option A: Wait for attempts to finish**
+
 ```
 1. Check number of active attempts
    → Button shows: "5 users taking this quiz"
@@ -295,6 +303,7 @@ try {
 ```
 
 **Option B: Force update (not recommended)**
+
 ```
 1. Acknowledge the warning
 2. Click "Force Update" button
@@ -303,6 +312,7 @@ try {
 ```
 
 **Option C: Use different timing**
+
 ```
 Best practice: Schedule changes for off-hours
 - Schedule updates at night
@@ -321,29 +331,32 @@ Best practice: Schedule changes for off-hours
 **Solution:**
 
 1. **Check browser console:**
-   ```
-   F12 → Network tab
-   Look for 422 or 500 responses
-   ```
+
+    ```
+    F12 → Network tab
+    Look for 422 or 500 responses
+    ```
 
 2. **Check server logs:**
-   ```bash
-   tail -f storage/logs/laravel.log
-   ```
+
+    ```bash
+    tail -f storage/logs/laravel.log
+    ```
 
 3. **Verify permissions:**
-   ```
-   User must have:
-   - admin role
-   - certification:edit permission
-   ```
+
+    ```
+    User must have:
+    - admin role
+    - certification:edit permission
+    ```
 
 4. **Check data integrity:**
-   ```bash
-   # Verify certification exists
-   php artisan tinker
-   > Certification::find($id)
-   ```
+    ```bash
+    # Verify certification exists
+    php artisan tinker
+    > Certification::find($id)
+    ```
 
 ---
 
@@ -356,20 +369,22 @@ Best practice: Schedule changes for off-hours
 **Solution:**
 
 1. **Check user role:**
-   ```bash
-   php artisan tinker
-   > $user->hasRole('admin')
-   ```
+
+    ```bash
+    php artisan tinker
+    > $user->hasRole('admin')
+    ```
 
 2. **Verify permission exists:**
-   ```bash
-   > $user->can('edit', Certification::find($id))
-   ```
+
+    ```bash
+    > $user->can('edit', Certification::find($id))
+    ```
 
 3. **Re-assign role if needed:**
-   ```bash
-   > $user->assignRole('admin')
-   ```
+    ```bash
+    > $user->assignRole('admin')
+    ```
 
 ---
 
@@ -384,22 +399,24 @@ Best practice: Schedule changes for off-hours
 **Solution:**
 
 1. **Check API endpoint:**
-   ```bash
-   curl http://localhost/admin/api/certifications/{id}/versions
-   
-   Should return JSON with version list
-   ```
+
+    ```bash
+    curl http://localhost/admin/api/certifications/{id}/versions
+
+    Should return JSON with version list
+    ```
 
 2. **Check permissions:**
-   ```
-   API requires auth + admin role
-   ```
+
+    ```
+    API requires auth + admin role
+    ```
 
 3. **Verify database has versions:**
-   ```bash
-   php artisan tinker
-   > CertificationVersion::where('certification_id', $id)->get()
-   ```
+    ```bash
+    php artisan tinker
+    > CertificationVersion::where('certification_id', $id)->get()
+    ```
 
 ---
 
@@ -409,12 +426,12 @@ Best practice: Schedule changes for off-hours
 
 **Cause:** Multiple possible reasons:
 
-| Cause | Solution |
-|-------|----------|
-| Reverting to current version | Can't revert to same version |
-| Active attempts blocking revert | Wait for attempts to finish |
-| Permission denied | Check user has admin role |
-| Version doesn't exist | Refresh page or reload data |
+| Cause                           | Solution                     |
+| ------------------------------- | ---------------------------- |
+| Reverting to current version    | Can't revert to same version |
+| Active attempts blocking revert | Wait for attempts to finish  |
+| Permission denied               | Check user has admin role    |
+| Version doesn't exist           | Refresh page or reload data  |
 
 **To force revert via API:**
 
@@ -441,25 +458,27 @@ Response should show:
 **Solution:**
 
 1. **Check network:**
-   ```
-   Dev Tools → Network tab
-   Look for /admin/api/certifications/.../compare
-   Should complete in < 1 second
-   ```
+
+    ```
+    Dev Tools → Network tab
+    Look for /admin/api/certifications/.../compare
+    Should complete in < 1 second
+    ```
 
 2. **Try with smaller set:**
-   ```
-   Compare v4 to v5 (fewer changes)
-   vs
-   Compare v1 to current
-   ```
+
+    ```
+    Compare v4 to v5 (fewer changes)
+    vs
+    Compare v1 to current
+    ```
 
 3. **Restart if stuck:**
-   ```
-   Escape or close modal
-   Refresh page completely
-   Try again
-   ```
+    ```
+    Escape or close modal
+    Refresh page completely
+    Try again
+    ```
 
 ---
 
@@ -474,13 +493,13 @@ Response should show:
 ```
 1. Too many questions (1000+)
    → Paginate questions list
-   
+
 2. Large JSON settings
    → Validates on load
-   
+
 3. Database query slow
    → Check certification relationship loads
-   
+
 4. Network latency
    → Check network tab timing
 ```
@@ -488,31 +507,34 @@ Response should show:
 **Solution:**
 
 1. **Profile the load time:**
-   ```bash
-   # In browser console
-   window.time_start = performance.now();
-   
-   # Wait for page to load
-   
-   window.time_end = performance.now();
-   console.log(time_end - time_start); // ms
-   ```
+
+    ```bash
+    # In browser console
+    window.time_start = performance.now();
+
+    # Wait for page to load
+
+    window.time_end = performance.now();
+    console.log(time_end - time_start); // ms
+    ```
 
 2. **Check specific endpoints:**
-   ```
-   Dev Tools → Network → Slow request?
-   See which endpoint takes longest
-   ```
+
+    ```
+    Dev Tools → Network → Slow request?
+    See which endpoint takes longest
+    ```
 
 3. **Optimize database:**
-   ```bash
-   # Run migrations
-   php artisan migrate
-   
-   # Check indexes
-   php artisan tinker
-   > Schema::getIndexes('certifications')
-   ```
+
+    ```bash
+    # Run migrations
+    php artisan migrate
+
+    # Check indexes
+    php artisan tinker
+    > Schema::getIndexes('certifications')
+    ```
 
 ---
 
@@ -526,7 +548,7 @@ Response should show:
 
 ```javascript
 // In browser console, disable validation temporarily
-document.getElementById('name').removeEventListener('input', validateField);
+document.getElementById("name").removeEventListener("input", validateField);
 
 // Or increase debounce time in code
 // (Contact dev team to adjust)
@@ -565,22 +587,24 @@ curl -H "Authorization: Bearer {token}" \
 **Solution:**
 
 1. **Verify certification exists:**
-   ```bash
-   php artisan tinker
-   > Certification::find($id) // Should not be null
-   ```
+
+    ```bash
+    php artisan tinker
+    > Certification::find($id) // Should not be null
+    ```
 
 2. **Check routes are registered:**
-   ```bash
-   php artisan route:list | grep api/certifications
-   ```
+
+    ```bash
+    php artisan route:list | grep api/certifications
+    ```
 
 3. **Verify route in web.php:**
-   ```php
-   Route::prefix('admin/api')->group(function () {
-       Route::get('certifications/{id}/versions', [...]);
-   });
-   ```
+    ```php
+    Route::prefix('admin/api')->group(function () {
+        Route::get('certifications/{id}/versions', [...]);
+    });
+    ```
 
 ---
 
@@ -593,17 +617,18 @@ curl -H "Authorization: Bearer {token}" \
 **Solution:**
 
 1. **Check questions exist:**
-   ```bash
-   php artisan tinker
-   > Certification::find($id)->questions()->count()
-   // Should be > 0
-   ```
+
+    ```bash
+    php artisan tinker
+    > Certification::find($id)->questions()->count()
+    // Should be > 0
+    ```
 
 2. **Check questions are active:**
-   ```bash
-   > Certification::find($id)->questions()->where('active', true)->count()
-   // Should match expected count
-   ```
+    ```bash
+    > Certification::find($id)->questions()->where('active', true)->count()
+    // Should match expected count
+    ```
 
 ---
 
@@ -618,10 +643,10 @@ curl -H "Authorization: Bearer {token}" \
 ```
 ❌ "Column doesn't exist"
    → Check previous migrations ran
-   
+
 ❌ "Table already exists"
    → Already migrated
-   
+
 ❌ "Foreign key constraint fails"
    → Referenced table missing
 ```
@@ -672,32 +697,34 @@ php artisan certifications:archive-versions --before="2024-01-01"
 When reporting a problem:
 
 1. **Provide details:**
-   ```
-   - What were you doing?
-   - What happened?
-   - What should have happened?
-   - Any error messages?
-   - Browser/OS version?
-   ```
+
+    ```
+    - What were you doing?
+    - What happened?
+    - What should have happened?
+    - Any error messages?
+    - Browser/OS version?
+    ```
 
 2. **Include screenshots:**
-   - Error message
-   - Form state
-   - Network response
+    - Error message
+    - Form state
+    - Network response
 
 3. **Check logs:**
-   ```bash
-   tail -n 100 storage/logs/laravel.log
-   # Paste relevant entries
-   ```
+
+    ```bash
+    tail -n 100 storage/logs/laravel.log
+    # Paste relevant entries
+    ```
 
 4. **Gather debug info:**
-   ```bash
-   # Browser console (F12):
-   - Copy all red errors
-   - Copy network responses (422, 500, etc)
-   - Run: window.location.pathname
-   ```
+    ```bash
+    # Browser console (F12):
+    - Copy all red errors
+    - Copy network responses (422, 500, etc)
+    - Run: window.location.pathname
+    ```
 
 ---
 
@@ -764,6 +791,7 @@ Attachment: screenshot.png
 ### Q: Can I have multiple admins editing the same certification?
 
 A: Not simultaneously. If two admins try:
+
 - First one succeeds and creates new version
 - Second one gets 409 Conflict error
 - Second must reload page and redo changes
@@ -775,6 +803,7 @@ A: Not simultaneously. If two admins try:
 ### Q: Will reverting a version affect active quiz attempts?
 
 A: No. Active users continue with their version:
+
 - Users mid-quiz see original questions (v5)
 - After revert to v3, new attempts get v3 questions
 - Old v5 attempts continue unaffected
@@ -792,6 +821,7 @@ A: Indefinitely. They are immutable records for audit.
 ### Q: What happens if JSON settings are corrupted?
 
 A: Validation will prevent save:
+
 - Error message shows: "Invalid JSON syntax"
 - Fix the JSON and try again
 - Use jsonlint.com to validate
@@ -817,6 +847,7 @@ A: No. Versions are immutable for compliance.
 ## Still Need Help?
 
 Check the logs, ask your team, or create an issue with:
+
 - Exact error message
 - Steps to reproduce
 - Screenshots of the error

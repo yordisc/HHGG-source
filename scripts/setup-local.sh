@@ -76,6 +76,49 @@ run_privileged() {
   exit 1
 }
 
+disable_broken_apt_sources() {
+  for source_file in /etc/apt/sources.list.d/* /etc/apt/sources.list; do
+    [ -e "$source_file" ] || continue
+
+    if grep -qi 'dl.yarnpkg.com/debian' "$source_file" 2>/dev/null; then
+      log "[WARN] Desactivando repositorio roto de Yarn: $(basename "$source_file")"
+      run_privileged sed -i 's|^deb \(.*dl\.yarnpkg\.com/debian.*\)$|# disabled by setup-local.sh: deb \1|g' "$source_file"
+    fi
+  done
+}
+
+ensure_sury_php_repo() {
+  if grep -Rqi 'packages.sury.org/php' /etc/apt/sources.list /etc/apt/sources.list.d 2>/dev/null; then
+    return 0
+  fi
+
+  log "[INFO] Añadiendo repositorio PHP de Sury..."
+  run_privileged mkdir -p /etc/apt/keyrings
+
+  if ! command -v curl >/dev/null 2>&1 || ! command -v gpg >/dev/null 2>&1; then
+    log "[ERROR] curl y gpg son necesarios para añadir el repo PHP de Sury"
+    return 1
+  fi
+
+  if ! curl -fsSL https://packages.sury.org/php/apt.gpg | run_privileged gpg --dearmor -o /etc/apt/keyrings/sury-php.gpg; then
+    log "[ERROR] No se pudo importar la clave GPG de Sury"
+    return 1
+  fi
+
+  if [ -r /etc/os-release ]; then
+    . /etc/os-release
+    codename="${VERSION_CODENAME:-bullseye}"
+  else
+    codename="bullseye"
+  fi
+
+  printf '%s\n' "deb [signed-by=/etc/apt/keyrings/sury-php.gpg] https://packages.sury.org/php/ ${codename} main" | run_privileged tee /etc/apt/sources.list.d/sury-php.list >/dev/null
+}
+
+has_mysql_driver() {
+  php -r 'exit(extension_loaded("pdo_mysql") ? 0 : 1);' >/dev/null 2>&1
+}
+
 require_cmd() {
   if ! command -v "$1" >/dev/null 2>&1; then
     log "[ERROR] Falta comando requerido: $1"
@@ -84,22 +127,43 @@ require_cmd() {
 }
 
 install_deps() {
-  if command -v apk >/dev/null 2>&1; then
-    log "[INFO] Detectado Alpine. Instalando dependencias con apk..."
-    run_privileged apk add --no-cache \
-      php php-phar php-tokenizer php-xml php-xmlwriter php-mbstring php-openssl \
-      php-curl php-pdo php-pdo_mysql php-pdo_sqlite php-zip php-dom php-fileinfo \
-      php-session php-ctype php-json php-bcmath php-intl composer nodejs npm \
-      sqlite mariadb mariadb-client git unzip curl rsync
-  elif command -v apt-get >/dev/null 2>&1; then
+  if command -v apt-get >/dev/null 2>&1; then
     log "[INFO] Detectado Debian/Ubuntu/Linux Mint. Instalando dependencias con apt-get..."
+    php_version="$(php -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;' 2>/dev/null || true)"
+    if [ -n "$php_version" ]; then
+      mysql_php_package="php${php_version}-mysql"
+    else
+      mysql_php_package="php-mysql"
+    fi
+
+    disable_broken_apt_sources
+
     run_privileged apt-get update -y
-    run_privileged apt-get install -y \
-      php php-cli php-mbstring php-xml php-curl php-mysql php-zip \
+
+    if ! run_privileged apt-get install -y \
+      php php-cli php-mbstring php-xml php-curl "$mysql_php_package" php-zip \
       php-bcmath php-intl composer nodejs npm default-mysql-server default-mysql-client \
-      git unzip curl rsync
+      git unzip curl rsync; then
+      log "[WARN] No se pudieron instalar las dependencias con los repositorios actuales."
+      log "[INFO] Reintentando tras agregar el repo PHP de Sury..."
+      if ! ensure_sury_php_repo; then
+        log "[ERROR] No se pudo preparar el repo PHP de Sury."
+        exit 1
+      fi
+
+      run_privileged apt-get update -y
+
+      if ! run_privileged apt-get install -y \
+        php php-cli php-mbstring php-xml php-curl "$mysql_php_package" php-zip \
+        php-bcmath php-intl composer nodejs npm default-mysql-server default-mysql-client \
+        git unzip curl rsync; then
+        log "[ERROR] No se pudieron instalar las dependencias ni con el repo PHP de Sury."
+        exit 1
+      fi
+    fi
   else
-    log "[WARN] No se detecto apk ni apt-get. Se omite instalacion automatica de paquetes."
+    log "[ERROR] Este bootstrap está pensado solo para Debian/apt."
+    exit 1
   fi
 }
 
