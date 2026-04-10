@@ -9,6 +9,7 @@ VITE_PORT="${VITE_PORT:-5173}"
 KILL_STALE="0"
 APP_PUBLIC_URL=""
 VITE_PUBLIC_URL=""
+XDEBUG_MODE_SETTING="${DEV_LOCAL_XDEBUG_MODE:-off}"
 
 log() {
   printf '%s\n' "$1"
@@ -234,9 +235,17 @@ run_development_stack() {
   normalize_hot_file_url
   trap cleanup_hot_file EXIT INT TERM
 
+  PHP_WITH_XDEBUG="XDEBUG_MODE=${XDEBUG_MODE_SETTING} php"
+
+  if [ "$XDEBUG_MODE_SETTING" = "off" ]; then
+    log "[INFO] Xdebug desactivado para server/queue (exporta DEV_LOCAL_XDEBUG_MODE=debug para habilitarlo)."
+  else
+    log "[INFO] Xdebug activo para server/queue (modo: ${XDEBUG_MODE_SETTING})."
+  fi
+
   if should_use_pail; then
     log "[INFO] Levantando entorno de desarrollo con Pail..."
-    APP_PORT="$APP_PORT" composer run dev
+    APP_PORT="$APP_PORT" XDEBUG_MODE="$XDEBUG_MODE_SETTING" composer run dev
     return
   fi
 
@@ -246,7 +255,7 @@ run_development_stack() {
     log "[WARN] La extension pcntl no esta disponible; se omite Pail."
   fi
   log "[INFO] Levantando entorno de desarrollo sin Pail..."
-  APP_URL="${APP_PUBLIC_URL}" VITE_PUBLIC_URL="${VITE_PUBLIC_URL}" npx concurrently -c "#93c5fd,#c4b5fd,#fdba74" "php artisan serve --host=0.0.0.0 --port=${APP_PORT}" "php artisan queue:listen --tries=1" "npm run dev -- --host=0.0.0.0 --port=${VITE_PORT} --strictPort" --names=server,queue,vite
+  APP_URL="${APP_PUBLIC_URL}" VITE_PUBLIC_URL="${VITE_PUBLIC_URL}" npx concurrently -c "#93c5fd,#c4b5fd,#fdba74" "${PHP_WITH_XDEBUG} artisan serve --host=0.0.0.0 --port=${APP_PORT}" "${PHP_WITH_XDEBUG} artisan queue:listen --tries=1" "npm run dev -- --host=0.0.0.0 --port=${VITE_PORT} --strictPort" --names=server,queue,vite
 }
 
 main() {
