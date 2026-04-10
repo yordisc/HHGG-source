@@ -1,11 +1,11 @@
 #!/bin/bash
 # ─────────────────────────────────────────────────────────────────────────────
-# post-start.sh — Versión para SQLite
+# post-start.sh — MySQL/MariaDB para Codespaces
 # Se ejecuta CADA VEZ que el Codespace arranca (no solo la primera vez).
-# Verifica la base de datos SQLite y ejecuta migraciones si es necesario.
+# Verifica que MySQL/MariaDB esté disponible y ejecuta migraciones/seeders.
 # ─────────────────────────────────────────────────────────────────────────────
 
-set -e
+set -euo pipefail
 
 echo ""
 echo "╔══════════════════════════════════════════════════════════════╗"
@@ -16,111 +16,128 @@ echo ""
 WORKSPACE_DIR="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 cd "$WORKSPACE_DIR"
 
-# ─── 1. Verificar base de datos SQLite ───────────────────────────────────────
-echo "► Verificando base de datos SQLite..."
-mkdir -p database
-touch database/database.sqlite
-echo "   ✓ Base de datos SQLite lista"
+start_mysql_service() {
+  echo "► Iniciando servicio MySQL/MariaDB..."
 
-# ─── 2. Ejecutar migraciones (si hay nuevas o es la primera vez) ────────────
-echo ""
-echo "► Ejecutando migraciones de base de datos..."
-
-# Crear tabla de caché si no existe
-php artisan cache:table 2>/dev/null || true
-php artisan session:table 2>/dev/null || true
-
-# Ejecutar migraciones
-php artisan migrate --no-interaction --force 2>&1
-
-echo "   ✓ Migraciones ejecutadas"
-
-# ─── 3. Ejecutar seeders (solo si la tabla questions está vacía) ─────────────
-echo ""
-echo "► Verificando datos de ejemplo en la base de datos..."
-
-QUESTION_COUNT=$(php artisan tinker --execute="echo \App\Models\Question::count();" 2>/dev/null | tail -1 | tr -d '[:space:]' || echo "0")
-
-if [ "$QUESTION_COUNT" = "0" ] || [ -z "$QUESTION_COUNT" ]; then
-  echo "   No hay preguntas en la DB — ejecutando seeders..."
-  php artisan db:seed --no-interaction 2>&1
-  echo "   ✓ Datos de ejemplo cargados"
-else
-  echo "   ✓ Ya existen $QUESTION_COUNT preguntas en la DB (saltando seeders)"
-fi
-
-# ─── 4. Limpiar caché de desarrollo ─────────────────────────────────────────
-echo ""
-echo "► Limpiando caché de desarrollo..."
-php artisan config:clear 2>/dev/null || true
-php artisan route:clear 2>/dev/null || true
-php artisan view:clear 2>/dev/null || true
-echo "   ✓ Caché limpiada"
-
-# ─── 5. Verificar que todos los archivos necesarios existen ─────────────────
-echo ""
-echo "► Verificando estructura del proyecto..."
-
-MISSING=0
-
-check_dir() {
-  if [ ! -d "$1" ]; then
-    echo "   ⚠ Falta carpeta: $1"
-    mkdir -p "$1"
-    MISSING=$((MISSING + 1))
+  if service mysql start >/dev/null 2>&1; then
+    :
+  elif service mariadb start >/dev/null 2>&1; then
+    :
   fi
 }
 
-check_file() {
-  if [ ! -f "$1" ]; then
-    echo "   ⚠ Falta archivo: $1"
-    MISSING=$((MISSING + 1))
+wait_for_mysql() {
+  echo "► Esperando a que MySQL responda..."
+
+  for _ in $(seq 1 30); do
+    if mysqladmin ping -h 127.0.0.1 -u root --silent >/dev/null 2>&1; then
+      echo "   ✓ MySQL disponible"
+      return 0
+    fi
+    sleep 1
+  done
+
+  echo "   ⚠ MySQL no respondió a tiempo"
+  return 1
+}
+
+configure_mysql_database() {
+  echo "► Asegurando base de datos y usuario de desarrollo..."
+
+  mysql -u root <<'SQL'
+CREATE DATABASE IF NOT EXISTS certificados_dev CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER IF NOT EXISTS 'laravel'@'%' IDENTIFIED BY 'secret';
+GRANT ALL PRIVILEGES ON certificados_dev.* TO 'laravel'@'%';
+FLUSH PRIVILEGES;
+SQL
+
+  echo "   ✓ MySQL listo para el proyecto"
+}
+
+run_migrations() {
+  echo ""
+  echo "► Ejecutando migraciones de base de datos..."
+
+  php artisan cache:table 2>/dev/null || true
+  php artisan session:table 2>/dev/null || true
+
+  DB_CONNECTION=mysql \
+  DB_HOST=127.0.0.1 \
+  DB_PORT=3306 \
+  DB_DATABASE=certificados_dev \
+  DB_USERNAME=laravel \
+  DB_PASSWORD=secret \
+  php artisan migrate --no-interaction --force
+
+  echo "   ✓ Migraciones ejecutadas"
+}
+
+run_seeders_if_needed() {
+  echo ""
+  echo "► Verificando datos de ejemplo en la base de datos..."
+
+  QUESTION_COUNT=$(DB_CONNECTION=mysql \
+    DB_HOST=127.0.0.1 \
+    DB_PORT=3306 \
+    DB_DATABASE=certificados_dev \
+    DB_USERNAME=laravel \
+    DB_PASSWORD=secret \
+    php artisan tinker --execute="echo \\App\\Models\\Question::count();" 2>/dev/null | tail -1 | tr -d '[:space:]' || echo "0")
+
+  if [ "$QUESTION_COUNT" = "0" ] || [ -z "$QUESTION_COUNT" ]; then
+    echo "   No hay preguntas en la DB — ejecutando seeders..."
+    DB_CONNECTION=mysql \
+    DB_HOST=127.0.0.1 \
+    DB_PORT=3306 \
+    DB_DATABASE=certificados_dev \
+    DB_USERNAME=laravel \
+    DB_PASSWORD=secret \
+    php artisan db:seed --no-interaction
+    echo "   ✓ Datos de ejemplo cargados"
+  else
+    echo "   ✓ Ya existen $QUESTION_COUNT preguntas en la DB (saltando seeders)"
   fi
 }
 
-check_dir "app/Livewire"
-check_dir "app/Services"
-check_dir "app/Console/Commands"
-check_dir "resources/views/layouts"
-check_dir "resources/views/livewire"
-check_dir "resources/views/cert"
-check_dir "resources/views/pdf"
-check_file ".env"
-check_file "artisan"
+clear_dev_cache() {
+  echo ""
+  echo "► Limpiando caché de desarrollo..."
+  php artisan config:clear 2>/dev/null || true
+  php artisan route:clear 2>/dev/null || true
+  php artisan view:clear 2>/dev/null || true
+  echo "   ✓ Caché limpiada"
+}
 
-if [ $MISSING -gt 0 ]; then
-  echo "   Se crearon $MISSING elementos faltantes"
-else
-  echo "   ✓ Estructura del proyecto correcta"
-fi
+show_status() {
+  echo ""
+  echo "╔══════════════════════════════════════════════════════════════╗"
+  echo "║   ✅ Codespace listo para desarrollar                        ║"
+  echo "╠══════════════════════════════════════════════════════════════╣"
+  echo "║                                                              ║"
+  echo "║   COMANDOS PARA EMPEZAR:                                     ║"
+  echo "║                                                              ║"
+  echo "║   Servidor de desarrollo:                                    ║"
+  echo "║   $ php artisan serve                                        ║"
+  echo "║                                                              ║"
+  echo "║   Assets (en otra terminal):                                 ║"
+  echo "║   $ npm run dev                                              ║"
+  echo "║                                                              ║"
+  echo "║   Ver todas las rutas disponibles:                           ║"
+  echo "║   $ php artisan route:list                                   ║"
+  echo "║                                                              ║"
+  echo "║   Consola interactiva (Tinker):                              ║"
+  echo "║   $ php artisan tinker                                       ║"
+  echo "║                                                              ║"
+  echo "║   Ver el plan del proyecto:                                  ║"
+  echo "║   $ cat plan_certificados_laravel.md                         ║"
+  echo "╚══════════════════════════════════════════════════════════════╝"
+  echo ""
+}
 
-# ─── 6. Mostrar estado del proyecto ─────────────────────────────────────────
-echo ""
-echo "╔══════════════════════════════════════════════════════════════╗"
-echo "║   ✅ Codespace listo para desarrollar                        ║"
-echo "╠══════════════════════════════════════════════════════════════╣"
-echo "║                                                              ║"
-echo "║   COMANDOS PARA EMPEZAR:                                     ║"
-echo "║                                                              ║"
-echo "║   Servidor de desarrollo:                                    ║"
-echo "║   $ php artisan serve                                        ║"
-echo "║                                                              ║"
-echo "║   Assets (en otra terminal):                                 ║"
-echo "║   $ npm run dev                                              ║"
-echo "║                                                              ║"
-echo "║   Ver todas las rutas disponibles:                           ║"
-echo "║   $ php artisan route:list                                   ║"
-echo "║                                                              ║"
-echo "║   Crear nuevo componente Livewire:                           ║"
-echo "║   $ php artisan make:livewire NombreComponente               ║"
-echo "║                                                              ║"
-echo "║   Crear nueva migración:                                     ║"
-echo "║   $ php artisan make:migration nombre_de_la_migracion        ║"
-echo "║                                                              ║"
-echo "║   Consola interactiva (Tinker):                              ║"
-echo "║   $ php artisan tinker                                       ║"
-echo "║                                                              ║"
-echo "║   Ver el plan del proyecto:                                  ║"
-echo "║   $ cat plan_certificados_laravel.md                         ║"
-echo "╚══════════════════════════════════════════════════════════════╝"
-echo ""
+start_mysql_service
+wait_for_mysql
+configure_mysql_database
+run_migrations
+run_seeders_if_needed
+clear_dev_cache
+show_status

@@ -10,9 +10,6 @@
         "ghcr.io/devcontainers/features/github-cli:1": {}
     },
 
-    // ─── Servicios Docker (MySQL local para desarrollo) ──────────────────────────
-    "dockerComposeFile": "docker-compose.yml",
-    "service": "app",
     "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
 
     // ─── Extensiones de VS Code que se instalan automáticamente ─────────────────

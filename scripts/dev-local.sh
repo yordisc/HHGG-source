@@ -3,6 +3,19 @@ set -eu
 
 PROJECT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
 
+ENV_FILE="$PROJECT_DIR/.env"
+LOCAL_APP_ENV="local"
+LOCAL_DB_CONNECTION="mysql"
+LOCAL_DB_HOST="127.0.0.1"
+LOCAL_DB_PORT="3306"
+LOCAL_DB_DATABASE="certificados_dev"
+LOCAL_DB_USERNAME="laravel"
+LOCAL_DB_PASSWORD="secret"
+LOCAL_CACHE_STORE="database"
+LOCAL_SESSION_DRIVER="database"
+LOCAL_QUEUE_CONNECTION="database"
+LOCAL_MAIL_MAILER="log"
+
 MODE="serve"
 APP_PORT="${PORT:-8000}"
 VITE_PORT="${VITE_PORT:-5173}"
@@ -24,6 +37,55 @@ require_cmd() {
   if ! command -v "$1" >/dev/null 2>&1; then
     fail "Falta el comando requerido: $1"
   fi
+}
+
+ensure_env_file() {
+  if [ ! -f "$ENV_FILE" ]; then
+    log "[INFO] Creando .env desde .env.example..."
+    cp "$PROJECT_DIR/.env.example" "$ENV_FILE"
+  fi
+}
+
+ensure_app_key() {
+  if ! grep -q '^APP_KEY=base64:.*' "$ENV_FILE" 2>/dev/null; then
+    log "[INFO] Generando APP_KEY..."
+    php artisan key:generate --force --no-interaction >/dev/null
+  fi
+}
+
+install_php_dependencies() {
+  if [ ! -f "$PROJECT_DIR/vendor/autoload.php" ]; then
+    log "[INFO] Instalando dependencias de Composer..."
+    composer install --no-interaction --prefer-dist
+  fi
+}
+
+install_node_dependencies() {
+  if [ ! -d "$PROJECT_DIR/node_modules" ]; then
+    log "[INFO] Instalando dependencias de Node..."
+    npm install --no-audit --no-fund
+  fi
+}
+
+prepare_application_state() {
+  ensure_env_file
+  install_php_dependencies
+  install_node_dependencies
+  ensure_app_key
+
+  log "[INFO] Ejecutando migraciones locales..."
+  APP_ENV="$LOCAL_APP_ENV" \
+  DB_CONNECTION="$LOCAL_DB_CONNECTION" \
+  DB_HOST="$LOCAL_DB_HOST" \
+  DB_PORT="$LOCAL_DB_PORT" \
+  DB_DATABASE="$LOCAL_DB_DATABASE" \
+  DB_USERNAME="$LOCAL_DB_USERNAME" \
+  DB_PASSWORD="$LOCAL_DB_PASSWORD" \
+  CACHE_STORE="$LOCAL_CACHE_STORE" \
+  SESSION_DRIVER="$LOCAL_SESSION_DRIVER" \
+  QUEUE_CONNECTION="$LOCAL_QUEUE_CONNECTION" \
+  MAIL_MAILER="$LOCAL_MAIL_MAILER" \
+  php artisan migrate --force --no-interaction
 }
 
 has_pcntl() {
@@ -69,7 +131,15 @@ resolve_ports() {
   REQUESTED_APP_PORT="$APP_PORT"
   REQUESTED_VITE_PORT="$VITE_PORT"
 
-  APP_PORT="$(pick_available_port "$REQUESTED_APP_PORT" 40)" || fail "No se encontro puerto libre para Laravel a partir de ${REQUESTED_APP_PORT}."
+  if is_codespaces; then
+    if ! is_port_available "$REQUESTED_APP_PORT"; then
+      fail "El puerto ${REQUESTED_APP_PORT} ya esta ocupado en Codespaces. Ejecuta con --kill-stale o libera ese puerto antes de iniciar."
+    fi
+    APP_PORT="$REQUESTED_APP_PORT"
+  else
+    APP_PORT="$(pick_available_port "$REQUESTED_APP_PORT" 40)" || fail "No se encontro puerto libre para Laravel a partir de ${REQUESTED_APP_PORT}."
+  fi
+
   VITE_PORT="$(pick_available_port "$REQUESTED_VITE_PORT" 40)" || fail "No se encontro puerto libre para Vite a partir de ${REQUESTED_VITE_PORT}."
 
   if [ "$APP_PORT" != "$REQUESTED_APP_PORT" ]; then
@@ -112,6 +182,10 @@ kill_port_processes() {
 }
 
 prepare_ports() {
+  if is_codespaces; then
+    KILL_STALE="1"
+  fi
+
   if [ "$KILL_STALE" = "1" ]; then
     log "[INFO] --kill-stale activo: limpiando puertos objetivo antes de iniciar."
     kill_port_processes "$APP_PORT"
@@ -245,7 +319,21 @@ run_development_stack() {
 
   if should_use_pail; then
     log "[INFO] Levantando entorno de desarrollo con Pail..."
-    APP_PORT="$APP_PORT" XDEBUG_MODE="$XDEBUG_MODE_SETTING" composer run dev
+    APP_ENV="$LOCAL_APP_ENV" \
+    APP_URL="$APP_PUBLIC_URL" \
+    DB_CONNECTION="$LOCAL_DB_CONNECTION" \
+    DB_HOST="$LOCAL_DB_HOST" \
+    DB_PORT="$LOCAL_DB_PORT" \
+    DB_DATABASE="$LOCAL_DB_DATABASE" \
+    DB_USERNAME="$LOCAL_DB_USERNAME" \
+    DB_PASSWORD="$LOCAL_DB_PASSWORD" \
+    CACHE_STORE="$LOCAL_CACHE_STORE" \
+    SESSION_DRIVER="$LOCAL_SESSION_DRIVER" \
+    QUEUE_CONNECTION="$LOCAL_QUEUE_CONNECTION" \
+    MAIL_MAILER="$LOCAL_MAIL_MAILER" \
+    APP_PORT="$APP_PORT" \
+    VITE_PORT="$VITE_PORT" \
+    XDEBUG_MODE="$XDEBUG_MODE_SETTING" composer run dev
     return
   fi
 
@@ -255,7 +343,20 @@ run_development_stack() {
     log "[WARN] La extension pcntl no esta disponible; se omite Pail."
   fi
   log "[INFO] Levantando entorno de desarrollo sin Pail..."
-  APP_URL="${APP_PUBLIC_URL}" VITE_PUBLIC_URL="${VITE_PUBLIC_URL}" npx concurrently -c "#93c5fd,#c4b5fd,#fdba74" "${PHP_WITH_XDEBUG} artisan serve --host=0.0.0.0 --port=${APP_PORT}" "${PHP_WITH_XDEBUG} artisan queue:listen --tries=1" "npm run dev -- --host=0.0.0.0 --port=${VITE_PORT} --strictPort" --names=server,queue,vite
+  APP_ENV="$LOCAL_APP_ENV" \
+  APP_URL="${APP_PUBLIC_URL}" \
+  DB_CONNECTION="$LOCAL_DB_CONNECTION" \
+  DB_HOST="$LOCAL_DB_HOST" \
+  DB_PORT="$LOCAL_DB_PORT" \
+  DB_DATABASE="$LOCAL_DB_DATABASE" \
+  DB_USERNAME="$LOCAL_DB_USERNAME" \
+  DB_PASSWORD="$LOCAL_DB_PASSWORD" \
+  CACHE_STORE="$LOCAL_CACHE_STORE" \
+  SESSION_DRIVER="$LOCAL_SESSION_DRIVER" \
+  QUEUE_CONNECTION="$LOCAL_QUEUE_CONNECTION" \
+  MAIL_MAILER="$LOCAL_MAIL_MAILER" \
+  VITE_PORT="$VITE_PORT" \
+  VITE_PUBLIC_URL="${VITE_PUBLIC_URL}" npx concurrently -c "#93c5fd,#c4b5fd,#fdba74" "${PHP_WITH_XDEBUG} artisan serve --host=0.0.0.0 --port=${APP_PORT}" "${PHP_WITH_XDEBUG} artisan queue:listen --tries=1" "npm run dev" --names=server,queue,vite
 }
 
 main() {
@@ -266,6 +367,10 @@ main() {
   require_cmd php
   require_cmd composer
   require_cmd npm
+
+  if [ "$MODE" = "serve" ]; then
+    prepare_application_state
+  fi
 
   if [ "$MODE" = "test" ] || [ "$MODE" = "all" ]; then
     log "[INFO] Ejecutando validacion previa con tests..."
