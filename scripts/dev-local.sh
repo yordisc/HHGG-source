@@ -23,6 +23,66 @@ KILL_STALE="0"
 APP_PUBLIC_URL=""
 VITE_PUBLIC_URL=""
 XDEBUG_MODE_SETTING="${DEV_LOCAL_XDEBUG_MODE:-off}"
+FRONTEND_MODE="vite"
+
+read_env_value() {
+  KEY="$1"
+
+  if [ ! -f "$ENV_FILE" ]; then
+    return 0
+  fi
+
+  VALUE="$(grep -E "^${KEY}=" "$ENV_FILE" | tail -n 1 | cut -d '=' -f2- || true)"
+  if [ -z "$VALUE" ]; then
+    return 0
+  fi
+
+  FIRST_CHAR="$(printf '%s' "$VALUE" | cut -c1)"
+  LAST_CHAR="$(printf '%s' "$VALUE" | awk '{print substr($0, length, 1)}')"
+
+  if [ "$FIRST_CHAR" = '"' ] && [ "$LAST_CHAR" = '"' ]; then
+    VALUE="${VALUE#\"}"
+    VALUE="${VALUE%\"}"
+  elif [ "$FIRST_CHAR" = "'" ] && [ "$LAST_CHAR" = "'" ]; then
+    VALUE="${VALUE#\'}"
+    VALUE="${VALUE%\'}"
+  fi
+
+  printf '%s' "$VALUE"
+}
+
+resolve_config_value() {
+  KEY="$1"
+  DEFAULT_VALUE="$2"
+
+  CURRENT_VALUE="$(printenv "$KEY" 2>/dev/null || true)"
+  if [ -n "$CURRENT_VALUE" ]; then
+    printf '%s' "$CURRENT_VALUE"
+    return 0
+  fi
+
+  ENV_FILE_VALUE="$(read_env_value "$KEY")"
+  if [ -n "$ENV_FILE_VALUE" ]; then
+    printf '%s' "$ENV_FILE_VALUE"
+    return 0
+  fi
+
+  printf '%s' "$DEFAULT_VALUE"
+}
+
+init_local_runtime_config() {
+  LOCAL_APP_ENV="$(resolve_config_value APP_ENV "$LOCAL_APP_ENV")"
+  LOCAL_DB_CONNECTION="$(resolve_config_value DB_CONNECTION "$LOCAL_DB_CONNECTION")"
+  LOCAL_DB_HOST="$(resolve_config_value DB_HOST "$LOCAL_DB_HOST")"
+  LOCAL_DB_PORT="$(resolve_config_value DB_PORT "$LOCAL_DB_PORT")"
+  LOCAL_DB_DATABASE="$(resolve_config_value DB_DATABASE "$LOCAL_DB_DATABASE")"
+  LOCAL_DB_USERNAME="$(resolve_config_value DB_USERNAME "$LOCAL_DB_USERNAME")"
+  LOCAL_DB_PASSWORD="$(resolve_config_value DB_PASSWORD "$LOCAL_DB_PASSWORD")"
+  LOCAL_CACHE_STORE="$(resolve_config_value CACHE_STORE "$LOCAL_CACHE_STORE")"
+  LOCAL_SESSION_DRIVER="$(resolve_config_value SESSION_DRIVER "$LOCAL_SESSION_DRIVER")"
+  LOCAL_QUEUE_CONNECTION="$(resolve_config_value QUEUE_CONNECTION "$LOCAL_QUEUE_CONNECTION")"
+  LOCAL_MAIL_MAILER="$(resolve_config_value MAIL_MAILER "$LOCAL_MAIL_MAILER")"
+}
 
 log() {
   printf '%s\n' "$1"
@@ -86,8 +146,111 @@ ensure_env_file() {
 ensure_app_key() {
   if ! grep -q '^APP_KEY=base64:.*' "$ENV_FILE" 2>/dev/null; then
     log "[INFO] Generando APP_KEY..."
-    php artisan key:generate --force --no-interaction >/dev/null
+    XDEBUG_MODE=off php artisan key:generate --force --no-interaction >/dev/null
   fi
+}
+
+is_safe_mysql_name() {
+  VALUE="$1"
+  case "$VALUE" in
+    *[!A-Za-z0-9_]*|'')
+      return 1
+      ;;
+    *)
+      return 0
+      ;;
+  esac
+}
+
+can_connect_with_app_mysql_credentials() {
+  if ! command -v mysql >/dev/null 2>&1; then
+    return 1
+  fi
+
+  mysql --protocol=TCP \
+    -h "$LOCAL_DB_HOST" \
+    -P "$LOCAL_DB_PORT" \
+    -u "$LOCAL_DB_USERNAME" \
+    -p"$LOCAL_DB_PASSWORD" \
+    -e 'SELECT 1;' >/dev/null 2>&1
+}
+
+can_connect_as_mysql_root() {
+  if ! command -v mysql >/dev/null 2>&1; then
+    return 1
+  fi
+
+  if mysql -u root -e 'SELECT 1;' >/dev/null 2>&1; then
+    return 0
+  fi
+
+  if mysql --protocol=TCP -h "$LOCAL_DB_HOST" -P "$LOCAL_DB_PORT" -u root -e 'SELECT 1;' >/dev/null 2>&1; then
+    return 0
+  fi
+
+  run_privileged mysql -u root -e 'SELECT 1;' >/dev/null 2>&1
+}
+
+run_mysql_as_root() {
+  MYSQL_SQL="$1"
+
+  if mysql -u root -e 'SELECT 1;' >/dev/null 2>&1; then
+    mysql -u root -e "$MYSQL_SQL" >/dev/null
+    return
+  fi
+
+  if mysql --protocol=TCP -h "$LOCAL_DB_HOST" -P "$LOCAL_DB_PORT" -u root -e 'SELECT 1;' >/dev/null 2>&1; then
+    mysql --protocol=TCP -h "$LOCAL_DB_HOST" -P "$LOCAL_DB_PORT" -u root -e "$MYSQL_SQL" >/dev/null
+    return
+  fi
+
+  run_privileged mysql -u root -e "$MYSQL_SQL" >/dev/null
+}
+
+bootstrap_mysql_permissions_if_needed() {
+  if can_connect_with_app_mysql_credentials; then
+    return 0
+  fi
+
+  if [ "$LOCAL_DB_CONNECTION" != "mysql" ]; then
+    return 0
+  fi
+
+  if ! command -v mysql >/dev/null 2>&1; then
+    fail "No se pudo validar MySQL (falta cliente mysql) y las credenciales actuales no funcionan para migrar."
+  fi
+
+  log "[WARN] No se pudo autenticar en MySQL con ${LOCAL_DB_USERNAME}@${LOCAL_DB_HOST}:${LOCAL_DB_PORT}."
+  log "[INFO] Intentando crear base/usuario con root..."
+
+  if ! is_safe_mysql_name "$LOCAL_DB_DATABASE"; then
+    fail "DB_DATABASE invalido para bootstrap automatico: ${LOCAL_DB_DATABASE}"
+  fi
+
+  if ! is_safe_mysql_name "$LOCAL_DB_USERNAME"; then
+    fail "DB_USERNAME invalido para bootstrap automatico: ${LOCAL_DB_USERNAME}"
+  fi
+
+  if ! can_connect_as_mysql_root; then
+    fail "No fue posible autenticarse como root para crear permisos. Ajusta .env o crea el usuario manualmente."
+  fi
+
+  ESCAPED_DB_PASSWORD="$(printf '%s' "$LOCAL_DB_PASSWORD" | sed "s/'/''/g")"
+
+  ROOT_SQL="CREATE DATABASE IF NOT EXISTS ${LOCAL_DB_DATABASE} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+  ROOT_SQL="${ROOT_SQL} CREATE USER IF NOT EXISTS '${LOCAL_DB_USERNAME}'@'%' IDENTIFIED BY '${ESCAPED_DB_PASSWORD}';"
+  ROOT_SQL="${ROOT_SQL} CREATE USER IF NOT EXISTS '${LOCAL_DB_USERNAME}'@'localhost' IDENTIFIED BY '${ESCAPED_DB_PASSWORD}';"
+  ROOT_SQL="${ROOT_SQL} GRANT ALL PRIVILEGES ON ${LOCAL_DB_DATABASE}.* TO '${LOCAL_DB_USERNAME}'@'%';"
+  ROOT_SQL="${ROOT_SQL} GRANT ALL PRIVILEGES ON ${LOCAL_DB_DATABASE}.* TO '${LOCAL_DB_USERNAME}'@'localhost';"
+  ROOT_SQL="${ROOT_SQL} FLUSH PRIVILEGES;"
+
+  run_mysql_as_root "$ROOT_SQL"
+
+  if ! can_connect_with_app_mysql_credentials; then
+    fail "Se crearon permisos en MySQL, pero ${LOCAL_DB_USERNAME} todavia no puede autenticarse. Revisa DB_HOST/DB_PORT/DB_PASSWORD en .env."
+  fi
+
+  log "[OK] Permisos MySQL listos para ${LOCAL_DB_USERNAME}."
 }
 
 install_php_dependencies() {
@@ -106,9 +269,18 @@ install_node_dependencies() {
 
 prepare_application_state() {
   ensure_env_file
+  init_local_runtime_config
+  resolve_frontend_mode
   install_php_dependencies
   install_node_dependencies
   ensure_app_key
+  bootstrap_mysql_permissions_if_needed
+
+  if [ "$FRONTEND_MODE" = "build-watch" ]; then
+    log "[INFO] Generando build inicial de assets (modo Codespaces)..."
+    npm run build >/dev/null
+    cleanup_hot_file
+  fi
 
   log "[INFO] Ejecutando migraciones locales..."
   APP_ENV="$LOCAL_APP_ENV" \
@@ -122,7 +294,7 @@ prepare_application_state() {
   SESSION_DRIVER="$LOCAL_SESSION_DRIVER" \
   QUEUE_CONNECTION="$LOCAL_QUEUE_CONNECTION" \
   MAIL_MAILER="$LOCAL_MAIL_MAILER" \
-  php artisan migrate --force --no-interaction
+  XDEBUG_MODE=off php artisan migrate --force --no-interaction
 }
 
 has_pcntl() {
@@ -131,6 +303,22 @@ has_pcntl() {
 
 is_codespaces() {
   [ "${CODESPACES:-}" = "true" ]
+}
+
+resolve_frontend_mode() {
+  REQUESTED_FRONTEND_MODE="${DEV_LOCAL_FRONTEND_MODE:-}"
+
+  if [ -n "$REQUESTED_FRONTEND_MODE" ]; then
+    FRONTEND_MODE="$REQUESTED_FRONTEND_MODE"
+    return
+  fi
+
+  if is_codespaces; then
+    FRONTEND_MODE="build-watch"
+    return
+  fi
+
+  FRONTEND_MODE="vite"
 }
 
 is_port_available() {
@@ -258,12 +446,41 @@ should_use_pail() {
 
 print_access_hint() {
   resolve_public_urls
+  resolve_frontend_mode
 
   log "[INFO] Laravel escuchando en 0.0.0.0:${APP_PORT}"
-  log "[INFO] Vite escuchando en 0.0.0.0:${VITE_PORT}"
+  if [ "$FRONTEND_MODE" = "vite" ]; then
+    log "[INFO] Vite escuchando en 0.0.0.0:${VITE_PORT}"
+  else
+    log "[INFO] Assets servidos por Laravel (vite build --watch, sin puerto 5173)"
+  fi
 
   log "[INFO] URL de la aplicacion (usar esta): ${APP_PUBLIC_URL}"
-  log "[INFO] URL de Vite (solo assets/HMR): ${VITE_PUBLIC_URL}"
+  if [ "$FRONTEND_MODE" = "vite" ]; then
+    log "[INFO] URL de Vite (solo assets/HMR): ${VITE_PUBLIC_URL}"
+  fi
+}
+
+open_url_in_browser() {
+  TARGET_URL="$1"
+
+  if [ "${DEV_LOCAL_OPEN_BROWSER:-1}" = "0" ]; then
+    return
+  fi
+
+  if [ -n "${BROWSER:-}" ]; then
+    "$BROWSER" "$TARGET_URL" >/dev/null 2>&1 &
+    log "[INFO] Abriendo navegador: ${TARGET_URL}"
+    return
+  fi
+
+  if command -v xdg-open >/dev/null 2>&1; then
+    xdg-open "$TARGET_URL" >/dev/null 2>&1 &
+    log "[INFO] Abriendo navegador: ${TARGET_URL}"
+    return
+  fi
+
+  log "[WARN] No se pudo abrir navegador automaticamente. Usa: \"\$BROWSER\" \"${TARGET_URL}\""
 }
 
 normalize_hot_file_url() {
@@ -341,10 +558,17 @@ parse_args() {
 }
 
 run_development_stack() {
+  resolve_frontend_mode
   prepare_ports
   print_access_hint
-  normalize_hot_file_url
+  open_url_in_browser "$APP_PUBLIC_URL"
   trap cleanup_hot_file EXIT INT TERM
+
+  if [ "$FRONTEND_MODE" = "vite" ]; then
+    normalize_hot_file_url
+  else
+    cleanup_hot_file
+  fi
 
   PHP_WITH_XDEBUG="XDEBUG_MODE=${XDEBUG_MODE_SETTING} php"
 
@@ -380,6 +604,16 @@ run_development_stack() {
     log "[WARN] La extension pcntl no esta disponible; se omite Pail."
   fi
   log "[INFO] Levantando entorno de desarrollo sin Pail..."
+
+  FRONTEND_COMMAND="npm run dev"
+  FRONTEND_NAME="vite"
+
+  if [ "$FRONTEND_MODE" = "build-watch" ]; then
+    FRONTEND_COMMAND="npm run build -- --watch"
+    FRONTEND_NAME="assets"
+    log "[INFO] Modo frontend build-watch activo (evita problemas CSP/CORS de puertos en Codespaces)."
+  fi
+
   APP_ENV="$LOCAL_APP_ENV" \
   APP_URL="${APP_PUBLIC_URL}" \
   DB_CONNECTION="$LOCAL_DB_CONNECTION" \
@@ -393,7 +627,7 @@ run_development_stack() {
   QUEUE_CONNECTION="$LOCAL_QUEUE_CONNECTION" \
   MAIL_MAILER="$LOCAL_MAIL_MAILER" \
   VITE_PORT="$VITE_PORT" \
-  VITE_PUBLIC_URL="${VITE_PUBLIC_URL}" npx concurrently -c "#93c5fd,#c4b5fd,#fdba74" "${PHP_WITH_XDEBUG} artisan serve --host=0.0.0.0 --port=${APP_PORT}" "${PHP_WITH_XDEBUG} artisan queue:listen --tries=1" "npm run dev" --names=server,queue,vite
+  VITE_PUBLIC_URL="${VITE_PUBLIC_URL}" npx concurrently -c "#93c5fd,#c4b5fd,#fdba74" "${PHP_WITH_XDEBUG} artisan serve --host=0.0.0.0 --port=${APP_PORT}" "${PHP_WITH_XDEBUG} artisan queue:listen --tries=1" "${FRONTEND_COMMAND}" --names=server,queue,"${FRONTEND_NAME}"
 }
 
 main() {
@@ -405,6 +639,9 @@ main() {
   require_cmd composer
   require_cmd npm
   install_mysql_driver
+
+  ensure_env_file
+  init_local_runtime_config
 
   if [ "$MODE" = "serve" ]; then
     prepare_application_state

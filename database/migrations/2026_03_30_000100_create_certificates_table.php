@@ -25,8 +25,8 @@ return new class extends Migration {
             $table->unsignedTinyInteger('score_incorrect');
             $table->unsignedTinyInteger('total_questions')->default(30);
 
-            $table->timestamp('issued_at');
-            $table->timestamp('expires_at')->index();
+            $table->dateTime('issued_at');
+            $table->dateTime('expires_at')->index();
             $table->timestamp('last_attempt_at')->nullable();
             $table->timestamps();
         });

@@ -19,7 +19,7 @@ class SecureHeaders
         $response->headers->set('X-XSS-Protection', '1; mode=block');
         $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
 
-        $scriptSrc = "'self' 'unsafe-inline'";
+        $scriptSrc = "'self' 'unsafe-inline' https://cdn.jsdelivr.net";
         $styleSrc = "'self' 'unsafe-inline' https://fonts.googleapis.com";
         $connectSrc = "'self'";
 
@@ -35,9 +35,9 @@ class SecureHeaders
                 'wss://*.app.github.dev',
             ]);
 
-            $scriptSrc .= ' '.$devHosts;
-            $styleSrc .= ' '.$devHosts;
-            $connectSrc .= ' '.$devHosts;
+            $scriptSrc .= ' ' . $devHosts;
+            $styleSrc .= ' ' . $devHosts;
+            $connectSrc .= ' ' . $devHosts;
         }
 
         $response->headers->set(
