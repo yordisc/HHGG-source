@@ -33,12 +33,12 @@ has_mysql_driver() {
 }
 
 disable_broken_apt_sources() {
-  for source_file in /etc/apt/sources.list.d/* /etc/apt/sources.list; do
+  for source_file in /etc/apt/sources.list /etc/apt/sources.list.d/*; do
     [ -e "$source_file" ] || continue
 
     if grep -qi 'dl.yarnpkg.com/debian' "$source_file" 2>/dev/null; then
       echo "   • Desactivando repositorio roto de Yarn: $(basename "$source_file")"
-      run_privileged sed -i 's|^deb \(.*dl\.yarnpkg\.com/debian.*\)$|# disabled by on-create.sh: deb \1|g' "$source_file"
+      run_privileged sed -i '/dl\.yarnpkg\.com\/debian/d' "$source_file" || true
     fi
   done
 }

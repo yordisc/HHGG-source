@@ -1,6 +1,10 @@
 FROM mcr.microsoft.com/devcontainers/php:8.4-bullseye
 
 RUN set -eux; \
+  for source_file in /etc/apt/sources.list /etc/apt/sources.list.d/*.list; do \
+    [ -e "$source_file" ] || continue; \
+    sed -i '/dl\.yarnpkg\.com\/debian/d' "$source_file" || true; \
+  done; \
     apt-get update; \
     apt-get install -y --no-install-recommends \
       build-essential \
