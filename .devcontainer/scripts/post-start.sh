@@ -1,8 +1,8 @@
 #!/bin/bash
 # ─────────────────────────────────────────────────────────────────────────────
-# post-start.sh
+# post-start.sh — Versión para SQLite
 # Se ejecuta CADA VEZ que el Codespace arranca (no solo la primera vez).
-# Verifica que la base de datos esté lista y ejecuta migraciones si es necesario.
+# Verifica la base de datos SQLite y ejecuta migraciones si es necesario.
 # ─────────────────────────────────────────────────────────────────────────────
 
 set -e
@@ -16,23 +16,11 @@ echo ""
 WORKSPACE_DIR="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 cd "$WORKSPACE_DIR"
 
-# ─── 1. Esperar a que MySQL esté disponible ──────────────────────────────────
-echo "► Esperando a que MySQL esté listo..."
-MAX_TRIES=30
-TRIES=0
-
-until mysqladmin ping -h 127.0.0.1 -u laravel -psecret --silent 2>/dev/null; do
-  TRIES=$((TRIES + 1))
-  if [ $TRIES -ge $MAX_TRIES ]; then
-    echo "   ✗ MySQL no respondió después de ${MAX_TRIES} intentos"
-    echo "   Intenta reiniciar el Codespace o revisar el contenedor MySQL"
-    exit 1
-  fi
-  echo "   Intento $TRIES/$MAX_TRIES — esperando 3 segundos..."
-  sleep 3
-done
-
-echo "   ✓ MySQL está disponible"
+# ─── 1. Verificar base de datos SQLite ───────────────────────────────────────
+echo "► Verificando base de datos SQLite..."
+mkdir -p database
+touch database/database.sqlite
+echo "   ✓ Base de datos SQLite lista"
 
 # ─── 2. Ejecutar migraciones (si hay nuevas o es la primera vez) ────────────
 echo ""

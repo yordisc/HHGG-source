@@ -1,11 +1,11 @@
 #!/bin/bash
 # ─────────────────────────────────────────────────────────────────────────────
-# on-create.sh
+# on-create.sh — Versión para Alpine Linux
 # Se ejecuta UNA SOLA VEZ cuando el Codespace es creado por primera vez.
 # Instala todas las dependencias del proyecto y configura el entorno.
 # ─────────────────────────────────────────────────────────────────────────────
 
-set -e  # Detener si cualquier comando falla
+set -e
 
 echo ""
 echo "╔══════════════════════════════════════════════════════════════╗"
@@ -13,160 +13,59 @@ echo "║   Instituto de Certificaciones Dudosas™ — Setup inicial      ║"
 echo "╚══════════════════════════════════════════════════════════════╝"
 echo ""
 
-# ─── 1. Extensiones PHP requeridas ──────────────────────────────────────────
+# ─── 1. Instalar extensiones PHP requeridas ────────────────────────────────
 echo "► Instalando extensiones PHP necesarias..."
-sudo apt-get update -qq
-sudo apt-get install -y -qq \
-  php8.4-bcmath \
-  php8.4-xml \
-  php8.4-curl \
-  php8.4-mbstring \
-  php8.4-mysql \
-  php8.4-sqlite3 \
-  php8.4-gd \
-  php8.4-zip \
-  php8.4-intl \
-  libfreetype6-dev \
-  libjpeg62-turbo-dev \
-  libpng-dev \
-  default-mysql-client \
-  unzip
+sudo apk update
+sudo apk add --no-cache \
+  php84 php84-cli php84-json php84-pdo php84-pdo_mysql php84-pdo_sqlite \
+  php84-ctype php84-dom php84-mbstring php84-openssl php84-curl php84-zip \
+  php84-xml php84-intl php84-gd php84-bcmath php84-session php84-fileinfo \
+  php84-tokenizer php84-xmlwriter \
+  composer nodejs npm git unzip mysql-client
 
-echo "   ✓ Extensiones PHP instaladas"
+echo "   ✓ Extensiones PHP instaladas (PHP 8.4)"
 
-# ─── 1.1 Herramientas para tests y cobertura ───────────────────────────────
-echo ""
-echo "► Configurando herramientas para tests/cobertura..."
-
-# phpdbg suele permitir coverage sin Xdebug/PCOV.
-sudo apt-get install -y -qq php8.4-phpdbg || true
-
-# Intentar instalar Xdebug para cobertura en CLI.
-sudo apt-get install -y -qq php8.4-xdebug || true
-
-if php -m | grep -qi '^xdebug$'; then
-  XDEBUG_CLI_INI="/etc/php/8.4/cli/conf.d/99-xdebug-coverage.ini"
-  if [ ! -f "$XDEBUG_CLI_INI" ]; then
-    echo "xdebug.mode=coverage" | sudo tee "$XDEBUG_CLI_INI" >/dev/null
-  fi
-fi
-
-if command -v phpdbg >/dev/null 2>&1; then
-  echo "   ✓ phpdbg disponible para cobertura"
-else
-  echo "   ⚠ phpdbg no disponible"
-fi
-
-if php -m | grep -qi '^xdebug$'; then
-  echo "   ✓ xdebug disponible para cobertura"
-else
-  echo "   ⚠ xdebug no disponible (se podrá usar phpdbg si existe)"
-fi
-
-# ─── 2. Verificar que Composer está disponible ──────────────────────────────
+# ─── 2. Verificar que Composer está disponible ───────────────────────────────
 echo ""
 echo "► Verificando Composer..."
-if ! command -v composer &> /dev/null; then
-  echo "   Instalando Composer..."
-  curl -sS https://getcomposer.org/installer | php
-  sudo mv composer.phar /usr/local/bin/composer
-fi
 echo "   ✓ Composer $(composer --version --no-ansi | head -1)"
 
-# ─── 3. Verificar Node.js ───────────────────────────────────────────────────
+# ─── 3. Verificar Node.js ─────────────────────────────────────────────────────
 echo ""
 echo "► Verificando Node.js..."
 echo "   ✓ Node.js $(node --version) / npm $(npm --version)"
 
-# ─── 4. Instalar el proyecto Laravel (solo si no existe aún) ────────────────
+# ─── 4. Navegar al directorio del proyecto ──────────────────────────────────
 WORKSPACE_DIR="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 cd "$WORKSPACE_DIR"
 CURRENT_DIR=$(pwd)
 
 echo ""
 echo "► Directorio de trabajo: $CURRENT_DIR"
+echo "   ✓ Proyecto Laravel detectado"
 
-# Verificar si ya existe un proyecto Laravel
-if [ ! -f "$CURRENT_DIR/artisan" ]; then
-  echo ""
-  echo "► No se detectó proyecto Laravel. Creando proyecto nuevo..."
-  echo "   (Esto puede tardar 2-3 minutos)"
-  echo ""
-
-  # Crear el proyecto Laravel en una carpeta temporal y moverlo
-  cd /tmp
-  composer create-project laravel/laravel certificados-app --prefer-dist --no-interaction 2>&1 | tail -5
-
-  # Mover los archivos al workspace
-  cp -r /tmp/certificados-app/. "$CURRENT_DIR/"
-  echo "   ✓ Proyecto Laravel creado"
-else
-  echo "   ✓ Proyecto Laravel ya existe — saltando creación"
-fi
-
-cd "$CURRENT_DIR"
-
-# ─── 5. Instalar dependencias Composer del proyecto ─────────────────────────
+# ─── 5. Instalar dependencias Composer ─────────────────────────────────────
 echo ""
 echo "► Instalando dependencias PHP (Composer)..."
-composer install --no-interaction --prefer-dist 2>&1 | tail -5
-echo "   ✓ Dependencias PHP instaladas"
-
-# ─── 6. Instalar paquetes específicos del proyecto ──────────────────────────
-echo ""
-echo "► Instalando paquetes específicos del proyecto..."
-
-# Livewire (componentes interactivos)
-composer require livewire/livewire --no-interaction 2>&1 | tail -3
-
-# DomPDF (generación de certificados PDF)
-composer require barryvdh/laravel-dompdf --no-interaction 2>&1 | tail -3
-
-# QR Code (para el certificado PDF)
-composer require simplesoftwareio/simple-qrcode --no-interaction 2>&1 | tail -3
-
-# Lista de países del mundo
-composer require league/iso3166 --no-interaction 2>&1 | tail -3
-
-echo "   ✓ Paquetes del proyecto instalados"
-
-# ─── 7. Instalar dependencias NPM ───────────────────────────────────────────
-echo ""
-echo "► Instalando dependencias JavaScript (npm)..."
-npm install 2>&1 | tail -5
-npm install -D tailwindcss postcss autoprefixer 2>&1 | tail -3
-npm install alpinejs 2>&1 | tail -3
-echo "   ✓ Dependencias JavaScript instaladas"
-
-# ─── 8. Configurar Tailwind CSS ─────────────────────────────────────────────
-echo ""
-echo "► Configurando Tailwind CSS..."
-
-# Solo inicializar si no existe ya
-if [ ! -f "tailwind.config.js" ]; then
-  npx tailwindcss init -p 2>&1 | tail -3
+if [ -f "composer.json" ]; then
+  composer install --no-interaction --prefer-dist 2>&1 | tail -3
+  echo "   ✓ Dependencias PHP instaladas"
+else
+  echo "   ⚠ composer.json no encontrado"
 fi
 
-# Escribir configuración de Tailwind con paths correctos
-cat > tailwind.config.js << 'TAILWIND_EOF'
-/** @type {import('tailwindcss').Config} */
-export default {
-  content: [
-    "./resources/**/*.blade.php",
-    "./resources/**/*.js",
-    "./app/Livewire/**/*.php",
-    "./vendor/livewire/**/*.blade.php",
-  ],
-  theme: {
-    extend: {},
-  },
-  plugins: [],
-}
-TAILWIND_EOF
+# ─── 6. Instalar dependencias NPM ───────────────────────────────────────────
+echo ""
+echo "► Instalando dependencias JavaScript (npm)..."
+if [ -f "package.json" ]; then
+  npm install 2>&1 | tail -3
+  npm audit fix 2>/dev/null || true
+  echo "   ✓ Dependencias JavaScript instaladas"
+else
+  echo "   ⚠ package.json no encontrado"
+fi
 
-echo "   ✓ Tailwind CSS configurado"
-
-# ─── 9. Configurar el archivo .env ──────────────────────────────────────────
+# ─── 7. Configurar el archivo .env ──────────────────────────────────────────
 echo ""
 echo "► Configurando archivo .env..."
 
@@ -175,29 +74,53 @@ if [ ! -f ".env" ]; then
   echo "   Archivo .env creado desde .env.example"
 fi
 
-# Configurar conexión a MySQL local del Codespace
-sed -i 's/DB_CONNECTION=sqlite/DB_CONNECTION=mysql/' .env 2>/dev/null || true
-sed -i 's/DB_CONNECTION=.*/DB_CONNECTION=mysql/' .env
-sed -i 's/# DB_HOST=.*/DB_HOST=127.0.0.1/' .env
-sed -i 's/DB_HOST=.*/DB_HOST=127.0.0.1/' .env
-sed -i 's/# DB_PORT=.*/DB_PORT=3306/' .env
-sed -i 's/DB_PORT=.*/DB_PORT=3306/' .env
-sed -i 's/# DB_DATABASE=.*/DB_DATABASE=certificados_dev/' .env
-sed -i 's/DB_DATABASE=.*/DB_DATABASE=certificados_dev/' .env
-sed -i 's/# DB_USERNAME=.*/DB_USERNAME=laravel/' .env
-sed -i 's/DB_USERNAME=.*/DB_USERNAME=laravel/' .env
-sed -i 's/# DB_PASSWORD=.*/DB_PASSWORD=secret/' .env
-sed -i 's/DB_PASSWORD=.*/DB_PASSWORD=secret/' .env
+# Configurar para SQLite (no requiere servidor MySQL)
+sed -i 's/^DB_CONNECTION=.*/DB_CONNECTION=sqlite/' .env
+sed -i 's|^DB_DATABASE=.*|DB_DATABASE='$CURRENT_DIR'/database/database.sqlite|' .env
+sed -i 's/^CACHE_STORE=.*/CACHE_STORE=database/' .env
+sed -i 's/^SESSION_DRIVER=.*/SESSION_DRIVER=database/' .env
+sed -i 's/^QUEUE_CONNECTION=.*/QUEUE_CONNECTION=database/' .env
 
-# Configurar caché y sesión en base de datos (sin Redis)
-sed -i 's/CACHE_STORE=.*/CACHE_STORE=database/' .env
-sed -i 's/SESSION_DRIVER=.*/SESSION_DRIVER=database/' .env
-sed -i 's/QUEUE_CONNECTION=.*/QUEUE_CONNECTION=database/' .env
+echo "   ✓ .env configurado para SQLite"
 
-# Agregar variables del proyecto si no existen
-grep -q "LINKEDIN_ORG_ID" .env || echo "" >> .env
-grep -q "LINKEDIN_ORG_ID" .env || echo "# LinkedIn - Agregar ID de tu página de empresa" >> .env
-grep -q "LINKEDIN_ORG_ID" .env || echo "LINKEDIN_ORG_ID=" >> .env
+# ─── 8. Generar APP_KEY ────────────────────────────────────────────────────
+echo ""
+echo "► Generando APP_KEY..."
+php artisan key:generate --force 2>/dev/null || true
+echo "   ✓ APP_KEY generada"
+
+# ─── 9. Crear base de datos SQLite ──────────────────────────────────────────
+echo ""
+echo "► Creando base de datos SQLite..."
+mkdir -p database
+touch database/database.sqlite
+echo "   ✓ Base de datos SQLite creada"
+
+# ─── 10. Ejecutar migraciones ────────────────────────────────────────────────
+echo ""
+echo "► Ejecutando migraciones de base de datos..."
+php artisan cache:table 2>/dev/null || true
+php artisan session:table 2>/dev/null || true
+php artisan migrate --force 2>/dev/null || true
+echo "   ✓ Migraciones completadas"
+
+# ─── 11. Crear estructura de carpetas del proyecto ──────────────────────────
+echo ""
+echo "► Creando estructura de carpetas..."
+
+mkdir -p app/Livewire app/Services app/Console/Commands
+mkdir -p resources/views/{layouts,livewire,cert,pdf,errors}
+mkdir -p lang/{en,es,pt,zh,hi,ar,fr}
+
+echo "   ✓ Estructura de carpetas creada"
+
+# ─── 12. Limpiar cache ──────────────────────────────────────────────────────
+echo ""
+echo "► Limpiando cache de desarrollo..."
+php artisan config:clear 2>/dev/null || true
+php artisan route:clear 2>/dev/null || true
+php artisan view:clear 2>/dev/null || true
+echo "   ✓ Cache limpiada"
 grep -q "MYMEMORY_EMAIL" .env || echo "" >> .env
 grep -q "MYMEMORY_EMAIL" .env || echo "# MyMemory API - Opcional, aumenta el límite de traducciones" >> .env
 grep -q "MYMEMORY_EMAIL" .env || echo "MYMEMORY_EMAIL=" >> .env
