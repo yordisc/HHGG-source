@@ -7,6 +7,8 @@
 
 set -euo pipefail
 
+MYSQL_READY=1
+
 echo ""
 echo "╔══════════════════════════════════════════════════════════════╗"
 echo "║   Instituto de Certificaciones Dudosas™ — Setup inicial      ║"
@@ -16,39 +18,75 @@ echo ""
 WORKSPACE_DIR="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 cd "$WORKSPACE_DIR"
 
+run_privileged() {
+  if [ "$(id -u)" -eq 0 ]; then
+    "$@"
+  elif command -v sudo >/dev/null 2>&1; then
+    sudo "$@"
+  else
+    return 1
+  fi
+}
+
 install_mysql() {
   echo "► Instalando soporte MySQL para Codespaces..."
 
   if command -v apt-get >/dev/null 2>&1; then
-    apt-get update -y
-    DEBIAN_FRONTEND=noninteractive apt-get install -y \
-      default-mysql-server default-mysql-client php-mysql
+    if ! run_privileged apt-get update -y; then
+      echo "   ⚠ Sin privilegios para apt-get update. Continuando sin instalar MySQL."
+      MYSQL_READY=0
+      return 0
+    fi
+
+    if ! run_privileged env DEBIAN_FRONTEND=noninteractive apt-get install -y \
+      default-mysql-server default-mysql-client php-mysql; then
+      echo "   ⚠ Fallo al instalar MySQL con apt. Continuando sin MySQL local."
+      MYSQL_READY=0
+      return 0
+    fi
   elif command -v apk >/dev/null 2>&1; then
-    apk add --no-cache mariadb mariadb-client php82-mysqli php82-pdo_mysql || apk add --no-cache mariadb mariadb-client php-mysqli php-pdo_mysql
+    if ! run_privileged apk add --no-cache mariadb mariadb-client php82-mysqli php82-pdo_mysql \
+      && ! run_privileged apk add --no-cache mariadb mariadb-client php-mysqli php-pdo_mysql; then
+      echo "   ⚠ Fallo al instalar MariaDB con apk. Continuando sin MySQL local."
+      MYSQL_READY=0
+      return 0
+    fi
   else
     echo "   ⚠ No se pudo detectar gestor de paquetes para instalar MySQL"
-    return 1
+    MYSQL_READY=0
+    return 0
   fi
 
   echo "   ✓ Soporte MySQL instalado"
 }
 
 start_mysql_service() {
+  if [ "$MYSQL_READY" -ne 1 ]; then
+    echo "► Saltando inicio de MySQL (instalacion no disponible)"
+    return 0
+  fi
+
   echo "► Iniciando servicio MySQL/MariaDB..."
 
-  if service mysql start >/dev/null 2>&1; then
+  if run_privileged service mysql start >/dev/null 2>&1; then
     :
-  elif service mariadb start >/dev/null 2>&1; then
+  elif run_privileged service mariadb start >/dev/null 2>&1; then
     :
   else
     echo "   ⚠ No se pudo iniciar el servicio MySQL/MariaDB"
-    return 1
+    MYSQL_READY=0
+    return 0
   fi
 
   echo "   ✓ Servicio MySQL/MariaDB iniciado"
 }
 
 wait_for_mysql() {
+  if [ "$MYSQL_READY" -ne 1 ]; then
+    echo "► Saltando verificacion de MySQL"
+    return 0
+  fi
+
   echo "► Esperando a que MySQL responda..."
 
   for _ in $(seq 1 30); do
@@ -60,18 +98,29 @@ wait_for_mysql() {
   done
 
   echo "   ⚠ MySQL no respondió a tiempo"
-  return 1
+  MYSQL_READY=0
+  return 0
 }
 
 configure_mysql_database() {
+  if [ "$MYSQL_READY" -ne 1 ] || ! command -v mysql >/dev/null 2>&1; then
+    echo "► Saltando creacion de DB (MySQL no disponible)"
+    return 0
+  fi
+
   echo "► Creando base de datos y usuario de desarrollo..."
 
-  mysql -u root <<'SQL'
+  if ! mysql -u root <<'SQL'
 CREATE DATABASE IF NOT EXISTS certificados_dev CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE USER IF NOT EXISTS 'laravel'@'%' IDENTIFIED BY 'secret';
 GRANT ALL PRIVILEGES ON certificados_dev.* TO 'laravel'@'%';
 FLUSH PRIVILEGES;
 SQL
+  then
+    echo "   ⚠ No se pudo configurar MySQL automaticamente"
+    MYSQL_READY=0
+    return 0
+  fi
 
   echo "   ✓ Base de datos y usuario listos"
 }

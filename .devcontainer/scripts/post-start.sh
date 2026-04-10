@@ -7,6 +7,8 @@
 
 set -euo pipefail
 
+MYSQL_READY=1
+
 echo ""
 echo "╔══════════════════════════════════════════════════════════════╗"
 echo "║   Instituto de Certificaciones Dudosas™ — Iniciando...       ║"
@@ -16,17 +18,35 @@ echo ""
 WORKSPACE_DIR="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 cd "$WORKSPACE_DIR"
 
+run_privileged() {
+  if [ "$(id -u)" -eq 0 ]; then
+    "$@"
+  elif command -v sudo >/dev/null 2>&1; then
+    sudo "$@"
+  else
+    return 1
+  fi
+}
+
 start_mysql_service() {
   echo "► Iniciando servicio MySQL/MariaDB..."
 
-  if service mysql start >/dev/null 2>&1; then
+  if run_privileged service mysql start >/dev/null 2>&1; then
     :
-  elif service mariadb start >/dev/null 2>&1; then
+  elif run_privileged service mariadb start >/dev/null 2>&1; then
     :
+  else
+    echo "   ⚠ No se pudo iniciar MySQL/MariaDB. Se continúa sin DB local."
+    MYSQL_READY=0
   fi
 }
 
 wait_for_mysql() {
+  if [ "$MYSQL_READY" -ne 1 ]; then
+    echo "► Saltando verificacion de MySQL"
+    return 0
+  fi
+
   echo "► Esperando a que MySQL responda..."
 
   for _ in $(seq 1 30); do
@@ -38,23 +58,40 @@ wait_for_mysql() {
   done
 
   echo "   ⚠ MySQL no respondió a tiempo"
-  return 1
+  MYSQL_READY=0
+  return 0
 }
 
 configure_mysql_database() {
+  if [ "$MYSQL_READY" -ne 1 ] || ! command -v mysql >/dev/null 2>&1; then
+    echo "► Saltando configuracion de DB (MySQL no disponible)"
+    return 0
+  fi
+
   echo "► Asegurando base de datos y usuario de desarrollo..."
 
-  mysql -u root <<'SQL'
+  if ! mysql -u root <<'SQL'
 CREATE DATABASE IF NOT EXISTS certificados_dev CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE USER IF NOT EXISTS 'laravel'@'%' IDENTIFIED BY 'secret';
 GRANT ALL PRIVILEGES ON certificados_dev.* TO 'laravel'@'%';
 FLUSH PRIVILEGES;
 SQL
+  then
+    echo "   ⚠ No se pudo configurar MySQL automaticamente"
+    MYSQL_READY=0
+    return 0
+  fi
 
   echo "   ✓ MySQL listo para el proyecto"
 }
 
 run_migrations() {
+  if [ "$MYSQL_READY" -ne 1 ]; then
+    echo ""
+    echo "► Saltando migraciones (MySQL no disponible)"
+    return 0
+  fi
+
   echo ""
   echo "► Ejecutando migraciones de base de datos..."
 
@@ -73,6 +110,12 @@ run_migrations() {
 }
 
 run_seeders_if_needed() {
+  if [ "$MYSQL_READY" -ne 1 ]; then
+    echo ""
+    echo "► Saltando seeders (MySQL no disponible)"
+    return 0
+  fi
+
   echo ""
   echo "► Verificando datos de ejemplo en la base de datos..."
 
