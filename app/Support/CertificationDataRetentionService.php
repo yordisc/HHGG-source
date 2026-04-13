@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Collection;
 
 /**
  * Service para gestionar retención y purga de datos de usuarios.
- * 
+ *
  * Responsabilidades:
  * - Ejecutar purga automática al vencer vigencia
  * - Ejecutar purga manual aunque la vigencia no haya vencido
@@ -25,9 +25,9 @@ class CertificationDataRetentionService
 
     /**
      * Purgar datos de usuario de una certificación vencida.
-     * 
+     *
      * Ejecutable vía job programado diario.
-     * 
+     *
      * @param Certification $certification
      * @return array resumen de eliminación ['certificates_deleted' => int, 'images_deleted' => int, ...]
      */
@@ -56,9 +56,9 @@ class CertificationDataRetentionService
 
     /**
      * Purgar datos de usuario manualmente, sin importar if vencimiento.
-     * 
+     *
      * Acción administrativa explícita, registrada en auditoría.
-     * 
+     *
      * @param Certification $certification
      * @param ?int $userId Si se proporciona, purgar solo datos de ese usuario
      * @return array
@@ -85,7 +85,7 @@ class CertificationDataRetentionService
 
     /**
      * Eliminar certificados y sus datos asociados.
-     * 
+     *
      * @param Collection $certificates
      * @param array $summary
      * @return array
@@ -106,7 +106,7 @@ class CertificationDataRetentionService
             }
 
             // Eliminar audit logs de este certificado
-            $auditDeleted = \App\Models\AuditLog::where('entity_type', 'Certificate')
+            $auditDeleted = \App\Models\AuditLog::where('entity', 'Certificate')
                 ->where('entity_id', $certificate->id)
                 ->delete();
             $summary['audit_logs_deleted'] += $auditDeleted;
@@ -121,7 +121,7 @@ class CertificationDataRetentionService
 
     /**
      * Determinar si una certificación debe ser purgada automáticamente.
-     * 
+     *
      * @param Certification $certification
      * @return bool
      */
@@ -132,14 +132,14 @@ class CertificationDataRetentionService
         // 2. manual_user_data_purge_enabled es true
         // 3. La certificación no está activa (fue desactivada o es temporal)
 
-        return $certification->expiry_mode === 'fixed' 
+        return $certification->expiry_mode === 'fixed'
             && $certification->manual_user_data_purge_enabled
             && !$certification->active;
     }
 
     /**
      * Obtener estadísticas de datos a purgar para una certificación.
-     * 
+     *
      * @param Certification $certification
      * @return array
      */

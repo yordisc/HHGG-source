@@ -134,7 +134,7 @@ class AdminCertificationApiTest extends TestCase
         $data = $response->json();
         // Should have 50 + 5 = 55 active questions, not the 10 inactive
         $this->assertEquals(55, $data['count']);
-        
+
         foreach ($data['questions'] as $question) {
             $this->assertTrue($question['active']);
         }
@@ -146,7 +146,7 @@ class AdminCertificationApiTest extends TestCase
             ->get(route('api.certifications.available-questions', $this->certification));
 
         $data = $response->json();
-        
+
         foreach ($data['questions'] as $question) {
             $this->assertGreaterThan(0, $question['translations_count']);
         }
@@ -161,7 +161,7 @@ class AdminCertificationApiTest extends TestCase
 
         $response->assertSuccessful();
         $data = $response->json();
-        
+
         // Should have Spanish prompts (they start with "Pregunta")
         $firstQuestion = $data['questions'][0] ?? null;
         $this->assertNotNull($firstQuestion);
@@ -176,7 +176,7 @@ class AdminCertificationApiTest extends TestCase
 
         $response->assertSuccessful();
         $data = $response->json();
-        
+
         $this->assertTrue($data['success']);
         $this->assertEquals(0, $data['count']);
         $this->assertEmpty($data['attempts']);
@@ -199,7 +199,7 @@ class AdminCertificationApiTest extends TestCase
                 'document_hash' => "hash{$i}",
                 'doc_lookup_hash' => 'lookup',
                 'identity_lookup_hash' => 'identity',
-                'doc_partial' => 'partial',
+                'doc_partial' => '1111',
                 'score_correct' => 0,
                 'score_incorrect' => 0,
                 'total_questions' => 0,
@@ -215,7 +215,7 @@ class AdminCertificationApiTest extends TestCase
 
         $response->assertSuccessful();
         $data = $response->json();
-        
+
         $this->assertTrue($data['success']);
         $this->assertEquals(3, $data['count']);
         $this->assertCount(3, $data['attempts']);
@@ -238,7 +238,7 @@ class AdminCertificationApiTest extends TestCase
                 'document_hash' => "hash{$i}",
                 'doc_lookup_hash' => 'lookup',
                 'identity_lookup_hash' => 'identity',
-                'doc_partial' => 'partial',
+                'doc_partial' => '1111',
                 'score_correct' => 0,
                 'score_incorrect' => 0,
                 'total_questions' => 0,
@@ -263,7 +263,7 @@ class AdminCertificationApiTest extends TestCase
                 'document_hash' => "hash{$i}",
                 'doc_lookup_hash' => 'lookup',
                 'identity_lookup_hash' => 'identity',
-                'doc_partial' => 'partial',
+                'doc_partial' => '1111',
                 'score_correct' => 30,
                 'score_incorrect' => 20,
                 'total_questions' => 50,
@@ -278,7 +278,7 @@ class AdminCertificationApiTest extends TestCase
             ->get(route('api.certifications.active-attempts', $this->certification));
 
         $data = $response->json();
-        
+
         // Should only count 2 active, not the 2 completed
         $this->assertEquals(2, $data['count']);
         $this->assertCount(2, $data['attempts']);
@@ -313,7 +313,7 @@ class AdminCertificationApiTest extends TestCase
 
         $data = $response->json();
         $attempt = $data['attempts'][0] ?? null;
-        
+
         $this->assertNotNull($attempt);
         $this->assertEquals('Jane Smith', $attempt['name']);
         $this->assertNotNull($attempt['started_at']);
@@ -366,7 +366,7 @@ class AdminCertificationApiTest extends TestCase
 
         $response->assertSuccessful();
         $data = $response->json();
-        
+
         $this->assertTrue($data['success']);
         $this->assertNotNull($data['differences']);
         $this->assertGreaterThan(0, $data['total_changes']);
@@ -421,7 +421,7 @@ class AdminCertificationApiTest extends TestCase
 
         $data = $response->json();
         $differences = $data['differences'];
-        
+
         // Should show changes in name, active, questions_required, pass_score_percentage, cooldown_days
         $this->assertArrayHasKey('name', $differences);
         $this->assertArrayHasKey('active', $differences);

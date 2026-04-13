@@ -8,12 +8,13 @@
 
 ## Guia rapida
 
-| Necesitas | Documento |
-|--|--|
-| Arquitectura y alcance funcional | [PROYECTO_DETALLADO.md](./PROYECTO_DETALLADO.md) |
-| Uso del editor visual | [VISUAL_BUILDER_GUIDE.md](./VISUAL_BUILDER_GUIDE.md) |
-| Versionado de certificaciones | [VERSIONING_SYSTEM.md](./VERSIONING_SYSTEM.md) |
-| Diagnostico de problemas | [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) |
+| Necesitas                         | Documento                                                    |
+| --------------------------------- | ------------------------------------------------------------ |
+| Arquitectura y alcance funcional  | [PROYECTO_DETALLADO.md](./PROYECTO_DETALLADO.md)             |
+| Uso del editor visual             | [VISUAL_BUILDER_GUIDE.md](./VISUAL_BUILDER_GUIDE.md)         |
+| Versionado de certificaciones     | [VERSIONING_SYSTEM.md](./VERSIONING_SYSTEM.md)               |
+| Diagnostico de problemas          | [TROUBLESHOOTING.md](./TROUBLESHOOTING.md)                   |
+| Despliegue en Render + Neon/Aiven | [DEPLOY_RENDER_NEON_AIVEN.md](./DEPLOY_RENDER_NEON_AIVEN.md) |
 
 ## Pruebas
 

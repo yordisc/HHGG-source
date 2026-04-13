@@ -30,7 +30,7 @@ No es una certificacion real ni sustituye evaluaciones medicas, psicologicas o l
 - Laravel 11
 - Livewire 4
 - Tailwind CSS + Vite
-- MySQL
+- MySQL / PostgreSQL
 - barryvdh/laravel-dompdf
 
 ## Inicio rapido local
@@ -64,8 +64,15 @@ sh scripts/dev-local.sh --all
 - APP_URL
 - APP_LOCALE
 - APP_FALLBACK_LOCALE
+- DB_CONNECTION
+- DB_URL / DATABASE_URL
+- DB_SSLMODE
 - ADMIN_ACCESS_KEY (requerida para panel admin)
 - LINKEDIN_ORG_ID (opcional)
+
+## Despliegue en Render
+
+La guia recomendada para produccion con Render y base de datos externa esta en [docs/DEPLOY_RENDER_NEON_AIVEN.md](docs/DEPLOY_RENDER_NEON_AIVEN.md). Ese flujo usa el `Dockerfile` de la raiz, pero no cambia el uso local ni en Codespaces, que siguen apoyandose en MySQL.
 
 ## Rutas principales
 

@@ -4,6 +4,12 @@ set -eu
 PROJECT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
 ENV_FILE="$PROJECT_DIR/.env"
 SUDO=""
+LOCAL_DB_CONNECTION="${DB_CONNECTION:-mysql}"
+TEST_DB_HOST="${DB_HOST:-127.0.0.1}"
+TEST_DB_PORT="${DB_PORT:-3306}"
+TEST_DB_NAME="certificados_test"
+TEST_DB_USER="${DB_USERNAME:-laravel}"
+TEST_DB_PASSWORD="${DB_PASSWORD:-secret}"
 
 log() {
   printf '%s\n' "$1"
@@ -113,6 +119,97 @@ install_node_dependencies() {
   fi
 }
 
+is_safe_mysql_name() {
+  VALUE="$1"
+  case "$VALUE" in
+    *[!A-Za-z0-9_]*|'')
+      return 1
+      ;;
+    *)
+      return 0
+      ;;
+  esac
+}
+
+can_connect_as_mysql_root() {
+  if ! command -v mysql >/dev/null 2>&1; then
+    return 1
+  fi
+
+  if mysql -u root -e 'SELECT 1;' >/dev/null 2>&1; then
+    return 0
+  fi
+
+  if mysql --protocol=TCP -h "$TEST_DB_HOST" -P "$TEST_DB_PORT" -u root -e 'SELECT 1;' >/dev/null 2>&1; then
+    return 0
+  fi
+
+  run_privileged mysql -u root -e 'SELECT 1;' >/dev/null 2>&1
+}
+
+run_mysql_as_root() {
+  MYSQL_SQL="$1"
+
+  if mysql -u root -e 'SELECT 1;' >/dev/null 2>&1; then
+    mysql -u root -e "$MYSQL_SQL" >/dev/null
+    return
+  fi
+
+  if mysql --protocol=TCP -h "$TEST_DB_HOST" -P "$TEST_DB_PORT" -u root -e 'SELECT 1;' >/dev/null 2>&1; then
+    mysql --protocol=TCP -h "$TEST_DB_HOST" -P "$TEST_DB_PORT" -u root -e "$MYSQL_SQL" >/dev/null
+    return
+  fi
+
+  run_privileged mysql -u root -e "$MYSQL_SQL" >/dev/null
+}
+
+bootstrap_test_database_permissions() {
+  if ! command -v mysql >/dev/null 2>&1; then
+    log "[WARN] mysql client no disponible; se asume que la base ${TEST_DB_NAME} ya existe con permisos correctos."
+    return
+  fi
+
+  if [ "$LOCAL_DB_CONNECTION" != "mysql" ]; then
+    return
+  fi
+
+  if ! is_safe_mysql_name "$TEST_DB_NAME"; then
+    fail "DB_DATABASE invalido para bootstrap automatico: ${TEST_DB_NAME}"
+  fi
+
+  if ! is_safe_mysql_name "$TEST_DB_USER"; then
+    fail "DB_USERNAME invalido para bootstrap automatico: ${TEST_DB_USER}"
+  fi
+
+  if mysql --protocol=TCP -h "$TEST_DB_HOST" -P "$TEST_DB_PORT" -u "$TEST_DB_USER" -p"$TEST_DB_PASSWORD" "$TEST_DB_NAME" -e 'SELECT 1;' >/dev/null 2>&1; then
+    return
+  fi
+
+  log "[WARN] No se pudo autenticar en MySQL con ${TEST_DB_USER}@${TEST_DB_HOST}:${TEST_DB_PORT}."
+  log "[INFO] Intentando crear base/permisos de pruebas con root..."
+
+  if ! can_connect_as_mysql_root; then
+    fail "No fue posible autenticarse como root para crear la base de pruebas. Ajusta .env o crea certificados_test manualmente."
+  fi
+
+  ESCAPED_TEST_DB_PASSWORD="$(printf '%s' "$TEST_DB_PASSWORD" | sed "s/'/''/g")"
+
+  ROOT_SQL="CREATE DATABASE IF NOT EXISTS ${TEST_DB_NAME} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+  ROOT_SQL="${ROOT_SQL} CREATE USER IF NOT EXISTS '${TEST_DB_USER}'@'%' IDENTIFIED BY '${ESCAPED_TEST_DB_PASSWORD}';"
+  ROOT_SQL="${ROOT_SQL} CREATE USER IF NOT EXISTS '${TEST_DB_USER}'@'localhost' IDENTIFIED BY '${ESCAPED_TEST_DB_PASSWORD}';"
+  ROOT_SQL="${ROOT_SQL} GRANT ALL PRIVILEGES ON ${TEST_DB_NAME}.* TO '${TEST_DB_USER}'@'%';"
+  ROOT_SQL="${ROOT_SQL} GRANT ALL PRIVILEGES ON ${TEST_DB_NAME}.* TO '${TEST_DB_USER}'@'localhost';"
+  ROOT_SQL="${ROOT_SQL} FLUSH PRIVILEGES;"
+
+  run_mysql_as_root "$ROOT_SQL"
+
+  if ! mysql --protocol=TCP -h "$TEST_DB_HOST" -P "$TEST_DB_PORT" -u "$TEST_DB_USER" -p"$TEST_DB_PASSWORD" "$TEST_DB_NAME" -e 'SELECT 1;' >/dev/null 2>&1; then
+    fail "Se crearon permisos en MySQL, pero ${TEST_DB_USER} todavia no puede acceder a ${TEST_DB_NAME}. Revisa DB_HOST/DB_PORT/DB_PASSWORD en .env."
+  fi
+
+  log "[OK] Permisos MySQL listos para la base de pruebas ${TEST_DB_NAME}."
+}
+
 run_migrations_and_seeders() {
   log "[INFO] Ejecutando migraciones y seeders en MySQL local..."
   APP_ENV=local \
@@ -130,12 +227,51 @@ run_migrations_and_seeders() {
   php artisan migrate --seed --force
 }
 
-run_tests() {
-  log "[INFO] Ejecutando pruebas Feature..."
-  php artisan test --testsuite=Feature --stop-on-failure
+run_test_migrations() {
+  log "[INFO] Preparando la base de datos de pruebas..."
+  APP_ENV=testing \
+  DB_CONNECTION=mysql \
+  DB_HOST="$TEST_DB_HOST" \
+  DB_PORT="$TEST_DB_PORT" \
+  DB_DATABASE="$TEST_DB_NAME" \
+  DB_USERNAME="$TEST_DB_USER" \
+  DB_PASSWORD="$TEST_DB_PASSWORD" \
+  CACHE_STORE=array \
+  SESSION_DRIVER=array \
+  QUEUE_CONNECTION=sync \
+  MAIL_MAILER=array \
+  ADMIN_ACCESS_KEY="${ADMIN_ACCESS_KEY:-test-admin-key}" \
+  php artisan migrate --force
+}
 
-  log "[INFO] Ejecutando pruebas Unit..."
-  php artisan test --testsuite=Unit --stop-on-failure
+run_tests() {
+  TEST_LOG_DIR="$PROJECT_DIR/storage/logs"
+  TEST_LOG_FILE="$TEST_LOG_DIR/local-test-tests.log"
+
+  mkdir -p "$TEST_LOG_DIR"
+
+  log "[INFO] Ejecutando pruebas Feature..."
+  : > "$TEST_LOG_FILE"
+  set +e
+  {
+    printf '%s\n' "[INFO] Ejecutando pruebas Feature..."
+    php artisan test --testsuite=Feature --stop-on-failure
+
+    printf '%s\n' "[INFO] Ejecutando pruebas Unit..."
+    php artisan test --testsuite=Unit --stop-on-failure
+  } > "$TEST_LOG_FILE" 2>&1
+
+  TEST_EXIT_CODE=$?
+  set -e
+
+  cat "$TEST_LOG_FILE"
+
+  if [ "$TEST_EXIT_CODE" -ne 0 ]; then
+    log "[WARN] La salida completa quedó guardada en: $TEST_LOG_FILE"
+    return "$TEST_EXIT_CODE"
+  fi
+
+  log "[OK] La salida completa quedó guardada en: $TEST_LOG_FILE"
 }
 
 main() {
@@ -152,7 +288,9 @@ main() {
   install_node_dependencies
   ensure_app_key
   ensure_mysql_database
+  bootstrap_test_database_permissions
   run_migrations_and_seeders
+  run_test_migrations
   run_tests
 
   log "[OK] Entorno local validado correctamente."
