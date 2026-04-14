@@ -1,4 +1,4 @@
-# CertificacionHHGG
+# HHGG
 
 Plataforma web satirica de certificados para entretenimiento, con apariencia formal y flujo completo de evaluacion, resultado, certificado publico y descarga en PDF.
 
