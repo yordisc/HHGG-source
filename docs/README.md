@@ -20,7 +20,9 @@
 
 ## Avance de arquitectura
 
-- Fase 1 completada: worker de colas y `QUEUE_CONNECTION=database` en blueprint de Render.
+- Fase 1 completada: blueprint de Render simplificado a un solo servicio web y `QUEUE_CONNECTION=sync`.
+- Fase 1.1 completada: estado efimero movido a Redis (`SESSION_DRIVER=redis`, `CACHE_STORE=redis`) para no saturar la base externa.
+- Fase 1.2 completada: migraciones retiradas del arranque del contenedor y movidas a ejecucion independiente.
 - Fase 2 completada: scheduler mantiene trigger HTTP y tareas pesadas encoladas.
 - Fase 3 completada: acceso admin migrado a autenticacion por usuario con rol `is_admin`.
 - Fase 4 en progreso: baseline de latencia y memoria con `scripts/profile-serving.sh`.
@@ -34,7 +36,10 @@ Decision de serving:
 
 ### 2026-04-14
 
-- Fase 1 completada: worker de colas en Render y conexion de cola en `database`.
+- Fase 1 completada: despliegue free de Render sin worker dedicado y cola en modo `sync`.
+- Estado de sesion/cache en produccion ajustado a Redis (Upstash) para reducir presion en Aiven/Neon.
+- Arranque del contenedor endurecido: se elimina `php artisan migrate --force` del startup script.
+- Dockerfile actualizado con perfil de OPCache de produccion (`opcache.validate_timestamps=0`, `opcache.memory_consumption=256`).
 - Fase 2 completada: comandos de limpieza/purga migrados a ejecucion asíncrona por Jobs.
 - Fase 3 completada: autenticacion admin migrada a usuario con rol `is_admin` y pruebas adaptadas.
 - Fase 4 iniciada: baseline de latencia/memoria con `scripts/profile-serving.sh`.

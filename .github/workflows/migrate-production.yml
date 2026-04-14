@@ -1,0 +1,48 @@
+name: Migrate Production
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: production-migrations
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    name: Run production migrations
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          extensions: mbstring, dom, fileinfo, pdo_mysql, pdo_pgsql, redis
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install --no-dev --prefer-dist --no-interaction --no-progress
+
+      - name: Run migrations (--force)
+        env:
+          APP_ENV: production
+          APP_KEY: ${{ secrets.APP_KEY }}
+          APP_DEBUG: "false"
+          APP_URL: ${{ secrets.APP_URL }}
+          DB_CONNECTION: ${{ secrets.DB_CONNECTION }}
+          DB_URL: ${{ secrets.DB_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_DATABASE: ${{ secrets.DB_DATABASE }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_SSLMODE: ${{ secrets.DB_SSLMODE }}
+          CACHE_STORE: array
+          SESSION_DRIVER: array
+          QUEUE_CONNECTION: sync
+        run: php artisan migrate --force

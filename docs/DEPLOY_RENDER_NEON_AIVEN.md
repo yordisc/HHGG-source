@@ -5,12 +5,15 @@ Esta guia mantiene el desarrollo local y en Codespaces en MySQL, pero prepara la
 ## Arquitectura recomendada
 
 - Render: servicio web con el Dockerfile de la raiz.
+- Render (plan free): sin servicio worker separado; la cola corre en modo `sync`.
 - Neon: PostgreSQL administrado.
 - Aiven: MySQL administrado si prefieres seguir en MySQL.
 
 ## Variables de entorno
 
 Para Render y la base de datos externa, define al menos:
+
+Referencia rapida: puedes partir de la plantilla [../.env.production.example](../.env.production.example).
 
 - `APP_NAME`
 - `APP_ENV=production`
@@ -21,9 +24,10 @@ Para Render y la base de datos externa, define al menos:
 - `DB_URL` o `DATABASE_URL` si tu proveedor entrega una cadena unica de conexion
 - `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` si usas variables separadas
 - `DB_SSLMODE=require` para PostgreSQL administrado
-- `CACHE_STORE=database`
-- `SESSION_DRIVER=database`
-- `QUEUE_CONNECTION=database`
+- `CACHE_STORE=redis`
+- `SESSION_DRIVER=redis`
+- `QUEUE_CONNECTION=sync`
+- `REDIS_URL` (Upstash Redis)
 - `ADMIN_ACCESS_KEY` (solo para webhook de scheduler)
 
 ## Checklist exacta de variables
@@ -39,10 +43,12 @@ Usa esta lista para no dejar huecos al desplegar:
 - `APP_URL`
 - `LOG_CHANNEL=stack`
 - `LOG_LEVEL=info`
-- `CACHE_STORE=database`
-- `SESSION_DRIVER=database`
+- `CACHE_STORE=redis`
+- `SESSION_DRIVER=redis`
 - `SESSION_LIFETIME=120`
-- `QUEUE_CONNECTION=database`
+- `QUEUE_CONNECTION=sync`
+- `REDIS_URL` (Upstash)
+- `REDIS_CLIENT=phpredis`
 - `ADMIN_ACCESS_KEY` (solo para webhook de scheduler)
 - `MAIL_MAILER=log` o el proveedor SMTP que uses
 - `MAIL_FROM_ADDRESS`
@@ -73,6 +79,11 @@ Usa esta lista para no dejar huecos al desplegar:
 
 - `ADMIN_ACCESS_KEY`
 
+### Redis (Upstash)
+
+- `REDIS_URL` (formato `rediss://...` recomendado)
+- `REDIS_CLIENT=phpredis`
+
 ### Opcional
 
 - `LINKEDIN_ORG_ID`
@@ -85,7 +96,35 @@ Usa esta lista para no dejar huecos al desplegar:
 2. Render detectara el `Dockerfile` de la raiz.
 3. Configura las variables de entorno anteriores.
 4. Usa el puerto `10000`; el contenedor ya expone `PORT` y sirve la app con Nginx + PHP-FPM.
-5. Si quieres automatizar el esquema, el contenedor ejecuta `php artisan migrate --force` al iniciar.
+5. Ejecuta migraciones como paso independiente antes del deploy (CI/CD o comando remoto manual). El contenedor ya no corre `php artisan migrate --force` al iniciar para evitar condiciones de carrera al escalar instancias.
+
+### Workflow sugerido para migraciones
+
+Este repositorio incluye un workflow manual de GitHub Actions en `.github/workflows/migrate-production.yml`.
+
+- Ejecuta `php artisan migrate --force` usando secretos del entorno `production`.
+- Evita correr migraciones dentro del contenedor web durante el arranque.
+- Permite auditar cada ejecución en el historial de Actions.
+
+Secrets recomendados en GitHub (Environment: `production`):
+
+- `APP_KEY`
+- `APP_URL`
+- `DB_CONNECTION`
+- `DB_URL` o `DATABASE_URL`
+- `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` (si no usas URL unica)
+- `DB_SSLMODE` (cuando aplique, por ejemplo Neon)
+
+### Workflow encadenado (migrar y desplegar)
+
+Tambien se incluye `.github/workflows/deploy-production.yml` para ejecutar ambos pasos en una sola corrida manual:
+
+1. Ejecuta migraciones (`php artisan migrate --force`).
+2. Si migraciones termina bien, dispara deploy en Render por deploy hook.
+
+Secret adicional requerido para este flujo:
+
+- `RENDER_DEPLOY_HOOK_URL` (Environment `production`)
 
 ## Scheduler
 

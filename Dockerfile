@@ -42,6 +42,7 @@ RUN composer install --no-dev --prefer-dist --no-interaction --no-progress --opt
     && php artisan package:discover --ansi
 
 COPY docker/nginx/default.conf.template /etc/nginx/templates/default.conf.template
+COPY docker/php/conf.d/production.ini /usr/local/etc/php/conf.d/99-production.ini
 COPY docker/start-container.sh /usr/local/bin/start-container
 RUN chmod +x /usr/local/bin/start-container
 RUN rm -f /etc/nginx/conf.d/default.conf /etc/nginx/sites-enabled/default

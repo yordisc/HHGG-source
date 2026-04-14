@@ -90,9 +90,18 @@ sh scripts/dev-local.sh --all
 - ADMIN_ACCESS_KEY (requerida para panel admin)
 - LINKEDIN_ORG_ID (opcional)
 
+Plantillas disponibles:
+
+- `.env.example` para desarrollo local.
+- `.env.production.example` para despliegue en Render + Neon/Aiven + Upstash.
+
 ## Despliegue en Render
 
 La guia recomendada para produccion con Render y base de datos externa esta en [docs/DEPLOY_RENDER_NEON_AIVEN.md](docs/DEPLOY_RENDER_NEON_AIVEN.md). Ese flujo usa el `Dockerfile` de la raiz, pero no cambia el uso local ni en Codespaces, que siguen apoyandose en MySQL.
+
+En produccion, ejecuta migraciones como paso independiente del despliegue (pipeline o comando remoto); el contenedor no corre migraciones automaticamente al arrancar.
+
+Si quieres automatizar en un solo paso, usa `.github/workflows/deploy-production.yml`, que primero migra y luego dispara el deploy hook de Render.
 
 ### Scheduler en plan gratuito (sin cron interno)
 
