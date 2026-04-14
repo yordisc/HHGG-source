@@ -13,7 +13,7 @@ class AdminCertificateTemplateTest extends TestCase
 
     public function test_admin_can_create_certificate_template(): void
     {
-        $this->withSession(['admin_authenticated' => true])
+        $this->asAdmin()
             ->post(route('admin.certificates.templates.store'), [
                 'slug' => 'modern-template',
                 'name' => 'Modern Design',
@@ -39,7 +39,7 @@ class AdminCertificateTemplateTest extends TestCase
             'is_default' => false,
         ]);
 
-        $this->withSession(['admin_authenticated' => true])
+        $this->asAdmin()
             ->put(route('admin.certificates.templates.update', $template), [
                 'slug' => 'test-template',
                 'name' => 'Updated Template',
@@ -66,7 +66,7 @@ class AdminCertificateTemplateTest extends TestCase
             'is_default' => false,
         ]);
 
-        $this->withSession(['admin_authenticated' => true])
+        $this->asAdmin()
             ->delete(route('admin.certificates.templates.destroy', $template))
             ->assertRedirect(route('admin.certificates.templates.index'));
 
@@ -85,7 +85,7 @@ class AdminCertificateTemplateTest extends TestCase
             'is_default' => false,
         ]);
 
-        $this->withSession(['admin_authenticated' => true])
+        $this->asAdmin()
             ->get(route('admin.certificates.templates.preview', $template))
             ->assertOk()
             ->assertSee('Nombre:');
@@ -105,7 +105,7 @@ class AdminCertificateTemplateTest extends TestCase
             'home_order' => 1,
         ]);
 
-        $this->withSession(['admin_authenticated' => true])
+        $this->asAdmin()
             ->post(route('admin.certificates.templates.certification.save', $cert), [
                 'use_custom' => 1,
                 'html_template' => '<div>Custom for {{nombre}}</div>',
@@ -141,7 +141,7 @@ class AdminCertificateTemplateTest extends TestCase
             'is_default' => false,
         ]);
 
-        $this->withSession(['admin_authenticated' => true])
+        $this->asAdmin()
             ->post(route('admin.certificates.templates.certification.save', $cert), [
                 'use_custom' => 0,
             ])
@@ -161,7 +161,7 @@ class AdminCertificateTemplateTest extends TestCase
             'is_default' => true,
         ]);
 
-        $this->withSession(['admin_authenticated' => true])
+        $this->asAdmin()
             ->post(route('admin.certificates.templates.store'), [
                 'slug' => 'second-default',
                 'name' => 'Second Default',

@@ -2,6 +2,7 @@
 
 namespace Tests;
 
+use App\Models\User;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 
@@ -20,5 +21,13 @@ abstract class TestCase extends BaseTestCase
 
         $this->withoutMiddleware([ValidateCsrfToken::class]);
         $this->withoutVite();
+    }
+
+    protected function asAdmin(array $attributes = []): static
+    {
+        $admin = User::factory()->admin()->create($attributes);
+        $this->actingAs($admin);
+
+        return $this;
     }
 }

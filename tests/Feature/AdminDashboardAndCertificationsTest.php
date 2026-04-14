@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Certification;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -19,8 +20,14 @@ class AdminDashboardAndCertificationsTest extends TestCase
 
     public function test_admin_can_access_dashboard_after_login(): void
     {
+        $admin = User::factory()->admin()->create([
+            'email' => 'admin@example.com',
+            'password' => 'password',
+        ]);
+
         $this->post(route('admin.login.submit'), [
-            'admin_key' => 'test-admin-key',
+            'email' => $admin->email,
+            'password' => 'password',
         ])->assertRedirect(route('admin.dashboard'));
 
         $this->get(route('admin.dashboard'))
@@ -30,7 +37,7 @@ class AdminDashboardAndCertificationsTest extends TestCase
 
     public function test_admin_can_create_update_and_delete_certification(): void
     {
-        $this->withSession(['admin_authenticated' => true])
+        $this->asAdmin()
             ->post(route('admin.certifications.store'), [
                 'slug' => 'wellbeing',
                 'name' => 'Wellbeing Certification',
@@ -48,7 +55,7 @@ class AdminDashboardAndCertificationsTest extends TestCase
 
         $certification = Certification::query()->where('slug', 'wellbeing')->firstOrFail();
 
-        $this->withSession(['admin_authenticated' => true])
+        $this->asAdmin()
             ->put(route('admin.certifications.update', $certification), [
                 'slug' => 'wellbeing-updated',
                 'name' => 'Wellbeing Certification Updated',
@@ -72,7 +79,7 @@ class AdminDashboardAndCertificationsTest extends TestCase
         $this->assertSame(20, $certification->questions_required);
         $this->assertSame('custom', $certification->result_mode);
 
-        $this->withSession(['admin_authenticated' => true])
+        $this->asAdmin()
             ->patch(route('admin.certifications.toggle', $certification))
             ->assertRedirect(route('admin.certifications.index'));
 
@@ -80,7 +87,7 @@ class AdminDashboardAndCertificationsTest extends TestCase
 
         $this->assertTrue($certification->active);
 
-        $this->withSession(['admin_authenticated' => true])
+        $this->asAdmin()
             ->delete(route('admin.certifications.destroy', $certification))
             ->assertRedirect(route('admin.certifications.index'));
 

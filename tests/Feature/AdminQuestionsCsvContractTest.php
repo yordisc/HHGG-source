@@ -42,7 +42,7 @@ class AdminQuestionsCsvContractTest extends TestCase
             'option_4' => 'Nunca',
         ]);
 
-        $response = $this->withSession(['admin_authenticated' => true])
+        $response = $this->asAdmin()
             ->get(route('admin.questions.export.csv', ['cert_type' => 'hetero']));
 
         $response->assertOk();
@@ -50,7 +50,7 @@ class AdminQuestionsCsvContractTest extends TestCase
 
         $content = $response->streamedContent();
 
-        $rows = array_values(array_filter(array_map(static fn (string $line): array => str_getcsv($line), preg_split('/\r\n|\n|\r/', trim($content)) ?: [])));
+        $rows = array_values(array_filter(array_map(static fn(string $line): array => str_getcsv($line), preg_split('/\r\n|\n|\r/', trim($content)) ?: [])));
 
         $this->assertNotEmpty($rows);
         $this->assertSame(
@@ -84,7 +84,7 @@ class AdminQuestionsCsvContractTest extends TestCase
 
         $file = UploadedFile::fake()->createWithContent('invalid_questions.csv', $csv);
 
-        $response = $this->withSession(['admin_authenticated' => true])
+        $response = $this->asAdmin()
             ->post(route('admin.questions.import.csv'), [
                 'csv_file' => $file,
             ]);
@@ -98,7 +98,7 @@ class AdminQuestionsCsvContractTest extends TestCase
 
     public function test_template_csv_contains_contract_header_and_examples(): void
     {
-        $response = $this->withSession(['admin_authenticated' => true])
+        $response = $this->asAdmin()
             ->get(route('admin.questions.template.csv'));
 
         $response->assertOk();

@@ -35,7 +35,6 @@ class AdminCertificationPhase3FieldsTest extends TestCase
     public function admin_can_update_certification_with_expiry_fields(): void
     {
         $response = $this->actingAs($this->adminUser)
-            ->withSession(['admin_authenticated' => true])
             ->put(route('admin.certifications.update', $this->certification), [
                 'slug' => 'test-cert',
                 'name' => 'Test Certification',
@@ -62,7 +61,6 @@ class AdminCertificationPhase3FieldsTest extends TestCase
     public function admin_can_update_certification_with_retention_fields(): void
     {
         $response = $this->actingAs($this->adminUser)
-            ->withSession(['admin_authenticated' => true])
             ->put(route('admin.certifications.update', $this->certification), [
                 'slug' => 'test-cert',
                 'name' => 'Test Certification',
@@ -85,7 +83,6 @@ class AdminCertificationPhase3FieldsTest extends TestCase
     public function admin_can_update_certification_with_randomization_fields(): void
     {
         $response = $this->actingAs($this->adminUser)
-            ->withSession(['admin_authenticated' => true])
             ->put(route('admin.certifications.update', $this->certification), [
                 'slug' => 'test-cert',
                 'name' => 'Test Certification',
@@ -110,7 +107,6 @@ class AdminCertificationPhase3FieldsTest extends TestCase
     public function admin_can_update_certification_with_question_bank_requirement(): void
     {
         $response = $this->actingAs($this->adminUser)
-            ->withSession(['admin_authenticated' => true])
             ->put(route('admin.certifications.update', $this->certification), [
                 'slug' => 'test-cert',
                 'name' => 'Test Certification',
@@ -143,7 +139,6 @@ class AdminCertificationPhase3FieldsTest extends TestCase
         ];
 
         $response = $this->actingAs($this->adminUser)
-            ->withSession(['admin_authenticated' => true])
             ->put(route('admin.certifications.update', $this->certification), [
                 'slug' => 'test-cert',
                 'name' => 'Test Certification',
@@ -168,7 +163,6 @@ class AdminCertificationPhase3FieldsTest extends TestCase
     public function validation_rejects_invalid_expiry_mode(): void
     {
         $response = $this->actingAs($this->adminUser)
-            ->withSession(['admin_authenticated' => true])
             ->put(route('admin.certifications.update', $this->certification), [
                 'slug' => 'test-cert',
                 'name' => 'Test Certification',
@@ -188,7 +182,6 @@ class AdminCertificationPhase3FieldsTest extends TestCase
     public function validation_requires_expiry_days_for_fixed_mode(): void
     {
         $response = $this->actingAs($this->adminUser)
-            ->withSession(['admin_authenticated' => true])
             ->put(route('admin.certifications.update', $this->certification), [
                 'slug' => 'test-cert',
                 'name' => 'Test Certification',
@@ -209,7 +202,6 @@ class AdminCertificationPhase3FieldsTest extends TestCase
     public function admin_can_create_certification_with_phase3_fields(): void
     {
         $response = $this->actingAs($this->adminUser)
-            ->withSession(['admin_authenticated' => true])
             ->post(route('admin.certifications.store'), [
                 'slug' => 'new-cert',
                 'name' => 'New Certification',

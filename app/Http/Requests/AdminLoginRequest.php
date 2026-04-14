@@ -14,7 +14,8 @@ class AdminLoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'admin_key' => ['required', 'string', 'min:6', 'max:120'],
+            'email' => ['required', 'email', 'max:255'],
+            'password' => ['required', 'string', 'min:6', 'max:120'],
         ];
     }
 }

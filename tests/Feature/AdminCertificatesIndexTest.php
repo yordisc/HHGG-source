@@ -32,19 +32,19 @@ class AdminCertificatesIndexTest extends TestCase
             'revoked_reason' => 'Prueba',
         ]);
 
-        $this->withSession(['admin_authenticated' => true])
+        $this->asAdmin()
             ->get(route('admin.certificates.index', ['status' => 'revoked']))
             ->assertOk()
             ->assertSee($revoked->serial)
             ->assertDontSee($active->serial);
 
-        $this->withSession(['admin_authenticated' => true])
+        $this->asAdmin()
             ->get(route('admin.certificates.index', ['status' => 'active']))
             ->assertOk()
             ->assertSee($active->serial)
             ->assertDontSee($revoked->serial);
 
-        $this->withSession(['admin_authenticated' => true])
+        $this->asAdmin()
             ->get(route('admin.certificates.index', ['certification_id' => $certA->id]))
             ->assertOk()
             ->assertSee($active->serial)
@@ -66,7 +66,7 @@ class AdminCertificatesIndexTest extends TestCase
             'revoked_reason' => 'Caso CSV',
         ]);
 
-        $response = $this->withSession(['admin_authenticated' => true])
+        $response = $this->asAdmin()
             ->get(route('admin.certificates.export.csv', ['status' => 'revoked']));
 
         $response->assertOk();
@@ -98,7 +98,7 @@ class AdminCertificatesIndexTest extends TestCase
             'revoked_reason' => 'Caso API',
         ]);
 
-        $response = $this->withSession(['admin_authenticated' => true])
+        $response = $this->asAdmin()
             ->getJson(route('admin.certificates.api.index', ['status' => 'revoked', 'per_page' => 10]));
 
         $response->assertOk();

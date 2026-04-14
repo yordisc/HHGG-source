@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Jobs\PurgeExpiredCertificationDataJob;
 use App\Models\Certification;
 use App\Support\CertificationDataRetentionService;
 use Illuminate\Console\Command;
@@ -61,6 +62,16 @@ class PurgeExpiredCertificationsCommand extends Command
             return self::FAILURE;
         }
 
+        if (!$dryRun) {
+            foreach ($certifications as $certification) {
+                dispatch(new PurgeExpiredCertificationDataJob($certification->id));
+            }
+
+            $this->info("Queued purge jobs for {$certifications->count()} certifications.");
+
+            return self::SUCCESS;
+        }
+
         $this->info("Found {$certifications->count()} certifications to process...\n");
 
         $totalStats = [
@@ -103,6 +114,14 @@ class PurgeExpiredCertificationsCommand extends Command
             }
         }
 
+        if (!$dryRun) {
+            dispatch(new PurgeExpiredCertificationDataJob($certification->id));
+
+            $this->info("Queued purge job for certification '{$slug}'.");
+
+            return self::SUCCESS;
+        }
+
         $stats = $this->showPurgeSummary($certification, $retentionService, $dryRun);
         $this->printFinalSummary($stats, $dryRun);
 
@@ -123,7 +142,7 @@ class PurgeExpiredCertificationsCommand extends Command
             return self::FAILURE;
         }
 
-        $choices = $certifications->map(fn ($c) => "{$c->name} ({$c->slug})")->toArray();
+        $choices = $certifications->map(fn($c) => "{$c->name} ({$c->slug})")->toArray();
         $selected = $this->choice('Select certification to purge', $choices);
 
         // Extract slug from choice
@@ -144,10 +163,10 @@ class PurgeExpiredCertificationsCommand extends Command
     private function showPurgeSummary(Certification $certification, CertificationDataRetentionService $retentionService, bool $dryRun): array
     {
         $this->line("\n📋 <fg=cyan;options=bold>{$certification->name}</> ({$certification->slug})");
-        
+
         // Get statistics
         $stats = $retentionService->getPurgeStatistics($certification);
-        
+
         if (($stats['expired_certificates'] ?? 0) === 0) {
             $this->info('  ✓ No expired data to purge');
             return ['certificates_deleted' => 0, 'images_deleted' => 0];
@@ -176,7 +195,7 @@ class PurgeExpiredCertificationsCommand extends Command
     private function printFinalSummary(array $stats, bool $dryRun): void
     {
         $this->line("\n<fg=cyan>════════════════════════════════════════</>");
-        
+
         if ($dryRun) {
             $this->line("<fg=yellow>DRY RUN SUMMARY:</>");
             $this->line("  Certificates that would be deleted: <fg=yellow>{$stats['certificates_deleted']}</>");
@@ -185,11 +204,11 @@ class PurgeExpiredCertificationsCommand extends Command
             $this->line("  Certificates deleted: <fg=green>{$stats['certificates_deleted']}</>");
             $this->line("  Images deleted: <fg=green>{$stats['images_deleted']}</>");
         }
-        
+
         if (isset($stats['certifications_processed'])) {
             $this->line("  Certifications processed: <fg=blue>{$stats['certifications_processed']}</>");
         }
-        
+
         $this->line("<fg=cyan>════════════════════════════════════════</>\n");
     }
 }

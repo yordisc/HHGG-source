@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Certificate;
+use App\Jobs\CleanExpiredCertificatesJob;
 use Illuminate\Console\Command;
 
 class CleanExpiredCertificates extends Command
@@ -13,11 +13,9 @@ class CleanExpiredCertificates extends Command
 
     public function handle(): int
     {
-        $deleted = Certificate::query()
-            ->where('expires_at', '<', now())
-            ->delete();
+        dispatch(new CleanExpiredCertificatesJob());
 
-        $this->info("Expired certificates deleted: {$deleted}");
+        $this->info('Expired certificates cleanup queued.');
 
         return self::SUCCESS;
     }

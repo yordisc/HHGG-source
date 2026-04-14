@@ -54,7 +54,7 @@ class AdminCertificationReorderTest extends TestCase
             'settings' => [],
         ]);
 
-        $this->withSession(['admin_authenticated' => true])
+        $this->asAdmin()
             ->post(route('admin.certifications.reorder'), [
                 'certifications' => [$third->id, $first->id, $second->id],
             ])

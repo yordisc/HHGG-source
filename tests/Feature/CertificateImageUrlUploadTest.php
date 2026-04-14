@@ -22,7 +22,7 @@ class CertificateImageUrlUploadTest extends TestCase
             ]),
         ]);
 
-        $this->withSession(['admin_authenticated' => true])
+        $this->asAdmin()
             ->postJson(route('cert.image.store', ['serial' => $certificate->serial]), [
                 'image_url' => 'https://example.com/image.png',
             ])
@@ -45,7 +45,7 @@ class CertificateImageUrlUploadTest extends TestCase
             ]),
         ]);
 
-        $this->withSession(['admin_authenticated' => true])
+        $this->asAdmin()
             ->postJson(route('cert.image.store', ['serial' => $certificate->serial]), [
                 'image_url' => 'https://example.com/not-image',
             ])

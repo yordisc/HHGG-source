@@ -19,8 +19,7 @@ class CertificationUnsavedWarningTest extends TestCase
     {
         parent::setUp();
 
-        $this->admin = User::factory()->create();
-        session(['admin_authenticated' => true]);
+        $this->admin = User::factory()->admin()->create();
 
         $this->certification = Certification::create([
             'slug' => 'unsaved-warning-test',
@@ -59,7 +58,7 @@ class CertificationUnsavedWarningTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check modal HTML
         $response->assertSeeText('Cambios sin guardar');
         $response->assertSeeText('unsavedChangesModal');
@@ -72,7 +71,7 @@ class CertificationUnsavedWarningTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check tracking functions
         $response->assertSeeText('initializeUnsavedChangesTracking');
         $response->assertSeeText('updateUnsavedState');
@@ -85,7 +84,7 @@ class CertificationUnsavedWarningTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check title indicator function
         $response->assertSeeText('updateTitleIndicator');
         $response->assertSeeText('brand-title');
@@ -97,7 +96,7 @@ class CertificationUnsavedWarningTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check buttons
         $response->assertSeeText('Descartar cambios');
         $response->assertSeeText('discardChangesAndLeave');
@@ -111,7 +110,7 @@ class CertificationUnsavedWarningTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check event listeners
         $response->assertSeeText("'change'");
         $response->assertSeeText("'input'");
@@ -124,7 +123,7 @@ class CertificationUnsavedWarningTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check beforeunload handler
         $response->assertSeeText('beforeunload');
         $response->assertSeeText('hasUnsavedChanges');
@@ -136,7 +135,7 @@ class CertificationUnsavedWarningTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check link interception
         $response->assertSeeText('closest');
         $response->assertSeeText('[href]');
@@ -149,7 +148,7 @@ class CertificationUnsavedWarningTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check that form submit bypasses check
         $response->assertSeeText("'submit'");
         $response->assertSeeText('form[method="POST"]');
@@ -161,7 +160,7 @@ class CertificationUnsavedWarningTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check FormData comparison
         $response->assertSeeText('FormData');
         $response->assertSeeText('URLSearchParams');
@@ -174,7 +173,7 @@ class CertificationUnsavedWarningTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Modal should be hidden
         $content = $response->content();
         $this->assertStringContainsString('id="unsavedChangesModal" class="hidden', $content);
@@ -186,7 +185,7 @@ class CertificationUnsavedWarningTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check modal show/hide functions
         $response->assertSeeText('showUnsavedChangesModal');
         $response->assertSeeText('hideUnsavedChangesModal');
@@ -198,7 +197,7 @@ class CertificationUnsavedWarningTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check classList manipulation
         $response->assertSeeText('classList.remove');
         $response->assertSeeText('classList.add');
@@ -210,7 +209,7 @@ class CertificationUnsavedWarningTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check save button state update
         $response->assertSeeText('updateSaveButton');
         $response->assertSeeText('[type="submit"]');
@@ -222,7 +221,7 @@ class CertificationUnsavedWarningTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check opacity manipulation
         $response->assertSeeText("style.opacity");
         $response->assertSeeText("style.cursor");
@@ -234,7 +233,7 @@ class CertificationUnsavedWarningTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check link interception logic
         $response->assertSeeText('.closest');
         $response->assertSeeText('URL');
@@ -247,7 +246,7 @@ class CertificationUnsavedWarningTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // External links should not be intercepted
         $response->assertSeeText("target === '_blank'");
         $response->assertSeeText('url.origin !== window.location.origin');
@@ -259,7 +258,7 @@ class CertificationUnsavedWarningTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Hash links should not trigger warning
         $response->assertSeeText("startsWith('#')");
     }
@@ -270,7 +269,7 @@ class CertificationUnsavedWarningTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check asterisk logic
         $this->assertStringContainsString("includes('*')", $response->content());
     }
@@ -281,7 +280,7 @@ class CertificationUnsavedWarningTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check color change
         $response->assertSeeText("style.color");
         $response->assertSeeText("'var(--accent)'");
@@ -294,7 +293,7 @@ class CertificationUnsavedWarningTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check preventDefault
         $response->assertSeeText("preventDefault()");
     }
@@ -328,7 +327,7 @@ class CertificationUnsavedWarningTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check combined logic
         $response->assertSeeText('hasUnsavedChanges');
         $response->assertSeeText('updateUnsavedState');
@@ -341,7 +340,7 @@ class CertificationUnsavedWarningTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check pending navigation variable
         $response->assertSeeText('pendingNavigation');
         $response->assertSeeText('= null');
@@ -354,7 +353,7 @@ class CertificationUnsavedWarningTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check callback handling
         $response->assertSeeText('typeof pendingNavigation === \'function\'');
         $response->assertSeeText('typeof pendingNavigation === \'string\'');
@@ -367,7 +366,7 @@ class CertificationUnsavedWarningTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check button elements (keyboard accessible)
         $response->assertSeeText('type="button"');
         $response->assertSeeText('onclick=');
@@ -379,7 +378,7 @@ class CertificationUnsavedWarningTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Original data is captured on init
         $response->assertSeeText('originalFormData');
         $response->assertSeeText('original');

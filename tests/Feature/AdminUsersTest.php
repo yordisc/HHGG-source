@@ -24,7 +24,7 @@ class AdminUsersTest extends TestCase
             'email' => 'first@example.com',
         ]);
 
-        $this->withSession(['admin_authenticated' => true])
+        $this->asAdmin()
             ->post(route('admin.users.store'), [
                 'name' => 'Nuevo Usuario',
                 'password' => 'secret123',
@@ -37,7 +37,7 @@ class AdminUsersTest extends TestCase
         $this->assertStringEndsWith('@users.local', $createdUser->email);
         $this->assertNotNull($createdUser->email_verified_at);
 
-        $this->withSession(['admin_authenticated' => true])
+        $this->asAdmin()
             ->put(route('admin.users.update', $createdUser), [
                 'name' => 'Usuario Modificado',
                 'password' => 'secret456',
@@ -51,7 +51,7 @@ class AdminUsersTest extends TestCase
         $this->assertStringEndsWith('@users.local', $createdUser->email);
         $this->assertNull($createdUser->email_verified_at);
 
-        $response = $this->withSession(['admin_authenticated' => true])
+        $response = $this->asAdmin()
             ->get(route('admin.users.export.csv'));
 
         $response->assertOk();
@@ -59,7 +59,7 @@ class AdminUsersTest extends TestCase
         $response->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
         $this->assertStringContainsString('name,email,email_verified_at', $response->streamedContent());
 
-        $this->withSession(['admin_authenticated' => true])
+        $this->asAdmin()
             ->delete(route('admin.users.destroy', $createdUser))
             ->assertRedirect(route('admin.users.index'));
 

@@ -19,8 +19,7 @@ class CertificationLiveValidationTest extends TestCase
     {
         parent::setUp();
 
-        $this->admin = User::factory()->create();
-        session(['admin_authenticated' => true]);
+        $this->admin = User::factory()->admin()->create();
 
         $this->certification = Certification::create([
             'slug' => 'validation-test-cert',
@@ -59,7 +58,7 @@ class CertificationLiveValidationTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check that validation script is loaded
         $response->assertSeeText('validationRules');
         $response->assertSeeText('validateField');
@@ -73,7 +72,7 @@ class CertificationLiveValidationTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check that name validation rules are present
         $response->assertSeeText('validationRules');
         // Should have: empty check, min 3 chars, max 255
@@ -88,7 +87,7 @@ class CertificationLiveValidationTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check that percentage validation rules are present
         $response->assertSeeText('Debe ser un número');
         $response->assertSeeText('Debe estar entre 0 y 100');
@@ -102,7 +101,7 @@ class CertificationLiveValidationTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check that cooldown validation rules are present
         $response->assertSeeText('No puede ser negativo');
         $response->assertSeeText('Máximo 1825 días');
@@ -114,7 +113,7 @@ class CertificationLiveValidationTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check that feedback creation logic is present
         $response->assertSeeText('feedback');
         $response->assertSeeText('getElementById');
@@ -127,7 +126,7 @@ class CertificationLiveValidationTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check that error styling classes are present
         $response->assertSeeText('border-red-500');
         $response->assertSeeText('border-red-200');
@@ -141,7 +140,7 @@ class CertificationLiveValidationTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check that warning styling classes are present
         $response->assertSeeText('border-yellow-500');
         $response->assertSeeText('border-yellow-200');
@@ -155,7 +154,7 @@ class CertificationLiveValidationTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check that input event listeners are set
         $response->assertSeeText('addEventListener');
         $response->assertSeeText("'input'");
@@ -168,7 +167,7 @@ class CertificationLiveValidationTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check that change event listeners are set
         $response->assertSeeText("'change'");
     }
@@ -179,7 +178,7 @@ class CertificationLiveValidationTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check that form validation happens on submit
         $response->assertSeeText('validateAllFields');
         $response->assertSeeText("'submit'");
@@ -192,7 +191,7 @@ class CertificationLiveValidationTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check that scroll to error logic is present
         $response->assertSeeText('scrollIntoView');
         $response->assertSeeText('smooth');
@@ -205,7 +204,7 @@ class CertificationLiveValidationTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check for low percentage warning
         $response->assertSeeText('Casi todos pasarán');
     }
@@ -216,7 +215,7 @@ class CertificationLiveValidationTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check for high percentage warning
         $response->assertSeeText('Solo los mejores pasarán');
     }
@@ -227,7 +226,7 @@ class CertificationLiveValidationTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check for long cooldown warning
         $response->assertSeeText('Muy largo');
     }
@@ -238,7 +237,7 @@ class CertificationLiveValidationTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check for character count display
         $response->assertSeeText('caracteres');
         $response->assertSeeText('/255');
@@ -250,7 +249,7 @@ class CertificationLiveValidationTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check that rules array has proper structure
         $response->assertSeeText('rules:');
         $response->assertSeeText('check:');
@@ -264,7 +263,7 @@ class CertificationLiveValidationTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check that initial validation logic exists
         $response->assertSeeText('input.value');
         $response->assertSeeText('updateFieldFeedback');
@@ -276,7 +275,7 @@ class CertificationLiveValidationTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check that feedback is cleared for valid values
         $response->assertSeeText('feedbackEl.innerHTML = \'\'');
     }
@@ -287,7 +286,7 @@ class CertificationLiveValidationTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check that validated fields are marked
         $response->assertSeeText('data-validated');
     }
@@ -298,10 +297,10 @@ class CertificationLiveValidationTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Every rule should have a message
         $content = $response->content();
-        
+
         // Count message: keys (should be at least 12)
         $messageCount = substr_count($content, 'message:');
         $this->assertGreaterThanOrEqual(12, $messageCount, 'Should have at least 12 validation messages');
@@ -313,7 +312,7 @@ class CertificationLiveValidationTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check proper object structure
         $response->assertSeeText('const validationRules = {');
         $response->assertSeeText('label:');
@@ -326,7 +325,7 @@ class CertificationLiveValidationTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check for defensive coding
         $response->assertSeeText('if (!rules)');
         $response->assertSeeText('if (!input)');
@@ -339,7 +338,7 @@ class CertificationLiveValidationTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check for parsing
         $response->assertSeeText('parseFloat');
         $response->assertSeeText('parseInt');
@@ -352,7 +351,7 @@ class CertificationLiveValidationTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check for years calculation
         $response->assertSeeText('.toFixed(1)');
         $response->assertSeeText('/ 365');

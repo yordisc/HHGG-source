@@ -31,7 +31,6 @@ class AdminQuestionsPhase3FieldsTest extends TestCase
     public function admin_can_update_question_type(): void
     {
         $response = $this->actingAs($this->adminUser)
-            ->withSession(['admin_authenticated' => true])
             ->put(route('admin.questions.update', $this->question), [
                 'cert_type' => $this->certification->slug,
                 'prompt' => 'Updated prompt',
@@ -53,7 +52,6 @@ class AdminQuestionsPhase3FieldsTest extends TestCase
     public function admin_can_update_question_weight(): void
     {
         $response = $this->actingAs($this->adminUser)
-            ->withSession(['admin_authenticated' => true])
             ->put(route('admin.questions.update', $this->question), [
                 'cert_type' => $this->certification->slug,
                 'prompt' => 'Updated prompt',
@@ -76,7 +74,6 @@ class AdminQuestionsPhase3FieldsTest extends TestCase
     public function admin_can_update_question_sudden_death_mode(): void
     {
         $response = $this->actingAs($this->adminUser)
-            ->withSession(['admin_authenticated' => true])
             ->put(route('admin.questions.update', $this->question), [
                 'cert_type' => $this->certification->slug,
                 'prompt' => 'Updated prompt',
@@ -99,7 +96,6 @@ class AdminQuestionsPhase3FieldsTest extends TestCase
     public function admin_can_create_question_with_weight(): void
     {
         $response = $this->actingAs($this->adminUser)
-            ->withSession(['admin_authenticated' => true])
             ->post(route('admin.questions.store'), [
                 'cert_type' => $this->certification->slug,
                 'prompt' => 'New question',
@@ -124,7 +120,6 @@ class AdminQuestionsPhase3FieldsTest extends TestCase
     public function admin_can_create_mcq2_question(): void
     {
         $response = $this->actingAs($this->adminUser)
-            ->withSession(['admin_authenticated' => true])
             ->post(route('admin.questions.store'), [
                 'cert_type' => $this->certification->slug,
                 'prompt' => 'True or False question',
@@ -144,7 +139,6 @@ class AdminQuestionsPhase3FieldsTest extends TestCase
     public function validation_rejects_invalid_type(): void
     {
         $response = $this->actingAs($this->adminUser)
-            ->withSession(['admin_authenticated' => true])
             ->put(route('admin.questions.update', $this->question), [
                 'cert_type' => $this->certification->slug,
                 'prompt' => 'Updated prompt',
@@ -163,7 +157,6 @@ class AdminQuestionsPhase3FieldsTest extends TestCase
     public function validation_rejects_invalid_weight(): void
     {
         $response = $this->actingAs($this->adminUser)
-            ->withSession(['admin_authenticated' => true])
             ->put(route('admin.questions.update', $this->question), [
                 'cert_type' => $this->certification->slug,
                 'prompt' => 'Updated prompt',
@@ -183,7 +176,6 @@ class AdminQuestionsPhase3FieldsTest extends TestCase
     public function validation_rejects_invalid_sudden_death_mode(): void
     {
         $response = $this->actingAs($this->adminUser)
-            ->withSession(['admin_authenticated' => true])
             ->put(route('admin.questions.update', $this->question), [
                 'cert_type' => $this->certification->slug,
                 'prompt' => 'Updated prompt',
@@ -203,7 +195,6 @@ class AdminQuestionsPhase3FieldsTest extends TestCase
     public function mcq2_questions_have_options_3_and_4_as_null(): void
     {
         $this->actingAs($this->adminUser)
-            ->withSession(['admin_authenticated' => true])
             ->post(route('admin.questions.store'), [
                 'cert_type' => $this->certification->slug,
                 'prompt' => 'Two option question',

@@ -22,8 +22,7 @@ class AdminCertificationApiTest extends TestCase
     {
         parent::setUp();
 
-        $this->admin = User::factory()->create();
-        session(['admin_authenticated' => true]);
+        $this->admin = User::factory()->admin()->create();
 
         $this->certification = Certification::create([
             'slug' => 'api-test-cert',

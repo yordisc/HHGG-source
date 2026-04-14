@@ -18,6 +18,28 @@
     - Scheduler externo via webhook protegido.
     - Flujo local conservado con `scripts/local-test.sh` y `scripts/dev-local.sh`.
 
+## Avance de arquitectura
+
+- Fase 1 completada: worker de colas y `QUEUE_CONNECTION=database` en blueprint de Render.
+- Fase 2 completada: scheduler mantiene trigger HTTP y tareas pesadas encoladas.
+- Fase 3 completada: acceso admin migrado a autenticacion por usuario con rol `is_admin`.
+- Fase 4 en progreso: baseline de latencia y memoria con `scripts/profile-serving.sh`.
+
+Decision de serving:
+
+- Mantener stack Nginx + PHP-FPM mientras la metrica P95 y la RAM sean estables.
+- Evaluar migracion de serving solo con evidencia de presion sostenida de recursos.
+
+## Registro de cambios
+
+### 2026-04-14
+
+- Fase 1 completada: worker de colas en Render y conexion de cola en `database`.
+- Fase 2 completada: comandos de limpieza/purga migrados a ejecucion asíncrona por Jobs.
+- Fase 3 completada: autenticacion admin migrada a usuario con rol `is_admin` y pruebas adaptadas.
+- Fase 4 iniciada: baseline de latencia/memoria con `scripts/profile-serving.sh`.
+- Documentacion consolidada en `docs/README.md` y `docs/DEPLOY_RENDER_NEON_AIVEN.md`.
+
 ## Guia rapida
 
 | Necesitas                             | Documento                                                    |

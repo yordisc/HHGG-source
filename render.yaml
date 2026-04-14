@@ -6,3 +6,17 @@ services:
     autoDeploy: true
     dockerfilePath: ./Dockerfile
     healthCheckPath: /
+    envVars:
+      - key: QUEUE_CONNECTION
+        value: database
+
+  - type: worker
+    name: certificacionhhgg-worker
+    env: docker
+    plan: free
+    autoDeploy: true
+    dockerfilePath: ./Dockerfile
+    dockerCommand: php artisan queue:work --tries=3 --timeout=90
+    envVars:
+      - key: QUEUE_CONNECTION
+        value: database

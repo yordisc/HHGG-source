@@ -15,11 +15,11 @@ class AdminCertificationWizardAndTestToolsTest extends TestCase
 
     public function test_admin_can_create_certification_through_wizard(): void
     {
-        $this->withSession(['admin_authenticated' => true])
+        $this->asAdmin()
             ->get(route('admin.certifications.create'))
             ->assertRedirect(route('admin.certifications.wizard', ['step' => 1]));
 
-        $this->withSession(['admin_authenticated' => true])
+        $this->asAdmin()
             ->post(route('admin.certifications.wizard.store', ['step' => 1]), [
                 'slug' => 'wizard-cert',
                 'name' => 'Wizard Cert',
@@ -27,21 +27,21 @@ class AdminCertificationWizardAndTestToolsTest extends TestCase
             ])
             ->assertRedirect(route('admin.certifications.wizard', ['step' => 2]));
 
-        $this->withSession(['admin_authenticated' => true])
+        $this->asAdmin()
             ->post(route('admin.certifications.wizard.store', ['step' => 2]), [
                 'questions_required' => 12,
                 'pass_score_percentage' => 75,
             ])
             ->assertRedirect(route('admin.certifications.wizard', ['step' => 3]));
 
-        $this->withSession(['admin_authenticated' => true])
+        $this->asAdmin()
             ->post(route('admin.certifications.wizard.store', ['step' => 3]), [
                 'cooldown_days' => 14,
                 'result_mode' => 'binary_threshold',
             ])
             ->assertRedirect(route('admin.certifications.wizard', ['step' => 4]));
 
-        $this->withSession(['admin_authenticated' => true])
+        $this->asAdmin()
             ->post(route('admin.certifications.wizard.store', ['step' => 4]), [
                 'active' => 1,
                 'pdf_view' => 'pdf.certificate',
@@ -50,7 +50,7 @@ class AdminCertificationWizardAndTestToolsTest extends TestCase
             ])
             ->assertRedirect(route('admin.certifications.wizard', ['step' => 5]));
 
-        $this->withSession(['admin_authenticated' => true])
+        $this->asAdmin()
             ->post(route('admin.certifications.wizard.store', ['step' => 5]))
             ->assertRedirect();
 
@@ -79,7 +79,7 @@ class AdminCertificationWizardAndTestToolsTest extends TestCase
             'settings' => [],
         ]);
 
-        $this->withSession(['admin_authenticated' => true])
+        $this->asAdmin()
             ->post(route('admin.certifications.test-questions', $certification), [
                 'count' => 5,
             ])
@@ -88,7 +88,7 @@ class AdminCertificationWizardAndTestToolsTest extends TestCase
         $this->assertSame(5, Question::query()->where('certification_id', $certification->id)->where('is_test_question', true)->count());
         $this->assertSame(5, QuestionTranslation::query()->count());
 
-        $this->withSession(['admin_authenticated' => true])
+        $this->asAdmin()
             ->delete(route('admin.certifications.test-questions.clear', $certification))
             ->assertRedirect(route('admin.certifications.edit', $certification));
 
@@ -134,7 +134,7 @@ class AdminCertificationWizardAndTestToolsTest extends TestCase
             'option_4' => 'D',
         ]);
 
-        $this->withSession(['admin_authenticated' => true])
+        $this->asAdmin()
             ->get(route('admin.certifications.test', $certification))
             ->assertOk()
             ->assertSee('Prueba de funcionamiento')
@@ -143,14 +143,14 @@ class AdminCertificationWizardAndTestToolsTest extends TestCase
 
     public function test_wizard_rejects_draft_id_that_does_not_belong_to_session(): void
     {
-        $this->withSession(['admin_authenticated' => true])
+        $this->asAdmin()
             ->get(route('admin.certifications.wizard', ['step' => 1]))
             ->assertOk();
 
         $sessionDraftId = (int) CertificationDraft::query()->latest('id')->value('id');
         $mismatchedDraftId = $sessionDraftId + 999;
 
-        $this->withSession(['admin_authenticated' => true])
+        $this->asAdmin()
             ->post(route('admin.certifications.wizard.store', ['step' => 1]), [
                 'draft_id' => $mismatchedDraftId,
                 'slug' => 'wizard-cert-locked',

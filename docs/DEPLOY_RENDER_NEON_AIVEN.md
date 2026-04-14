@@ -24,7 +24,7 @@ Para Render y la base de datos externa, define al menos:
 - `CACHE_STORE=database`
 - `SESSION_DRIVER=database`
 - `QUEUE_CONNECTION=database`
-- `ADMIN_ACCESS_KEY`
+- `ADMIN_ACCESS_KEY` (solo para webhook de scheduler)
 
 ## Checklist exacta de variables
 
@@ -43,7 +43,7 @@ Usa esta lista para no dejar huecos al desplegar:
 - `SESSION_DRIVER=database`
 - `SESSION_LIFETIME=120`
 - `QUEUE_CONNECTION=database`
-- `ADMIN_ACCESS_KEY`
+- `ADMIN_ACCESS_KEY` (solo para webhook de scheduler)
 - `MAIL_MAILER=log` o el proveedor SMTP que uses
 - `MAIL_FROM_ADDRESS`
 - `MAIL_FROM_NAME`
@@ -69,7 +69,7 @@ Usa esta lista para no dejar huecos al desplegar:
 - `DB_USERNAME`
 - `DB_PASSWORD`
 
-### Recomendado si usas el panel admin
+### Recomendado para scheduler webhook
 
 - `ADMIN_ACCESS_KEY`
 
@@ -84,12 +84,14 @@ Usa esta lista para no dejar huecos al desplegar:
 1. Crea el proyecto web en Render y apunta al repositorio.
 2. Render detectara el `Dockerfile` de la raiz.
 3. Configura las variables de entorno anteriores.
-4. Usa el puerto `10000`; el contenedor ya expone `PORT` y arranca `php artisan serve` con ese valor.
+4. Usa el puerto `10000`; el contenedor ya expone `PORT` y sirve la app con Nginx + PHP-FPM.
 5. Si quieres automatizar el esquema, el contenedor ejecuta `php artisan migrate --force` al iniciar.
 
 ## Scheduler
 
 Para mantener la opcion gratuita, este blueprint deja fuera el cron interno de Render. Si necesitas ejecutar `php artisan schedule:run` cada minuto, usa un cron externo gratuito o programa una tarea aparte; si mas adelante cambias a un plan que soporte cron en Render, puedes añadir ese servicio sin tocar el resto.
+
+El webhook requiere el header `X-Admin-Access-Key` con el valor de `ADMIN_ACCESS_KEY`.
 
 ## Neon
 
@@ -121,3 +123,34 @@ sh scripts/local-test.sh
 ## Observacion operativa
 
 La app usa comandos programados por Laravel. En produccion necesitas un cron o job externo que ejecute `php artisan schedule:run` cada minuto si mantienes el plan gratuito.
+
+## Baseline de rendimiento (Fase 4)
+
+Antes de evaluar una migracion de serving (por ejemplo FrankenPHP), toma una linea base con el runtime actual.
+
+1. Despliega la version actual en Render.
+2. Ejecuta desde una terminal local:
+
+```bash
+sh scripts/profile-serving.sh --url "https://tu-servicio.onrender.com" --requests 300
+```
+
+3. Si corres local en Docker, puedes agregar snapshot de memoria del contenedor:
+
+```bash
+sh scripts/profile-serving.sh --url "http://localhost:10000" --requests 300 --container certificacionhhgg-web
+```
+
+4. Revisa el reporte generado en `docs/benchmarks/phase4-baseline-*.md`.
+
+Decision recomendada:
+
+- Mantener stack actual si latencia y memoria son estables.
+- Evaluar migracion de serving solo si hay presion de RAM sostenida o P95 alto de forma consistente.
+
+## Estado de fases
+
+- Fase 1: completada.
+- Fase 2: completada.
+- Fase 3: completada.
+- Fase 4: en progreso.

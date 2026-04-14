@@ -27,7 +27,7 @@ class AdminQuestionsImportTest extends TestCase
 
         $file = UploadedFile::fake()->createWithContent('questions.csv', $csv);
 
-        $response = $this->withSession(['admin_authenticated' => true])
+        $response = $this->asAdmin()
             ->post(route('admin.questions.import.csv'), [
                 'csv_file' => $file,
             ]);

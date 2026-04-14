@@ -19,8 +19,7 @@ class CertificationChangePreviewModalTest extends TestCase
     {
         parent::setUp();
 
-        $this->admin = User::factory()->create();
-        session(['admin_authenticated' => true]);
+        $this->admin = User::factory()->admin()->create();
 
         $this->certification = Certification::create([
             'slug' => 'modal-test-cert',
@@ -59,7 +58,7 @@ class CertificationChangePreviewModalTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check that modal HTML is present
         $response->assertSeeText('Vista previa de cambios');
         $response->assertSeeText('Revisa qué va a cambiar antes de guardar');
@@ -72,7 +71,7 @@ class CertificationChangePreviewModalTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check for preview button
         $response->assertSeeText('Vista previa');
     }
@@ -83,7 +82,7 @@ class CertificationChangePreviewModalTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check that key JavaScript functions are present
         $response->assertSeeText('showChangePreview');
         $response->assertSeeText('closeChangePreview');
@@ -97,7 +96,7 @@ class CertificationChangePreviewModalTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check that field label mappings are present
         $response->assertSeeText('Slug');
         $response->assertSeeText('Nombre');
@@ -114,7 +113,7 @@ class CertificationChangePreviewModalTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check that sensitive field detection is present
         $response->assertSeeText('sensitive');
         $response->assertSeeText('Cambio sensible');
@@ -126,7 +125,7 @@ class CertificationChangePreviewModalTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check that change tracking is properly initialized
         $response->assertSeeText('formChangeData');
         $response->assertSeeText('originalValues');
@@ -139,7 +138,7 @@ class CertificationChangePreviewModalTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check for XSS protection
         $response->assertSeeText('escapeHtml');
     }
@@ -150,7 +149,7 @@ class CertificationChangePreviewModalTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Modal should have 'hidden' class by default
         $content = $response->content();
         $this->assertStringContainsString('id="changePreviewModal" class="hidden', $content);
@@ -170,7 +169,7 @@ class CertificationChangePreviewModalTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Verify the button clicks handler is set up
         $response->assertSeeText('onclick="showChangePreview()"');
     }
@@ -181,7 +180,7 @@ class CertificationChangePreviewModalTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Verify the confirm button is wired to submission
         $response->assertSeeText('onclick="confirmAndSubmit()"');
         $response->assertSeeText('Guardar cambios');
@@ -193,10 +192,10 @@ class CertificationChangePreviewModalTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Verify sensitive field detection logic is in place
         $content = $response->content();
-        
+
         // Check that the array includes sensitive fields
         $this->assertStringContainsString('questions_required', $content);
         $this->assertStringContainsString('pass_score_percentage', $content);
@@ -211,7 +210,7 @@ class CertificationChangePreviewModalTest extends TestCase
             ->get(route('admin.certifications.edit', $this->certification));
 
         $response->assertSuccessful();
-        
+
         // Check that "no changes" message exists
         $response->assertSeeText('No hay cambios pendientes');
     }

@@ -19,6 +19,11 @@ class PurgeExpiredCertificationDataJob implements ShouldQueue
         $this->certificationId = $certificationId;
     }
 
+    public function certificationId(): ?int
+    {
+        return $this->certificationId;
+    }
+
     /**
      * Execute the job.
      */
@@ -36,7 +41,7 @@ class PurgeExpiredCertificationDataJob implements ShouldQueue
                 }
 
                 $stats = $retentionService->purgeExpiredCertificationData($certification);
-                
+
                 Log::info('PurgeExpiredCertificationDataJob: Certification purged', [
                     'certification_id' => $certification->id,
                     'certification_slug' => $certification->slug,
@@ -46,7 +51,7 @@ class PurgeExpiredCertificationDataJob implements ShouldQueue
             } else {
                 // Purge all expired certifications
                 $allCertifications = Certification::where('manual_user_data_purge_enabled', true)->get();
-                
+
                 $totalStats = [
                     'certificates_deleted' => 0,
                     'images_deleted' => 0,

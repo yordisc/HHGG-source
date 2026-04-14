@@ -16,8 +16,8 @@ class AuditLogTest extends TestCase
     public function test_audit_log_index_displays(): void
     {
         AuditLog::log('create', 'User', 1, 'Test User');
-        
-        $response = $this->withSession(['admin_authenticated' => true])
+
+        $response = $this->asAdmin()
             ->get(route('admin.audit.index'));
         $response->assertStatus(200);
         $response->assertViewIs('admin.audit.index');
@@ -25,15 +25,15 @@ class AuditLogTest extends TestCase
 
     public function test_audit_log_appears_after_user_creation(): void
     {
-        $response = $this->withSession(['admin_authenticated' => true])
+        $response = $this->asAdmin()
             ->post(route('admin.users.store'), [
                 'name' => 'New User',
                 'password' => 'password123',
                 'email_verified' => false,
             ]);
-        
+
         $response->assertRedirect();
-        
+
         $this->assertDatabaseHas('audit_logs', [
             'action' => 'create',
             'entity' => 'User',
@@ -44,8 +44,8 @@ class AuditLogTest extends TestCase
     public function test_audit_log_appears_after_certification_update(): void
     {
         $certification = Certification::factory()->create(['name' => 'Original Name']);
-        
-        $response = $this->withSession(['admin_authenticated' => true])
+
+        $response = $this->asAdmin()
             ->put(route('admin.certifications.update', $certification), [
                 'name' => 'Updated Name',
                 'slug' => $certification->slug,
@@ -58,9 +58,9 @@ class AuditLogTest extends TestCase
                 'pdf_view' => $certification->pdf_view,
                 'home_order' => $certification->home_order,
             ]);
-        
+
         $response->assertRedirect();
-        
+
         $this->assertDatabaseHas('audit_logs', [
             'action' => 'update',
             'entity' => 'Certification',
@@ -71,12 +71,12 @@ class AuditLogTest extends TestCase
     public function test_audit_log_appears_after_user_deletion(): void
     {
         $user = User::factory()->create(['name' => 'To Delete']);
-        
-        $response = $this->withSession(['admin_authenticated' => true])
+
+        $response = $this->asAdmin()
             ->delete(route('admin.users.destroy', $user));
-        
+
         $response->assertRedirect();
-        
+
         $this->assertDatabaseHas('audit_logs', [
             'action' => 'delete',
             'entity' => 'User',
@@ -89,10 +89,10 @@ class AuditLogTest extends TestCase
         AuditLog::log('create', 'User', 1, 'Test');
         AuditLog::log('update', 'Certification', 1, 'Test');
         AuditLog::log('delete', 'User', 2, 'Test');
-        
-        $response = $this->withSession(['admin_authenticated' => true])
+
+        $response = $this->asAdmin()
             ->get(route('admin.audit.index', ['filter' => 'create']));
-        
+
         $response->assertStatus(200);
         $response->assertSee('Crear');
     }
@@ -101,17 +101,17 @@ class AuditLogTest extends TestCase
     {
         AuditLog::log('create', 'User', 1, 'Test');
         AuditLog::log('create', 'Certification', 2, 'Test');
-        
-        $response = $this->withSession(['admin_authenticated' => true])
+
+        $response = $this->asAdmin()
             ->get(route('admin.audit.index', ['entity' => 'User']));
-        
+
         $response->assertStatus(200);
     }
 
     public function test_audit_log_records_ip_address(): void
     {
         AuditLog::log('create', 'User', 1, 'Test User');
-        
+
         $log = AuditLog::first();
         $this->assertNotNull($log->ip_address);
     }
@@ -119,7 +119,7 @@ class AuditLogTest extends TestCase
     public function test_audit_log_records_user_agent(): void
     {
         AuditLog::log('create', 'User', 1, 'Test User');
-        
+
         $log = AuditLog::first();
         $this->assertNotNull($log->user_agent);
     }
@@ -127,7 +127,7 @@ class AuditLogTest extends TestCase
     public function test_audit_log_stores_changes_as_json(): void
     {
         AuditLog::log('update', 'User', 1, 'Test', ['email' => 'new@example.com']);
-        
+
         $log = AuditLog::first();
         $this->assertIsArray($log->changes);
         $this->assertEquals('new@example.com', $log->changes['email']);

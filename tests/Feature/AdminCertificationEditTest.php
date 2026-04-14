@@ -21,10 +21,7 @@ class AdminCertificationEditTest extends TestCase
         parent::setUp();
 
         // Create admin user
-        $this->admin = User::factory()->create();
-
-        // Set admin authentication in session (CRITICAL - required by admin.auth middleware)
-        session(['admin_authenticated' => true]);
+        $this->admin = User::factory()->admin()->create();
 
         // Create certification with active questions
         $this->certification = Certification::create([

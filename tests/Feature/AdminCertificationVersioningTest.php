@@ -20,8 +20,7 @@ class AdminCertificationVersioningTest extends TestCase
     {
         parent::setUp();
 
-        $this->admin = User::factory()->create();
-        session(['admin_authenticated' => true]);
+        $this->admin = User::factory()->admin()->create();
 
         $this->certification = Certification::create([
             'slug' => 'versioned-cert',
@@ -134,7 +133,7 @@ class AdminCertificationVersioningTest extends TestCase
 
         $response->assertSuccessful();
         $response->assertViewHas('versions');
-        
+
         $versions = $response->viewData('versions');
         $this->assertGreaterThanOrEqual(3, count($versions));
     }

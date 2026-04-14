@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Certification;
 use App\Models\Question;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -18,10 +19,16 @@ class AdminQuestionsTest extends TestCase
         $response->assertRedirect(route('admin.login'));
     }
 
-    public function test_admin_login_with_valid_key_allows_access(): void
+    public function test_admin_login_with_valid_credentials_allows_access(): void
     {
+        $admin = User::factory()->admin()->create([
+            'email' => 'admin@example.com',
+            'password' => 'password',
+        ]);
+
         $response = $this->post(route('admin.login.submit'), [
-            'admin_key' => 'test-admin-key',
+            'email' => $admin->email,
+            'password' => 'password',
         ]);
 
         $response->assertRedirect(route('admin.dashboard'));
@@ -49,7 +56,7 @@ class AdminQuestionsTest extends TestCase
             'active' => true,
         ]);
 
-        $response = $this->withSession(['admin_authenticated' => true])
+        $response = $this->asAdmin()
             ->get(route('admin.questions.export.csv'));
 
         $response->assertOk();

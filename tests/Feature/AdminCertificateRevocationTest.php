@@ -15,7 +15,7 @@ class AdminCertificateRevocationTest extends TestCase
     {
         [$certification, $certificate] = $this->seedCertificate();
 
-        $this->withSession(['admin_authenticated' => true])
+        $this->asAdmin()
             ->post(route('admin.certifications.certificates.revoke', [$certification, $certificate]), [
                 'reason' => 'Datos inconsistentes detectados en revisión manual.',
             ])
@@ -35,7 +35,7 @@ class AdminCertificateRevocationTest extends TestCase
             'revoked_reason' => 'Motivo inicial',
         ]);
 
-        $this->withSession(['admin_authenticated' => true])
+        $this->asAdmin()
             ->post(route('admin.certifications.certificates.restore', [$certification, $certificate]))
             ->assertRedirect(route('admin.certifications.edit', $certification));
 
