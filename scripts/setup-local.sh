@@ -8,6 +8,8 @@ PROJECT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
 TMP_DIR="/tmp/certificados-app"
 IS_CODESPACES="${CODESPACES:-false}"
 SUDO=""
+TARGET_PHP_VERSION="8.4"
+TARGET_NODE_MAJOR="20"
 
 log() {
   printf '%s\n' "$1"
@@ -87,6 +89,29 @@ disable_broken_apt_sources() {
   done
 }
 
+detect_apt_codename() {
+  if [ -r /etc/os-release ]; then
+    . /etc/os-release
+
+    if [ "${ID:-}" = "linuxmint" ] && [ -n "${UBUNTU_CODENAME:-}" ]; then
+      printf '%s' "$UBUNTU_CODENAME"
+      return 0
+    fi
+
+    if [ -n "${VERSION_CODENAME:-}" ]; then
+      printf '%s' "$VERSION_CODENAME"
+      return 0
+    fi
+
+    if [ -n "${UBUNTU_CODENAME:-}" ]; then
+      printf '%s' "$UBUNTU_CODENAME"
+      return 0
+    fi
+  fi
+
+  printf '%s' "bullseye"
+}
+
 ensure_sury_php_repo() {
   if grep -Rqi 'packages.sury.org/php' /etc/apt/sources.list /etc/apt/sources.list.d 2>/dev/null; then
     return 0
@@ -105,18 +130,69 @@ ensure_sury_php_repo() {
     return 1
   fi
 
-  if [ -r /etc/os-release ]; then
-    . /etc/os-release
-    codename="${VERSION_CODENAME:-bullseye}"
-  else
-    codename="bullseye"
-  fi
+  codename="$(detect_apt_codename)"
 
   printf '%s\n' "deb [signed-by=/etc/apt/keyrings/sury-php.gpg] https://packages.sury.org/php/ ${codename} main" | run_privileged tee /etc/apt/sources.list.d/sury-php.list >/dev/null
 }
 
+ensure_nodesource_repo() {
+  if grep -Rqi 'deb.nodesource.com/node_20.x' /etc/apt/sources.list /etc/apt/sources.list.d 2>/dev/null; then
+    return 0
+  fi
+
+  log "[INFO] Añadiendo repositorio Node.js 20 (NodeSource)..."
+  run_privileged mkdir -p /etc/apt/keyrings
+
+  if ! command -v curl >/dev/null 2>&1 || ! command -v gpg >/dev/null 2>&1; then
+    log "[ERROR] curl y gpg son necesarios para añadir el repo NodeSource"
+    return 1
+  fi
+
+  if ! curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | run_privileged gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg; then
+    log "[ERROR] No se pudo importar la clave GPG de NodeSource"
+    return 1
+  fi
+
+  codename="$(detect_apt_codename)"
+
+  printf '%s\n' "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x ${codename} main" | run_privileged tee /etc/apt/sources.list.d/nodesource-node20.list >/dev/null
+}
+
 has_mysql_driver() {
   php -r 'exit(extension_loaded("pdo_mysql") ? 0 : 1);' >/dev/null 2>&1
+}
+
+install_repo_prerequisites() {
+  run_privileged apt-get install -y ca-certificates curl gnupg lsb-release
+}
+
+install_database_packages() {
+  if run_privileged apt-get install -y default-mysql-server default-mysql-client; then
+    return 0
+  fi
+
+  log "[WARN] No se pudo instalar default-mysql-server/client. Reintentando con MariaDB..."
+  run_privileged apt-get install -y mariadb-server mariadb-client
+}
+
+ensure_runtime_requirements() {
+  php_major_minor="$(php -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;' 2>/dev/null || true)"
+  node_major="$(node -p 'process.versions.node.split(".")[0]' 2>/dev/null || true)"
+
+  if [ "$php_major_minor" != "$TARGET_PHP_VERSION" ]; then
+    log "[ERROR] Se requiere PHP ${TARGET_PHP_VERSION}. Detectado: ${php_major_minor:-desconocido}"
+    exit 1
+  fi
+
+  if [ "$node_major" != "$TARGET_NODE_MAJOR" ]; then
+    log "[ERROR] Se requiere Node.js ${TARGET_NODE_MAJOR}. Detectado: ${node_major:-desconocido}"
+    exit 1
+  fi
+
+  if ! has_mysql_driver; then
+    log "[ERROR] Falta la extension PDO MySQL para PHP ${TARGET_PHP_VERSION}."
+    exit 1
+  fi
 }
 
 require_cmd() {
@@ -129,37 +205,37 @@ require_cmd() {
 install_deps() {
   if command -v apt-get >/dev/null 2>&1; then
     log "[INFO] Detectado Debian/Ubuntu/Linux Mint. Instalando dependencias con apt-get..."
-    php_version="$(php -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;' 2>/dev/null || true)"
-    if [ -n "$php_version" ]; then
-      mysql_php_package="php${php_version}-mysql"
-    else
-      mysql_php_package="php-mysql"
-    fi
+    php_version="$TARGET_PHP_VERSION"
+    mysql_php_package="php${php_version}-mysql"
+    php_package_prefix="php${php_version}"
 
     disable_broken_apt_sources
+    run_privileged apt-get update -y
+    install_repo_prerequisites
+
+    if ! ensure_sury_php_repo; then
+      log "[ERROR] No se pudo preparar el repo PHP de Sury."
+      exit 1
+    fi
+
+    if ! ensure_nodesource_repo; then
+      log "[ERROR] No se pudo preparar el repo NodeSource para Node.js ${TARGET_NODE_MAJOR}."
+      exit 1
+    fi
 
     run_privileged apt-get update -y
 
     if ! run_privileged apt-get install -y \
-      php php-cli php-mbstring php-xml php-curl "$mysql_php_package" php-zip \
-      php-bcmath php-intl composer nodejs npm default-mysql-server default-mysql-client \
+      "$php_package_prefix" "$php_package_prefix"-cli "$php_package_prefix"-mbstring "$php_package_prefix"-xml "$php_package_prefix"-curl "$mysql_php_package" "$php_package_prefix"-zip \
+      "$php_package_prefix"-bcmath "$php_package_prefix"-intl composer nodejs npm \
       git unzip curl rsync; then
-      log "[WARN] No se pudieron instalar las dependencias con los repositorios actuales."
-      log "[INFO] Reintentando tras agregar el repo PHP de Sury..."
-      if ! ensure_sury_php_repo; then
-        log "[ERROR] No se pudo preparar el repo PHP de Sury."
-        exit 1
-      fi
+      log "[ERROR] No se pudieron instalar las dependencias requeridas con apt-get."
+      exit 1
+    fi
 
-      run_privileged apt-get update -y
-
-      if ! run_privileged apt-get install -y \
-        php php-cli php-mbstring php-xml php-curl "$mysql_php_package" php-zip \
-        php-bcmath php-intl composer nodejs npm default-mysql-server default-mysql-client \
-        git unzip curl rsync; then
-        log "[ERROR] No se pudieron instalar las dependencias ni con el repo PHP de Sury."
-        exit 1
-      fi
+    if ! install_database_packages; then
+      log "[ERROR] No se pudo instalar ni MySQL ni MariaDB."
+      exit 1
     fi
   else
     log "[ERROR] Este bootstrap está pensado solo para Debian/apt."
@@ -307,6 +383,7 @@ main() {
   detect_sudo
   require_cmd sh
   install_deps
+  ensure_runtime_requirements
   require_cmd mysqladmin
   require_cmd mysql
   require_cmd composer
