@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 # HHGG
+=======
+# HHGG-source
+>>>>>>> a3e81da (feat: Renombrar el proyecto de CertificacionHHGG a HHGG-source en documentación y configuración)
 
 Plataforma web satirica de certificados para entretenimiento, con apariencia formal y flujo completo de evaluacion, resultado, certificado publico y descarga en PDF.
 

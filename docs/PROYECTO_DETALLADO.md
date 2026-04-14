@@ -1,10 +1,10 @@
-# Documentación detallada del proyecto CertificacionHHGG
+# Documentación detallada del proyecto HHGG-source
 
 Última actualización: 2026-04-14
 
 ## 1. Resumen funcional
 
-CertificacionHHGG es una aplicación Laravel 11 + Livewire que permite:
+HHGG-source es una aplicación Laravel 11 + Livewire que permite:
 
 - Registrar candidato para un quiz humorístico.
 - Ejecutar quiz de N preguntas configurables por certificación, con randomización configurable de preguntas y opciones.
