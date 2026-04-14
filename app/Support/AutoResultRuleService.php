@@ -2,11 +2,12 @@
 
 namespace App\Support;
 
+use App\Enums\AutoResultRuleMode;
 use App\Models\Certification;
 
 /**
  * Service para evaluar reglas automáticas de aprobado/desaprobado.
- * 
+ *
  * Responsabilidades:
  * - Evaluar reglas por nombre y apellido del candidato
  * - Retornar decisión automática (pass, fail, none) y razón
@@ -19,7 +20,7 @@ class AutoResultRuleService
 
     /**
      * Evaluar reglas automáticas para un candidato.
-     * 
+     *
      * @param Certification $certification
      * @param string $firstName
      * @param string $lastName
@@ -30,7 +31,7 @@ class AutoResultRuleService
         string $firstName,
         string $lastName
     ): array {
-        if ($certification->auto_result_rule_mode === 'none' || !$certification->auto_result_rule_config) {
+        if ($certification->auto_result_rule_mode === AutoResultRuleMode::NONE->value || !$certification->auto_result_rule_config) {
             return [
                 'decision' => self::DECISION_NONE,
                 'reason' => '',
@@ -71,7 +72,7 @@ class AutoResultRuleService
 
     /**
      * Evaluar una regla individual contra nombre/apellido.
-     * 
+     *
      * @param array $rule Estructura:
      *     [
      *         'name_pattern' => 'Juan' (null para ignorar nombre),
@@ -85,7 +86,7 @@ class AutoResultRuleService
      */
     protected function evaluateRule(array $rule, string $firstName, string $lastName): array
     {
-        $namePattern = isset($rule['name_pattern']) 
+        $namePattern = isset($rule['name_pattern'])
             ? mb_strtolower(trim($rule['name_pattern']))
             : null;
 
@@ -128,13 +129,13 @@ class AutoResultRuleService
 
     /**
      * Verificar si una cadena coincide con un patrón.
-     * 
+     *
      * Soporta:
      * - Coincidencia exacta: "Juan" coincide solo con "Juan"
      * - Prefijo con *: "Ju*" coincide con "Juan", "Julia", "Juliana"
      * - Sufijo con *: "*van" coincide con "Juan", "Ivan"
      * - Contiene con *: "*ua*" coincide con "Juan", "Guanajuato"
-     * 
+     *
      * @param string $value
      * @param string $pattern
      * @return bool
@@ -147,7 +148,7 @@ class AutoResultRuleService
         }
 
         // Convertir patrón a regex escapando todo menos el wildcard '*'
-        $parts = array_map(static fn (string $part): string => preg_quote($part, '/'), explode('*', $pattern));
+        $parts = array_map(static fn(string $part): string => preg_quote($part, '/'), explode('*', $pattern));
         $regex = '/^' . implode('.*', $parts) . '$/';
 
         return (bool) preg_match($regex, $value);
@@ -155,7 +156,7 @@ class AutoResultRuleService
 
     /**
      * Validar configuración de reglas.
-     * 
+     *
      * @param array $config
      * @return array ['valid' => bool, 'errors' => string[]]
      */
@@ -187,7 +188,7 @@ class AutoResultRuleService
 
     /**
      * Crear configuración vacía para iniciar.
-     * 
+     *
      * @return array
      */
     public function createEmptyConfig(): array
@@ -199,7 +200,7 @@ class AutoResultRuleService
 
     /**
      * Agregar regla a configuración.
-     * 
+     *
      * @param array $config
      * @param string|null $namePattern
      * @param string|null $lastNamePattern
@@ -234,13 +235,13 @@ class AutoResultRuleService
 
     /**
      * Obtener descripción legible del modo de reglas.
-     * 
+     *
      * @param string $mode
      * @return string
      */
     public function getModeName(string $mode): string
     {
-        return match($mode) {
+        return match ($mode) {
             'name_rule' => 'Reglas automáticas por nombre/apellido',
             default => 'Sin reglas automáticas',
         };

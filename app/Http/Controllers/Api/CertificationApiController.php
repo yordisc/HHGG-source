@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\QuestionType;
 use App\Models\Certification;
 use App\Models\CertificationVersion;
 use App\Support\ActiveAttemptsService;
@@ -29,7 +30,7 @@ class CertificationApiController
                 return [
                     'id' => $question->id,
                     'prompt' => $translation?->prompt ?? $question->prompt,
-                    'type' => $question->type ?? 'mcq_4',
+                    'type' => $question->type ?? QuestionType::MCQ_4->value,
                     'active' => $question->active,
                     'translations_count' => $question->translations->count(),
                 ];

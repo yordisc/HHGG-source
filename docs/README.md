@@ -5,6 +5,13 @@
 - Suite de pruebas en verde (`php artisan test`).
 - Implementaciones de expiracion, retencion, reglas automaticas y scoring ponderado activas.
 - Flujo de quiz y panel admin validados por pruebas unitarias y feature.
+- Estado del quiz endurecido para produccion:
+    - Creacion de certificado centralizada en `CreateCertificateAction`.
+    - Intentos de quiz aislados por UUID de sesion (`quiz_attempt_<uuid>`).
+    - Propiedades sensibles de Livewire protegidas con `#[Locked]`.
+    - Manejo amigable cuando el banco de preguntas es insuficiente.
+- Cadenas magicas reducidas con enums en runtime y validaciones:
+    - `QuestionType`, `ResultMode`, `SuddenDeathMode`, `AutoResultRuleMode`.
 
 ## Guia rapida
 
@@ -33,3 +40,4 @@ Nota: en PHPUnit 11 ya no existe `--no-header`.
 - Mantener esta carpeta solo con documentacion vigente.
 - Evitar reportes historicos por fase en la rama principal.
 - Preferir documentos operativos y de referencia tecnica actual.
+- Cuando se implemente una mejora tecnica relevante, reflejarla aqui y en `PROYECTO_DETALLADO.md`.

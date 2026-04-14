@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\QuestionType;
 use App\Livewire\QuizRunner;
 use App\Models\Certificate;
 use App\Models\Certification;
@@ -55,6 +56,7 @@ class QuizRunnerLivewireTest extends TestCase
             'option_3' => 'C',
             'option_4' => 'D',
             'correct_option' => 1,
+            'type' => QuestionType::MCQ_4->value,
             'active' => true,
         ]);
 
@@ -99,6 +101,7 @@ class QuizRunnerLivewireTest extends TestCase
             'option_3' => 'C',
             'option_4' => 'D',
             'correct_option' => 1,
+            'type' => QuestionType::MCQ_4->value,
             'active' => true,
         ]);
 
@@ -129,7 +132,8 @@ class QuizRunnerLivewireTest extends TestCase
 
         $component = Livewire::test(QuizRunner::class, ['certType' => 'hetero']);
 
-        $attempt = session('quiz_attempt.hetero');
+        $attemptUuid = $component->instance()->attemptUuid;
+        $attempt = session('quiz_attempt_' . $attemptUuid);
         $this->assertIsArray($attempt);
 
         $correctDisplayed = (int) ($attempt['questions'][0]['correct_displayed'] ?? 1);
@@ -143,6 +147,6 @@ class QuizRunnerLivewireTest extends TestCase
         $this->assertNotNull($certificate->next_available_at);
 
         $this->assertFalse(session()->has('quiz_candidate.hetero'));
-        $this->assertFalse(session()->has('quiz_attempt.hetero'));
+        $this->assertFalse(session()->has('quiz_attempt_' . $attemptUuid));
     }
 }

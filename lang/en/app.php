@@ -44,6 +44,7 @@ return [
     'certification_invalid' => 'The selected certification is invalid or unavailable.',
     'complete_required_fields' => 'Complete country, document type, and identification to validate.',
     'quiz_blocked_until' => 'You cannot take this certification now. Available again at: :datetime',
+    'quiz_not_enough_questions' => 'This exam is not available right now because the question bank is incomplete. Please try again later.',
     'not_available_now' => 'Not available right now',
     'quiz_ready_to_start' => 'You can start the certification now.',
     'starting_exam' => 'Starting exam...',

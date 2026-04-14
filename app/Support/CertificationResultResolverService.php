@@ -2,6 +2,8 @@
 
 namespace App\Support;
 
+use App\Enums\ResultMode;
+
 class CertificationResultResolverService
 {
     /**
@@ -16,7 +18,7 @@ class CertificationResultResolverService
             return $failed ? $configured['fail'] : $configured['pass'];
         }
 
-        if ($resultMode === 'binary_threshold') {
+        if ($resultMode === ResultMode::BINARY_THRESHOLD->value) {
             $legacyBinaryMap = [
                 'hetero' => ['pass' => 'hetero_exitoso', 'fail' => 'hetero_rebeldon'],
                 'good_girl' => ['pass' => 'good_girl_pura', 'fail' => 'good_girl_desatada'],

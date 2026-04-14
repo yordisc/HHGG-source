@@ -1,14 +1,14 @@
 # Documentación detallada del proyecto CertificacionHHGG
 
-Última actualización: 2026-04-02
+Última actualización: 2026-04-14
 
 ## 1. Resumen funcional
 
 CertificacionHHGG es una aplicación Laravel 11 + Livewire que permite:
 
 - Registrar candidato para un quiz humorístico.
-- Ejecutar quiz de 30 preguntas aleatorias por tipo de certificado, con opciones remezcladas en cada intento.
-- Calcular resultado por umbral de errores y mostrarlo al final en el certificado.
+- Ejecutar quiz de N preguntas configurables por certificación, con randomización configurable de preguntas y opciones.
+- Calcular resultado con scoring ponderado, reglas automáticas y muerte súbita según configuración.
 - Generar certificado con serial único.
 - Publicar vista verificable por serial.
 - Descargar certificado en PDF.
@@ -50,17 +50,19 @@ CertificacionHHGG es una aplicación Laravel 11 + Livewire que permite:
 
 ### certificates
 
-- serial, cert_type, result_key
+- serial, certification_id, result_key
 - first_name, last_name, country
-- document_hash, doc_lookup_hash, doc_partial
+- country_code, document_type, document_hash, doc_lookup_hash, identity_lookup_hash, doc_partial
 - score_correct, score_incorrect, total_questions
-- issued_at, expires_at, last_attempt_at
+- score_numeric, issued_at, completed_at, next_available_at, expires_at, last_attempt_at
+- certification_expires_at, download_expires_at
+- result_decision_source, result_decision_reason
 
 ### questions
 
-- cert_type, prompt
+- certification_id, prompt
 - option_1..option_4, correct_option
-- active
+- type, weight, sudden_death_mode, active
 
 ### question_translations
 
@@ -76,9 +78,12 @@ CertificacionHHGG es una aplicación Laravel 11 + Livewire que permite:
 - Documento legal no se guarda en texto plano.
 - document_hash con bcrypt.
 - doc_lookup_hash (HMAC) para búsqueda.
+- identity_lookup_hash para control de intentos por identidad.
 - Middleware de headers seguros en grupo web.
 - Rate limit por IP/documento y reglas de renovacion.
 - Panel admin protegido por ADMIN_ACCESS_KEY (sesión).
+- Estado sensible de Livewire protegido con `#[Locked]` en el runner del quiz.
+- Intentos del quiz aislados por UUID de sesion para evitar colisiones entre pestañas.
 
 ## 7. i18n y contenido
 
@@ -124,7 +129,7 @@ Capacidades:
 Cobertura implementada:
 
 - Feature: home/search/admin/quiz/cert/PDF
-- Unit: comportamiento del modelo Certificate
+- Unit: servicios de scoring/reglas y acciones de persistencia de certificado
 
 Comando:
 
@@ -154,3 +159,5 @@ Documentación vigente:
 - Arquitectura de certificaciones escalable implementada (catálogo + servicios).
 - Home/admin dinámicos por certificaciones activas en BD.
 - Seguridad base, observabilidad y documentación operativa listas.
+- Flujo de finalización del quiz refactorizado con `CreateCertificateAction`.
+- Tipos/modos centrales modelados con enums en backend y validaciones.

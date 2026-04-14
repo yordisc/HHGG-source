@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\QuestionType;
 use App\Models\Certification;
 use App\Models\Question;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -15,7 +16,7 @@ class QuestionFactory extends Factory
         return [
             'certification_id' => Certification::factory(),
             'prompt' => $this->faker->sentence(),
-            'type' => 'mcq_4',
+            'type' => QuestionType::MCQ_4->value,
             'option_1' => 'Option A',
             'option_2' => 'Option B',
             'option_3' => 'Option C',

@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\QuestionType;
+use App\Enums\SuddenDeathMode;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -17,11 +19,11 @@ class UpdateQuestionRequest extends FormRequest
         return [
             'cert_type' => [
                 'nullable',
-                Rule::exists('certifications', 'slug')->where(fn ($query) => $query->where('active', true)),
+                Rule::exists('certifications', 'slug')->where(fn($query) => $query->where('active', true)),
             ],
             'certification_id' => [
                 'nullable',
-                Rule::exists('certifications', 'id')->where(fn ($query) => $query->where('active', true)),
+                Rule::exists('certifications', 'id')->where(fn($query) => $query->where('active', true)),
             ],
             'prompt' => ['required', 'string', 'min:8'],
             'option_1' => ['nullable', 'string', 'min:1'],
@@ -29,9 +31,9 @@ class UpdateQuestionRequest extends FormRequest
             'option_3' => ['nullable', 'string', 'min:1'],
             'option_4' => ['nullable', 'string', 'min:1'],
             'correct_option' => ['required', 'integer', 'between:1,4'],
-            'type' => ['nullable', 'string', 'in:mcq_2,mcq_4'],
+            'type' => ['nullable', 'string', Rule::in(QuestionType::values())],
             'weight' => ['nullable', 'numeric', 'min:0.0001', 'max:99999.9999'],
-            'sudden_death_mode' => ['nullable', 'string', Rule::in(['none', 'fail_if_wrong', 'pass_if_correct'])],
+            'sudden_death_mode' => ['nullable', 'string', Rule::in(SuddenDeathMode::values())],
             'explanation' => ['nullable', 'string'],
             'image' => ['nullable', 'image', 'max:5120'],
             'image_path' => ['nullable', 'string'],

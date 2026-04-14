@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\QuestionType;
+use App\Enums\SuddenDeathMode;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ImportQuestionsCsvRequest;
 use App\Http\Requests\StoreQuestionRequest;
@@ -43,7 +45,7 @@ class QuestionAdminController extends Controller
     public function store(StoreQuestionRequest $request): RedirectResponse
     {
         $data = $request->validated();
-        
+
         // Determinar certification_id
         if (isset($data['certification_id'])) {
             $certificationId = $data['certification_id'];
@@ -65,19 +67,19 @@ class QuestionAdminController extends Controller
         if (isset($data['type'])) {
             $questionData['type'] = $data['type'];
         }
-        
+
         if (isset($data['weight'])) {
             $questionData['weight'] = (float) $data['weight'];
         }
-        
+
         if (isset($data['sudden_death_mode'])) {
             $questionData['sudden_death_mode'] = $data['sudden_death_mode'];
         }
-        
+
         if (isset($data['explanation'])) {
             $questionData['explanation'] = $data['explanation'];
         }
-        
+
         if (isset($data['image_path'])) {
             $questionData['image_path'] = $data['image_path'];
         }
@@ -89,9 +91,9 @@ class QuestionAdminController extends Controller
         }
 
         // Agregar opciones según el tipo
-        $type = $data['type'] ?? 'mcq_4';
-        
-        if ($type === 'mcq_2') {
+        $type = $data['type'] ?? QuestionType::MCQ_4->value;
+
+        if ($type === QuestionType::MCQ_2->value) {
             $questionData['option_1'] = $data['option_1'] ?? '';
             $questionData['option_2'] = $data['option_2'] ?? '';
             $questionData['option_3'] = null;
@@ -138,7 +140,7 @@ class QuestionAdminController extends Controller
                 $query->where('active', (bool) $filterActive);
             })
             ->when($search !== '', function ($query) use ($search): void {
-                $query->where('prompt', 'like', '%'.$search.'%');
+                $query->where('prompt', 'like', '%' . $search . '%');
             })
             ->with('certification')
             ->when($sortBy === 'oldest', function ($query) {
@@ -206,9 +208,9 @@ class QuestionAdminController extends Controller
             'option_3' => $data['option_3'],
             'option_4' => $data['option_4'],
             'correct_option' => $data['correct_option'],
-            'type' => $data['type'] ?? 'mcq_4',
+            'type' => $data['type'] ?? QuestionType::MCQ_4->value,
             'weight' => isset($data['weight']) ? (float) $data['weight'] : 1.0,
-            'sudden_death_mode' => $data['sudden_death_mode'] ?? 'none',
+            'sudden_death_mode' => $data['sudden_death_mode'] ?? SuddenDeathMode::NONE->value,
             'image_path' => $imagePath,
             'active' => (bool) ($data['active'] ?? false),
         ]);
@@ -262,7 +264,7 @@ class QuestionAdminController extends Controller
             return back()->withErrors(['csv_file' => 'El archivo CSV esta vacio.']);
         }
 
-        $header = array_map(fn ($value) => mb_strtolower(trim((string) $value)), $header);
+        $header = array_map(fn($value) => mb_strtolower(trim((string) $value)), $header);
         $required = ['cert_type', 'prompt', 'option_1', 'option_2', 'option_3', 'option_4', 'correct_option'];
 
         foreach ($required as $requiredColumn) {
@@ -378,7 +380,7 @@ class QuestionAdminController extends Controller
             ]);
 
             return back()->withErrors([
-                'csv_file' => 'Error importando CSV: '.$exception->getMessage(),
+                'csv_file' => 'Error importando CSV: ' . $exception->getMessage(),
             ]);
         }
 
@@ -398,12 +400,12 @@ class QuestionAdminController extends Controller
         $tempPath = $request->input('temp_path');
         $certType = $request->input('cert_type');
 
-        if (!$tempPath || !file_exists(storage_path('app/'.$tempPath))) {
+        if (!$tempPath || !file_exists(storage_path('app/' . $tempPath))) {
             return back()->withErrors(['csv_file' => 'Archivo temporal no encontrado.']);
         }
 
         $file = new \Symfony\Component\HttpFoundation\File\UploadedFile(
-            storage_path('app/'.$tempPath),
+            storage_path('app/' . $tempPath),
             basename($tempPath),
             'text/csv'
         );
@@ -521,7 +523,7 @@ class QuestionAdminController extends Controller
             ]);
 
             // Limpiar archivo temporal
-            @unlink(storage_path('app/'.$tempPath));
+            @unlink(storage_path('app/' . $tempPath));
 
             $this->incrementMetric('admin.questions.import_csv.completed');
             Log::info('admin.questions.import_csv.completed', [
@@ -536,14 +538,14 @@ class QuestionAdminController extends Controller
                 ->with('status', "✅ Importación completada. Creadas: {$created}, actualizadas: {$updated}, traducciones: {$translations}, omitidas: {$skipped}.");
         } catch (\Throwable $exception) {
             DB::rollBack();
-            @unlink(storage_path('app/'.$tempPath));
+            @unlink(storage_path('app/' . $tempPath));
 
             Log::error('admin.questions.import_csv.failed', [
                 'message' => $exception->getMessage(),
             ]);
 
             return back()->withErrors([
-                'csv_file' => 'Error en importación: '.$exception->getMessage(),
+                'csv_file' => 'Error en importación: ' . $exception->getMessage(),
             ]);
         }
     }
@@ -558,11 +560,11 @@ class QuestionAdminController extends Controller
             'filter_type' => $filterType === '' ? 'all' : $filterType,
         ]);
 
-        $fileName = 'questions_export_'.now()->format('Ymd_His').'.csv';
+        $fileName = 'questions_export_' . now()->format('Ymd_His') . '.csv';
 
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="'.$fileName.'"',
+            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
         ];
 
         return response()->streamDownload(function () use ($filterType, $certifications): void {
@@ -675,7 +677,7 @@ class QuestionAdminController extends Controller
                 'error' => $e->getMessage(),
             ]);
 
-            return back()->with('error', 'Error al duplicar la pregunta: '.$e->getMessage());
+            return back()->with('error', 'Error al duplicar la pregunta: ' . $e->getMessage());
         }
     }
 
@@ -710,7 +712,7 @@ class QuestionAdminController extends Controller
 
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="'.$fileName.'"',
+            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
         ];
 
         return response()->streamDownload(function (): void {
@@ -787,7 +789,7 @@ class QuestionAdminController extends Controller
             }
 
             $hasAnyValue = collect($translationData)
-                ->filter(fn ($value) => is_string($value) && trim($value) !== '')
+                ->filter(fn($value) => is_string($value) && trim($value) !== '')
                 ->isNotEmpty();
 
             if (!$hasAnyValue) {
@@ -823,7 +825,7 @@ class QuestionAdminController extends Controller
 
     private function incrementMetric(string $metric): void
     {
-        $key = 'metrics.'.now()->format('Ymd').'.'.$metric;
+        $key = 'metrics.' . now()->format('Ymd') . '.' . $metric;
 
         if (!Cache::has($key)) {
             Cache::put($key, 0, now()->addDays(35));

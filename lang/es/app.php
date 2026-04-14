@@ -44,6 +44,7 @@ return [
     'certification_invalid' => 'La certificacion seleccionada no es valida o no esta disponible.',
     'complete_required_fields' => 'Completa pais, tipo de documento e identificacion para validar.',
     'quiz_blocked_until' => 'No puedes presentar esta certificacion ahora. Disponible de nuevo: :datetime',
+    'quiz_not_enough_questions' => 'Este examen no esta disponible por ahora porque el banco de preguntas esta incompleto. Intenta nuevamente mas tarde.',
     'not_available_now' => 'No disponible en este momento',
     'quiz_ready_to_start' => 'Puedes iniciar la certificacion ahora.',
     'starting_exam' => 'Iniciando examen...',

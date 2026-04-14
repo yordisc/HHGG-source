@@ -2,37 +2,47 @@
 
 namespace App\Livewire;
 
-use App\Models\Certificate;
+use App\Actions\CreateCertificateAction;
+use App\Enums\AutoResultRuleMode;
+use App\Enums\QuestionType;
+use App\Enums\ResultMode;
+use App\Enums\SuddenDeathMode;
 use App\Models\Certification;
 use App\Models\Question;
 use App\Support\AutoResultRuleService;
-use App\Support\CertificationDataRetentionService;
-use App\Support\CertificationExpirationService;
-use App\Support\CertificationResultResolverService;
-use App\Support\CertificationScoringService;
 use App\Support\QuestionBankAvailabilityService;
 use App\Support\SuddenDeathRuleService;
 use App\Support\WeightedScoringService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 class QuizRunner extends Component
 {
+    #[Locked]
     public string $certType;
+
+    #[Locked]
     public ?int $certificationId = null;
     public int $questionsRequired = 30;
     public float $passScorePercentage = 66.67;
     public int $cooldownDays = 30;
-    public string $resultMode = 'binary_threshold';
+    public string $resultMode = ResultMode::BINARY_THRESHOLD->value;
     public array $resultSettings = [];
     public int $currentIndex = 0;
     public int $total = 30;
+
+    #[Locked]
     public int $correctCount = 0;
+
+    #[Locked]
     public int $incorrectCount = 0;
     public array $currentQuestion = [];
-    
+    #[Locked]
+    public string $attemptUuid = '';
+
     // Phase 3 fields
     public string $currentLocale;
     public bool $showLanguageSelector = false;
@@ -55,13 +65,15 @@ class QuizRunner extends Component
         $this->questionsRequired = (int) ($certification->questions_required ?: 30);
         $this->passScorePercentage = (float) ($certification->pass_score_percentage ?: 66.67);
         $this->cooldownDays = (int) ($certification->cooldown_days ?: 30);
-        $this->resultMode = (string) ($certification->result_mode ?: 'binary_threshold');
+        $this->resultMode = (string) ($certification->result_mode ?: ResultMode::BINARY_THRESHOLD->value);
         $this->resultSettings = is_array($certification->settings) ? $certification->settings : [];
 
         if (!session()->has("quiz_candidate.{$certType}")) {
             $this->redirectRoute('quiz.register', ['certType' => $certType], true);
             return;
         }
+
+        $this->ensureAttemptUuid();
 
         // 2. Validar banco de preguntas
         $bankService = app(QuestionBankAvailabilityService::class);
@@ -85,7 +97,7 @@ class QuizRunner extends Component
 
             if (count($this->availableLanguages) === 1) {
                 $this->currentLocale = $this->availableLanguages[0];
-                session()->put('quiz_locale_override.'.$certType, $this->currentLocale);
+                session()->put('quiz_locale_override.' . $certType, $this->currentLocale);
             }
         }
 
@@ -95,13 +107,8 @@ class QuizRunner extends Component
             try {
                 $attempt = $this->buildAttempt($certification);
                 session([$this->attemptKey() => $attempt]);
-            } catch (\Exception $e) {
-                Log::error('quiz.attempt.build.failed', [
-                    'cert_type' => $certType,
-                    'locale' => $this->currentLocale,
-                    'error' => $e->getMessage(),
-                ]);
-                $this->redirectRoute('quiz.register', ['certType' => $certType], true);
+            } catch (\Throwable $e) {
+                $this->handleAttemptBuildFailure($e, 'quiz.attempt.build.failed');
                 return;
             }
         }
@@ -125,7 +132,7 @@ class QuizRunner extends Component
         }
 
         $this->currentLocale = $locale;
-        session()->put('quiz_locale_override.'.$this->certType, $locale);
+        session()->put('quiz_locale_override.' . $this->certType, $locale);
         $this->showLanguageSelector = false;
 
         try {
@@ -133,11 +140,9 @@ class QuizRunner extends Component
             session([$this->attemptKey() => $attempt]);
             $this->total = count($attempt['questions']);
             $this->setCurrentQuestion($attempt);
-        } catch (\Exception $e) {
-            Log::error('quiz.language.change.failed', [
-                'cert_type' => $this->certType,
+        } catch (\Throwable $e) {
+            $this->handleAttemptBuildFailure($e, 'quiz.language.change.failed', [
                 'locale' => $locale,
-                'error' => $e->getMessage(),
             ]);
         }
     }
@@ -155,8 +160,8 @@ class QuizRunner extends Component
         }
 
         // 4. Validar según tipo de pregunta
-        $questionType = $question['type'] ?? 'mcq_4';
-        $maxOptions = ($questionType === 'mcq_2') ? 2 : 4;
+        $questionType = $question['type'] ?? QuestionType::MCQ_4->value;
+        $maxOptions = ($questionType === QuestionType::MCQ_2->value) ? 2 : 4;
 
         if ($selectedOption < 1 || $selectedOption > $maxOptions) {
             return;
@@ -174,7 +179,7 @@ class QuizRunner extends Component
             'question_id' => $question['id'],
             'correct' => $isCorrect,
             'weight' => $question['weight'] ?? 1.0,
-            'sudden_death_mode' => $question['sudden_death_mode'] ?? 'none',
+            'sudden_death_mode' => $question['sudden_death_mode'] ?? SuddenDeathMode::NONE->value,
             'type' => $questionType,
         ];
 
@@ -207,7 +212,16 @@ class QuizRunner extends Component
 
     private function attemptKey(): string
     {
-        return "quiz_attempt.{$this->certType}";
+        return 'quiz_attempt_' . $this->ensureAttemptUuid();
+    }
+
+    private function ensureAttemptUuid(): string
+    {
+        if ($this->attemptUuid === '') {
+            $this->attemptUuid = (string) Str::uuid();
+        }
+
+        return $this->attemptUuid;
     }
 
     private function buildAttempt(Certification $certification): array
@@ -234,25 +248,26 @@ class QuizRunner extends Component
         if ($questions->count() < $requiredQuestions) {
             throw new \Exception(
                 "Question bank must contain at least {$requiredQuestions} active questions for certificate type '{$this->certType}'. "
-                ."Currently has {$questions->count()} questions. Contact support if the problem persists."
+                    . "Currently has {$questions->count()} questions. Contact support if the problem persists."
             );
         }
 
         $prepared = [];
 
         foreach ($questions as $question) {
-            $translation = $question->translations->firstWhere('language', $locale)
-                ?? $question->translations->firstWhere('language', $fallbackLocale);
+            $translationsByLanguage = $question->translations->keyBy('language');
+            $translation = $translationsByLanguage->get($locale)
+                ?? $translationsByLanguage->get($fallbackLocale);
 
             $prompt = $translation?->prompt ?? $question->prompt;
             $option1 = $translation?->option_1 ?? $question->option_1;
             $option2 = $translation?->option_2 ?? $question->option_2;
 
-            $questionType = $question->type ?? 'mcq_4';
-            $option3 = ($questionType === 'mcq_2' || $translation === null)
+            $questionType = $question->type ?? QuestionType::MCQ_4->value;
+            $option3 = ($questionType === QuestionType::MCQ_2->value || $translation === null)
                 ? null
                 : ($translation?->option_3 ?? $question->option_3);
-            $option4 = ($questionType === 'mcq_2' || $translation === null)
+            $option4 = ($questionType === QuestionType::MCQ_2->value || $translation === null)
                 ? null
                 : ($translation?->option_4 ?? $question->option_4);
 
@@ -261,7 +276,7 @@ class QuizRunner extends Component
                 ['index' => 2, 'text' => $option2],
             ];
 
-            if ($questionType !== 'mcq_2') {
+            if ($questionType !== QuestionType::MCQ_2->value) {
                 $options[] = ['index' => 3, 'text' => $option3];
                 $options[] = ['index' => 4, 'text' => $option4];
             }
@@ -287,7 +302,7 @@ class QuizRunner extends Component
                 'correct_displayed' => $correctDisplayed,
                 'type' => $questionType,
                 'weight' => $question->weight ?? 1.0,
-                'sudden_death_mode' => $question->sudden_death_mode ?? 'none',
+                'sudden_death_mode' => $question->sudden_death_mode ?? SuddenDeathMode::NONE->value,
             ];
         }
 
@@ -307,6 +322,18 @@ class QuizRunner extends Component
         ];
     }
 
+    private function handleAttemptBuildFailure(\Throwable $e, string $event, array $context = []): void
+    {
+        Log::warning($event, array_merge([
+            'cert_type' => $this->certType,
+            'locale' => $this->currentLocale,
+            'error' => $e->getMessage(),
+        ], $context));
+
+        session()->flash('error', __('app.quiz_not_enough_questions'));
+        $this->redirectRoute('quiz.register', ['certType' => $this->certType], true);
+    }
+
     private function finishAttemptWithSuddenDeath(array $deathResult): void
     {
         $candidate = session("quiz_candidate.{$this->certType}");
@@ -317,76 +344,44 @@ class QuizRunner extends Component
 
         $certification = Certification::find($this->certificationId);
         $completedAt = now();
-
         $decision = $deathResult['decision'] === 'pass' ? 'passed' : 'failed';
         $failed = $decision === 'failed';
         $scoreNumeric = $failed ? 0.0 : 100.0;
-
-        $resultKey = app(CertificationResultResolverService::class)->resolve(
-            $this->certType,
-            $this->resultMode,
-            $failed,
-            $this->resultSettings
-        );
-
-        $expirationService = app(CertificationExpirationService::class);
-        $certificationExpiresAt = $expirationService->calculateCertificationExpiryDate($certification, $completedAt);
-        $downloadExpiresAt = $expirationService->calculateDownloadExpiryDate($certification, $certificationExpiresAt);
-
-        $serial = 'CERT-'.date('Y').'-'.strtoupper(substr($this->certType, 0, 2)).'-'.Str::upper(Str::random(6));
         $cooldownDays = $this->cooldownDays > 0
             ? $this->cooldownDays
             : (int) config('quiz.cooldown_days', 30);
-
-        $certificate = Certificate::create([
-            'serial' => $serial,
-            'certification_id' => $this->certificationId,
-            'result_key' => $resultKey,
-            'first_name' => $candidate['first_name'],
-            'last_name' => $candidate['last_name'],
-            'country' => $candidate['country'],
-            'country_code' => $candidate['country_code'] ?? null,
-            'document_type' => $candidate['document_type'] ?? null,
-            'document_hash' => $candidate['document_hash'],
-            'doc_lookup_hash' => $candidate['doc_lookup_hash'],
-            'identity_lookup_hash' => $candidate['identity_lookup_hash'] ?? null,
-            'doc_partial' => $candidate['doc_partial'],
-            'score_correct' => $this->correctCount,
-            'score_incorrect' => $this->incorrectCount,
-            'total_questions' => $this->total,
-            'score_numeric' => $scoreNumeric,
-            'issued_at' => $completedAt,
-            'completed_at' => $completedAt,
-            'next_available_at' => $completedAt->copy()->addDays($cooldownDays),
-            'expires_at' => now()->addYear(),
-            'last_attempt_at' => $completedAt,
-            'certification_expires_at' => $certificationExpiresAt,
-            'download_expires_at' => $downloadExpiresAt,
-            'result_decision_source' => 'sudden_death',
-            'result_decision_reason' => $deathResult['reason'],
-        ]);
-
-        $integrity = app(\App\Support\CertificateIntegrityService::class);
-        $certificate->update([
-            'content_hash' => $integrity->contentHash($certificate),
-            'verification_token_hash' => $integrity->verificationTokenHash($certificate),
-        ]);
+        $certificate = app(CreateCertificateAction::class)->execute(
+            $certification,
+            $candidate,
+            $this->certType,
+            $this->resultMode,
+            $this->resultSettings,
+            $failed,
+            $scoreNumeric,
+            $this->correctCount,
+            $this->incorrectCount,
+            $this->total,
+            $completedAt,
+            $cooldownDays,
+            'sudden_death',
+            $deathResult['reason'],
+        );
 
         $this->incrementMetric('quiz.completed');
-        $this->incrementMetric('quiz.completed.'.$decision);
+        $this->incrementMetric('quiz.completed.' . $decision);
         $this->incrementMetric('quiz.completed.sudden_death');
 
         Log::info('quiz.completed.sudden_death', [
             'serial' => $certificate->serial,
             'cert_type' => $this->certType,
-            'result_key' => $resultKey,
+            'result_key' => $certificate->result_key,
             'decision' => $decision,
             'reason' => $deathResult['reason'],
         ]);
 
         session()->forget($this->attemptKey());
         session()->forget("quiz_candidate.{$this->certType}");
-        session()->forget('quiz_locale_override.'.$this->certType);
+        session()->forget('quiz_locale_override.' . $this->certType);
 
         $this->redirectRoute('result.show', ['serial' => $certificate->serial], true);
     }
@@ -428,64 +423,34 @@ class QuizRunner extends Component
             $failed = $scoreNumeric < $this->passScorePercentage;
         }
 
-        $resultKey = app(CertificationResultResolverService::class)->resolve(
-            $this->certType,
-            $this->resultMode,
-            $failed,
-            $this->resultSettings
-        );
-
-        $expirationService = app(CertificationExpirationService::class);
-        $certificationExpiresAt = $expirationService->calculateCertificationExpiryDate($certification, $completedAt);
-        $downloadExpiresAt = $expirationService->calculateDownloadExpiryDate($certification, $certificationExpiresAt);
-
-        $serial = 'CERT-'.date('Y').'-'.strtoupper(substr($this->certType, 0, 2)).'-'.Str::upper(Str::random(6));
         $cooldownDays = $this->cooldownDays > 0
             ? $this->cooldownDays
             : (int) config('quiz.cooldown_days', 30);
-
-        $certificate = Certificate::create([
-            'serial' => $serial,
-            'certification_id' => $this->certificationId,
-            'result_key' => $resultKey,
-            'first_name' => $candidate['first_name'],
-            'last_name' => $candidate['last_name'],
-            'country' => $candidate['country'],
-            'country_code' => $candidate['country_code'] ?? null,
-            'document_type' => $candidate['document_type'] ?? null,
-            'document_hash' => $candidate['document_hash'],
-            'doc_lookup_hash' => $candidate['doc_lookup_hash'],
-            'identity_lookup_hash' => $candidate['identity_lookup_hash'] ?? null,
-            'doc_partial' => $candidate['doc_partial'],
-            'score_correct' => $this->correctCount,
-            'score_incorrect' => $this->incorrectCount,
-            'total_questions' => $this->total,
-            'score_numeric' => $scoreNumeric,
-            'issued_at' => $completedAt,
-            'completed_at' => $completedAt,
-            'next_available_at' => $completedAt->copy()->addDays($cooldownDays),
-            'expires_at' => now()->addYear(),
-            'last_attempt_at' => $completedAt,
-            'certification_expires_at' => $certificationExpiresAt,
-            'download_expires_at' => $downloadExpiresAt,
-            'result_decision_source' => $resultDecisionSource,
-            'result_decision_reason' => $resultDecisionReason,
-        ]);
-
-        $integrity = app(\App\Support\CertificateIntegrityService::class);
-        $certificate->update([
-            'content_hash' => $integrity->contentHash($certificate),
-            'verification_token_hash' => $integrity->verificationTokenHash($certificate),
-        ]);
+        $certificate = app(CreateCertificateAction::class)->execute(
+            $certification,
+            $candidate,
+            $this->certType,
+            $this->resultMode,
+            $this->resultSettings,
+            $failed,
+            $scoreNumeric,
+            $this->correctCount,
+            $this->incorrectCount,
+            $this->total,
+            $completedAt,
+            $cooldownDays,
+            $resultDecisionSource,
+            $resultDecisionReason,
+        );
 
         $this->incrementMetric('quiz.completed');
         $this->incrementMetric($failed ? 'quiz.completed.failed' : 'quiz.completed.passed');
-        $this->incrementMetric('quiz.completed.'.$resultDecisionSource);
+        $this->incrementMetric('quiz.completed.' . $resultDecisionSource);
 
         Log::info('quiz.completed', [
             'serial' => $certificate->serial,
             'cert_type' => $this->certType,
-            'result_key' => $resultKey,
+            'result_key' => $certificate->result_key,
             'score_numeric' => $scoreNumeric,
             'decision_source' => $resultDecisionSource,
             'decision_reason' => $resultDecisionReason,
@@ -494,14 +459,14 @@ class QuizRunner extends Component
 
         session()->forget($this->attemptKey());
         session()->forget("quiz_candidate.{$this->certType}");
-        session()->forget('quiz_locale_override.'.$this->certType);
+        session()->forget('quiz_locale_override.' . $this->certType);
 
         $this->redirectRoute('result.show', ['serial' => $certificate->serial], true);
     }
 
     private function incrementMetric(string $metric): void
     {
-        $key = 'metrics.'.now()->format('Ymd').'.'.$metric;
+        $key = 'metrics.' . now()->format('Ymd') . '.' . $metric;
 
         if (!Cache::has($key)) {
             Cache::put($key, 0, now()->addDays(35));

@@ -2,7 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\AutoResultRuleMode;
+use App\Enums\ResultMode;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
 class UpdateCertificationRequest extends FormRequest
@@ -51,7 +54,7 @@ class UpdateCertificationRequest extends FormRequest
                         $activeQuestionsCount = $certification->questions()
                             ->where('active', true)
                             ->count();
-                        
+
                         if ($newValue > $activeQuestionsCount) {
                             $fail("Se requieren {$newValue} preguntas pero solo hay {$activeQuestionsCount} preguntas activas.");
                         }
@@ -70,7 +73,7 @@ class UpdateCertificationRequest extends FormRequest
                     }
                 },
             ],
-            'result_mode' => ['required', 'string', Rule::in(['binary_threshold', 'custom', 'generic'])],
+            'result_mode' => ['required', 'string', Rule::in(ResultMode::values())],
             'pdf_view' => ['nullable', 'string', 'max:120'],
             'home_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
             'settings' => [
@@ -79,7 +82,7 @@ class UpdateCertificationRequest extends FormRequest
                     if ($value === null) {
                         return;
                     }
-                    
+
                     if (is_string($value)) {
                         try {
                             $decoded = json_decode($value, true, 512, JSON_THROW_ON_ERROR);
@@ -99,7 +102,7 @@ class UpdateCertificationRequest extends FormRequest
             // Phase 3: Expiry & Retention
             'expiry_mode' => ['nullable', 'string', Rule::in(['indefinite', 'fixed'])],
             'expiry_days' => [
-                Rule::requiredIf(fn () => $this->input('expiry_mode') === 'fixed'),
+                Rule::requiredIf(fn() => $this->input('expiry_mode') === 'fixed'),
                 'nullable',
                 'integer',
                 'min:1',
@@ -117,14 +120,14 @@ class UpdateCertificationRequest extends FormRequest
             'shuffle_questions' => ['nullable', 'boolean'],
             'shuffle_options' => ['nullable', 'boolean'],
             // Phase 3: Auto-rules
-            'auto_result_rule_mode' => ['nullable', 'string', Rule::in(['none', 'name_rule'])],
+            'auto_result_rule_mode' => ['nullable', 'string', Rule::in(AutoResultRuleMode::values())],
             'auto_result_rule_config' => [
                 'nullable',
                 function ($attribute, $value, $fail) {
                     if (!$value) {
                         return;
                     }
-                    
+
                     $config = is_string($value) ? json_decode($value, true) : $value;
                     if (!is_array($config)) {
                         $fail('La configuración de reglas debe ser un JSON válido.');
@@ -162,12 +165,12 @@ class UpdateCertificationRequest extends FormRequest
     {
         // Allowed settings keys
         $allowedKeys = ['timer_minutes', 'pass_score_percentage', 'result_mode', 'randomize_questions', 'show_answers'];
-        
+
         // Validate each key
         foreach ($settings as $key => $value) {
             if (!in_array($key, $allowedKeys, true)) {
                 // Log warning but don't fail - allow flexibility for future expansions
-                \Log::warning("Unknown settings key in certification: {$key}");
+                Log::warning("Unknown settings key in certification: {$key}");
             }
         }
 

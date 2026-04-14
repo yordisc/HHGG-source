@@ -17,6 +17,7 @@ use App\Support\CertificationVersioningService;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
@@ -83,7 +84,7 @@ class CertificationAdminController extends Controller
                     AuditLog::log('update', 'Certification', $certification->id, $certification->name, $changes);
                 } catch (\Exception $e) {
                     // Log audit failures but don't fail the update
-                    \Log::warning('Failed to create audit log for certification update', ['error' => $e->getMessage()]);
+                    Log::warning('Failed to create audit log for certification update', ['error' => $e->getMessage()]);
                 }
             }
 
@@ -95,10 +96,10 @@ class CertificationAdminController extends Controller
                     ->with('warning', $warningMessage);
             }
         } catch (\Exception $e) {
-            \Log::error('Certification update failed', ['error' => $e->getMessage()]);
+            Log::error('Certification update failed', ['error' => $e->getMessage()]);
             return redirect()
                 ->route('admin.certifications.edit', $certification)
-                ->with('error', 'Error al actualizar: '.$e->getMessage());
+                ->with('error', 'Error al actualizar: ' . $e->getMessage());
         }
 
         return redirect()
@@ -162,10 +163,10 @@ class CertificationAdminController extends Controller
     public function wizard(Request $request, int $step = 1): View|RedirectResponse
     {
         $step = max(1, min(5, $step));
-        
+
         // Obtener draft existente o crear uno nuevo
         $draft = CertificationDraft::query()
-            ->where('user_id', auth()->id())
+            ->where('user_id', Auth::id())
             ->where(function ($query): void {
                 $query->whereNull('expires_at')
                     ->orWhere('expires_at', '>', now());
@@ -176,7 +177,7 @@ class CertificationAdminController extends Controller
         // Si no hay draft, crear uno nuevo
         if (!$draft) {
             $draft = CertificationDraft::create([
-                'user_id' => auth()->id(),
+                'user_id' => Auth::id(),
                 'current_step' => $step,
                 'slug' => 'draft-' . uniqid(),
                 'name' => 'Borrador sin título',
@@ -208,9 +209,9 @@ class CertificationAdminController extends Controller
     {
         $step = max(1, min(5, $step));
         $data = $request->validate($this->wizardRules($step));
-        
+
         $draftId = $request->input('draft_id');
-        $draftQuery = CertificationDraft::query()->where('user_id', auth()->id());
+        $draftQuery = CertificationDraft::query()->where('user_id', Auth::id());
 
         if ($draftId) {
             $draft = (clone $draftQuery)->findOrFail($draftId);
@@ -221,7 +222,7 @@ class CertificationAdminController extends Controller
 
             if (! $draft) {
                 $draft = CertificationDraft::create([
-                    'user_id' => auth()->id(),
+                    'user_id' => Auth::id(),
                     'current_step' => $step,
                     'slug' => 'draft-' . uniqid(),
                     'name' => 'Borrador sin título',
@@ -274,7 +275,7 @@ class CertificationAdminController extends Controller
                     $data
                 );
                 $certification = Certification::query()->create($this->normalizeData($payload));
-                
+
                 // Eliminar draft
                 $draft->delete();
 
@@ -295,14 +296,14 @@ class CertificationAdminController extends Controller
     public function wizardReset(Request $request): RedirectResponse
     {
         $draftId = $request->input('draft_id');
-        
+
         if ($draftId) {
             // Eliminar un draft específico
             CertificationDraft::query()
-                ->where('user_id', auth()->id())
+                ->where('user_id', Auth::id())
                 ->findOrFail($draftId)
                 ->delete();
-            
+
             return redirect()
                 ->route('admin.certifications.wizard.drafts')
                 ->with('status', 'Borrador eliminado correctamente.');
@@ -310,7 +311,7 @@ class CertificationAdminController extends Controller
 
         // Eliminar el draft actual (para reiniciar desde el wizard)
         $draft = CertificationDraft::query()
-            ->where('user_id', auth()->id())
+            ->where('user_id', Auth::id())
             ->where(function ($query): void {
                 $query->whereNull('expires_at')
                     ->orWhere('expires_at', '>', now());
@@ -335,7 +336,7 @@ class CertificationAdminController extends Controller
 
         try {
             $draft = CertificationDraft::query()
-                ->where('user_id', auth()->id())
+                ->where('user_id', Auth::id())
                 ->findOrFail($draftId);
 
             // Actualizar campos directos del draft
@@ -390,7 +391,7 @@ class CertificationAdminController extends Controller
     public function wizardDrafts(): View
     {
         $drafts = CertificationDraft::query()
-            ->where('user_id', auth()->id())
+            ->where('user_id', Auth::id())
             ->orderByDesc('updated_at')
             ->get()
             ->map(function ($draft) {
@@ -456,16 +457,16 @@ class CertificationAdminController extends Controller
         for ($index = 1; $index <= $count; $index++) {
             $correctOption = random_int(1, 4);
             $options = [
-                1 => 'Opcion distractora A '.$index,
-                2 => 'Opcion distractora B '.$index,
-                3 => 'Opcion distractora C '.$index,
-                4 => 'Opcion distractora D '.$index,
+                1 => 'Opcion distractora A ' . $index,
+                2 => 'Opcion distractora B ' . $index,
+                3 => 'Opcion distractora C ' . $index,
+                4 => 'Opcion distractora D ' . $index,
             ];
-            $options[$correctOption] = 'Respuesta correcta '.$index;
+            $options[$correctOption] = 'Respuesta correcta ' . $index;
 
             $question = Question::query()->create([
                 'certification_id' => $certification->id,
-                'prompt' => 'Pregunta de prueba '.$index.': selecciona la respuesta correcta.',
+                'prompt' => 'Pregunta de prueba ' . $index . ': selecciona la respuesta correcta.',
                 'option_1' => $options[1],
                 'option_2' => $options[2],
                 'option_3' => $options[3],
@@ -481,7 +482,7 @@ class CertificationAdminController extends Controller
                     'language' => 'es',
                 ],
                 [
-                    'prompt' => 'Pregunta de prueba '.$index.': selecciona la respuesta correcta.',
+                    'prompt' => 'Pregunta de prueba ' . $index . ': selecciona la respuesta correcta.',
                     'option_1' => $options[1],
                     'option_2' => $options[2],
                     'option_3' => $options[3],
@@ -509,7 +510,7 @@ class CertificationAdminController extends Controller
             ->where('is_test_question', true)
             ->delete();
 
-        AuditLog::log('delete', 'Question', $certification->id, $certification->name.' (test questions)', [
+        AuditLog::log('delete', 'Question', $certification->id, $certification->name . ' (test questions)', [
             'count' => $deleted,
             'type' => 'test_questions',
         ]);
@@ -607,8 +608,8 @@ class CertificationAdminController extends Controller
         try {
             DB::transaction(function () use ($certification): void {
                 $newCert = $certification->replicate();
-                $newCert->slug = $certification->slug.'_copy_'.uniqid();
-                $newCert->name = $certification->name.' (Copy)';
+                $newCert->slug = $certification->slug . '_copy_' . uniqid();
+                $newCert->name = $certification->name . ' (Copy)';
                 $newCert->active = false;
                 $newCert->save();
 
@@ -645,7 +646,7 @@ class CertificationAdminController extends Controller
                 'error' => $e->getMessage(),
             ]);
 
-            return back()->with('error', 'Error al clonar la certificación: '.$e->getMessage());
+            return back()->with('error', 'Error al clonar la certificación: ' . $e->getMessage());
         }
     }
 
@@ -743,9 +744,9 @@ class CertificationAdminController extends Controller
     private function resultModes(): array
     {
         return [
-            'binary_threshold' => 'binary_threshold',
-            'custom' => 'custom',
-            'generic' => 'generic',
+            \App\Enums\ResultMode::BINARY_THRESHOLD->value => \App\Enums\ResultMode::BINARY_THRESHOLD->value,
+            \App\Enums\ResultMode::CUSTOM->value => \App\Enums\ResultMode::CUSTOM->value,
+            \App\Enums\ResultMode::GENERIC->value => \App\Enums\ResultMode::GENERIC->value,
         ];
     }
 
@@ -766,7 +767,7 @@ class CertificationAdminController extends Controller
     public function rollbackVersion(Certification $certification, int $versionId): RedirectResponse
     {
         $version = $certification->versions()->findOrFail($versionId);
-        
+
         try {
             $service = app(CertificationVersioningService::class);
             $rolledBack = $service->rollbackToVersion($certification, $version);
