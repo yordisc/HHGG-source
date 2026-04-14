@@ -7,6 +7,7 @@ use App\Models\Question;
 use App\Models\QuestionTranslation;
 use App\Support\QuestionBankAvailabilityService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class QuestionBankAvailabilityServiceTest extends TestCase
@@ -21,11 +22,11 @@ class QuestionBankAvailabilityServiceTest extends TestCase
         $this->service = app(QuestionBankAvailabilityService::class);
     }
 
-    /** @test */
+    #[Test]
     public function it_checks_if_bank_is_available_for_locale(): void
     {
         $certification = Certification::factory()->create();
-        
+
         $question = Question::factory()->create([
             'certification_id' => $certification->id,
             'active' => true,
@@ -40,7 +41,7 @@ class QuestionBankAvailabilityServiceTest extends TestCase
         $this->assertFalse($this->service->isBankAvailable($certification, 'en'));
     }
 
-    /** @test */
+    #[Test]
     public function it_gets_available_languages(): void
     {
         $certification = Certification::factory()->create();
@@ -66,7 +67,7 @@ class QuestionBankAvailabilityServiceTest extends TestCase
         $this->assertCount(2, $languages);
     }
 
-    /** @test */
+    #[Test]
     public function it_determines_if_language_selector_should_show(): void
     {
         $certification = Certification::factory()->create([
@@ -97,7 +98,7 @@ class QuestionBankAvailabilityServiceTest extends TestCase
         $this->assertFalse($shouldNotShow);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_activate_when_bank_required_and_available(): void
     {
         $certification = Certification::factory()->create([
@@ -119,7 +120,7 @@ class QuestionBankAvailabilityServiceTest extends TestCase
         $this->assertTrue($canActivate);
     }
 
-    /** @test */
+    #[Test]
     public function it_blocks_activation_when_bank_required_but_empty(): void
     {
         $certification = Certification::factory()->create([
@@ -130,7 +131,7 @@ class QuestionBankAvailabilityServiceTest extends TestCase
         $this->assertFalse($canActivate);
     }
 
-    /** @test */
+    #[Test]
     public function it_gets_question_count_by_language(): void
     {
         $certification = Certification::factory()->create();

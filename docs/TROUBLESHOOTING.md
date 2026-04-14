@@ -840,7 +840,8 @@ A: No. Versions are immutable for compliance.
 
 - [VISUAL_BUILDER_GUIDE.md](./VISUAL_BUILDER_GUIDE.md) - Complete interface guide
 - [VERSIONING_SYSTEM.md](./VERSIONING_SYSTEM.md) - Version control system
-- [COMPLETION_CHECKLIST.md](./COMPLETION_CHECKLIST.md) - Feature checklist
+- [PROYECTO_DETALLADO.md](./PROYECTO_DETALLADO.md) - Project overview and implementation details
+- [README.md](./README.md) - Documentation index
 
 ---
 

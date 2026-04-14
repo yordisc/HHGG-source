@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Certification;
+use App\Models\CertificationDraft;
 use App\Models\Question;
 use App\Models\QuestionTranslation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -138,5 +139,24 @@ class AdminCertificationWizardAndTestToolsTest extends TestCase
             ->assertOk()
             ->assertSee('Prueba de funcionamiento')
             ->assertSee('Pregunta base');
+    }
+
+    public function test_wizard_rejects_draft_id_that_does_not_belong_to_session(): void
+    {
+        $this->withSession(['admin_authenticated' => true])
+            ->get(route('admin.certifications.wizard', ['step' => 1]))
+            ->assertOk();
+
+        $sessionDraftId = (int) CertificationDraft::query()->latest('id')->value('id');
+        $mismatchedDraftId = $sessionDraftId + 999;
+
+        $this->withSession(['admin_authenticated' => true])
+            ->post(route('admin.certifications.wizard.store', ['step' => 1]), [
+                'draft_id' => $mismatchedDraftId,
+                'slug' => 'wizard-cert-locked',
+                'name' => 'Wizard Cert Locked',
+                'description' => 'Intento con draft ajeno',
+            ])
+            ->assertForbidden();
     }
 }

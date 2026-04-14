@@ -13,11 +13,13 @@ COPY vite.config.js postcss.config.js tailwind.config.js ./
 
 RUN npm run build
 
-FROM php:8.4-cli-bookworm AS app
+FROM php:8.4-fpm-bookworm AS app
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     unzip \
+    nginx \
+    gettext-base \
     libzip-dev \
     libicu-dev \
     libxml2-dev \
@@ -39,10 +41,15 @@ COPY . .
 RUN composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader --no-scripts \
     && php artisan package:discover --ansi
 
+COPY docker/nginx/default.conf.template /etc/nginx/templates/default.conf.template
+COPY docker/start-container.sh /usr/local/bin/start-container
+RUN chmod +x /usr/local/bin/start-container
+RUN rm -f /etc/nginx/conf.d/default.conf /etc/nginx/sites-enabled/default
+
 COPY --from=assets /app/public/build ./public/build
 
 EXPOSE 10000
 
 ENV PORT=10000
 
-CMD sh -lc 'php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=${PORT:-10000}'
+CMD ["/usr/local/bin/start-container"]

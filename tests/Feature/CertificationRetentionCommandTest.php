@@ -7,6 +7,7 @@ use App\Models\Certification;
 use App\Models\Certificate;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithoutMiddleware;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class CertificationRetentionCommandTest extends TestCase
@@ -14,7 +15,7 @@ class CertificationRetentionCommandTest extends TestCase
     use RefreshDatabase;
     use WithoutMiddleware;
 
-    /** @test */
+    #[Test]
     public function purge_command_can_be_called(): void
     {
         $certification = Certification::factory()->create([
@@ -29,7 +30,7 @@ class CertificationRetentionCommandTest extends TestCase
             ->assertExitCode(0);
     }
 
-    /** @test */
+    #[Test]
     public function purge_command_deletes_expired_certificates(): void
     {
         $certification = Certification::factory()->create([
@@ -54,7 +55,7 @@ class CertificationRetentionCommandTest extends TestCase
         $this->assertDatabaseCount('certificates', 2);
     }
 
-    /** @test */
+    #[Test]
     public function purge_command_respects_disabled_purge(): void
     {
         $certification = Certification::factory()->create([
@@ -75,7 +76,7 @@ class CertificationRetentionCommandTest extends TestCase
         $this->assertDatabaseCount('certificates', 3);
     }
 
-    /** @test */
+    #[Test]
     public function dry_run_does_not_delete(): void
     {
         $certification = Certification::factory()->create([
@@ -97,7 +98,7 @@ class CertificationRetentionCommandTest extends TestCase
         $this->assertDatabaseCount('certificates', 3);
     }
 
-    /** @test */
+    #[Test]
     public function purge_all_handles_multiple_certifications(): void
     {
         $cert1 = Certification::factory()->create([
@@ -125,7 +126,7 @@ class CertificationRetentionCommandTest extends TestCase
         $this->assertDatabaseCount('certificates', 0);
     }
 
-    /** @test */
+    #[Test]
     public function test_purge_command_shows_statistics(): void
     {
         $certification = Certification::factory()->create([
@@ -147,7 +148,7 @@ class CertificationRetentionCommandTest extends TestCase
             ->expectsOutput('Testing purge logic');
     }
 
-    /** @test */
+    #[Test]
     public function purge_respects_download_expiry_window(): void
     {
         $certification = Certification::factory()->create([
@@ -178,7 +179,7 @@ class CertificationRetentionCommandTest extends TestCase
         $this->assertDatabaseCount('certificates', 0);
     }
 
-    /** @test */
+    #[Test]
     public function purge_handles_indefinite_expiry(): void
     {
         $certification = Certification::factory()->create([
@@ -200,7 +201,7 @@ class CertificationRetentionCommandTest extends TestCase
         $this->assertDatabaseCount('certificates', 5);
     }
 
-    /** @test */
+    #[Test]
     public function purge_fails_with_invalid_certification(): void
     {
         $this->artisan('certificates:purge-expired', [

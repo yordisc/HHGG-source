@@ -1,31 +1,31 @@
-prompt,option_1,option_2,option_3,option_4,correct_option
-"¿Cuál es el objetivo principal del marketing?","Vender productos","Crear valor para clientes","Gastar presupuesto","Copiar competidores",2
-"¿Qué significa ROI en marketing?","Return On Investment - Retorno de la Inversión","Rapid Online Implementation","Retorno Operacional Inmediato","Remote Online Interaction",1
-"¿Cuál es la red social más usada para B2B?","Instagram","TikTok","LinkedIn","Facebook",3
-"¿Qué es el funnel de marketing?","Un embudo en la oficina","El proceso desde awareness hasta compra","Un tipo de email","Un software de CRM",2
-"El marketing de contenidos se enfoca en:","Comprar publicidad cara","Crear contenido valioso para atraer audiencia","Llamadas de venta","Spamear redes sociales",2
-"¿Cuál es el KPI más importante en marketing digital?","La cantidad de posts","El ROI y conversión","El número de seguidores","El color de la marca",2
-"¿Qué es SEO?","Search Engine Optimization","Secure Email Over internet","Social Engineering Oversight","Software Evaluation Office",1
-"El email marketing tiene un ROI promedio de:","2x","5x","42x","0.5x",3
-"¿Cuál es la duración ideal de un video para redes sociales?","3 minutos","30 segundos a 1 minuto","15 minutos","Depende la red",4
-"Google Analytics mide principalmente:","Las ganancias","El tráfico y comportamiento de usuarios","El ranking en Google","Las ventas directas",2
-"¿Qué es A/B testing?","Comparar dos versiones para ver cuál funciona mejor","Pauta A antes de la pauta B","Análisis de auditoría","Arquitectura de bases de datos",1
-"El customer journey map sirve para:","Dibujar figuras","Entender todos los puntos de contacto del cliente","Mapeo físico del negocio","Clasificar archivos",2
-"¿Cuál es la tasa de apertura promedio en email marketing?","5%","15-25%","50%","80%",2
-"La segmentación en marketing permite:","Enviar lo mismo a todos","Personalizar mensajes por grupos de audiencia","Ahorrar dinero en publicidad","Ignorar ciertos clientes",2
-"¿Qué es el retargeting?","Volver a dirigirse a usuarios que visitaron tu sitio","Disparar intentos de venta","Retro-diseño de campañas","Retorno de dinero",1
-"El marketing de influencers funciona mejor cuando:","El influencer es famoso","El influencer alinea con tu marca y audiencia","Pagas mucho dinero","El influencer es de tu industria",2
-"¿Cuál es el objetivo del inbound marketing?","Atraer clientes con contenido valioso","Llamadasfrías de venta","Publicidad masiva","Spam en redes",1
-"El CTR (Click Through Rate) mide:","La cantidad de clientes","El porcentaje de clicks en un anuncio","El tiempo de respuesta","La calidad del contenido",2
-"La credibilidad en marketing digital se construye con:","Mentiras convincentes","Transparencia y comportamiento consistente","Precios bajos","Muchos anuncios",2
-"¿Qué es el marketing mix (4 Ps)?","Precio, Producto, Plaza, Promoción","Personal, Plan, Platform, Process","Publicidad, Personas, Procesos, Precio","Paciencia, Persistencia, Pasión, Penetración",1
-"El landing page debe tener:","Muchos enlaces internos","Un CTA claro y enfocado","Toda la información posible","Videos autoreproducibles",2
-"¿Cuál es el propósito del marketing automation?","Automatizar todo sin revisión","Automatizar tareas repetitivas para eficiencia","Reemplazar humanos","Reducir costos al mínimo",2
-"El NPS (Net Promoter Score) mide:","El número de promotores","La probabilidad de que un cliente te recomiende","La nómina de empleados","El rendimiento neto",2
-"¿Qué es el buyer persona?","El vendedor del negocio","Representación detallada de tu cliente ideal","La persona que compra","El creador de la empresa",2
-"El marketing de media social requiere:","Posteos diarios sin estrategia","Estrategia, consistencia y conocimiento de la audiencia","Gastarmás dinero que la competencia","Copiar a otros negocios",2
-"¿La marca es solo el logo?","Sí","No, es la percepción completa del cliente","Es el nombre","Es el color",2
-"El marketing vertical se enfoca en:","Lo vertical del negocio","Mercados o nichos específicos","Mensajes verticales","Estructura organizacional",2
-"¿Qué tipo de contenido genera más engagement?","Texto largo","Video y contenido visual","PDFs","Documentos en Word",2
-"El marketing sustainability apunta a:","Sostenibilidad ambiental","Practicas comerciales responsables y éticas","Solo reducción de costos","Crecimiento sin límite",2
-"¿Cuál es el ciclo de vida de un producto en marketing?","Introducción, Crecimiento, Madurez, Decline","Creación, Venta, Fin","Inicio, Cambio, Fin","Idea, Producción, Distribución",1
+cert_type,prompt,option_1,option_2,option_3,option_4,correct_option,language,active
+marketing_101,"¿Cuál es el objetivo principal del marketing?","Vender productos","Crear valor para clientes","Gastar presupuesto","Copiar competidores",2,en,1
+marketing_101,"¿Qué significa ROI en marketing?","Return On Investment - Retorno de la Inversión","Rapid Online Implementation","Retorno Operacional Inmediato","Remote Online Interaction",1,en,1
+marketing_101,"¿Cuál es la red social más usada para B2B?","Instagram","TikTok","LinkedIn","Facebook",3,en,1
+marketing_101,"¿Qué es el funnel de marketing?","Un embudo en la oficina","El proceso desde awareness hasta compra","Un tipo de email","Un software de CRM",2,en,1
+marketing_101,"El marketing de contenidos se enfoca en:","Comprar publicidad cara","Crear contenido valioso para atraer audiencia","Llamadas de venta","Spamear redes sociales",2,en,1
+marketing_101,"¿Cuál es el KPI más importante en marketing digital?","La cantidad de posts","El ROI y conversión","El número de seguidores","El color de la marca",2,en,1
+marketing_101,"¿Qué es SEO?","Search Engine Optimization","Secure Email Over internet","Social Engineering Oversight","Software Evaluation Office",1,en,1
+marketing_101,"El email marketing tiene un ROI promedio de:","2x","5x","42x","0.5x",3,en,1
+marketing_101,"¿Cuál es la duración ideal de un video para redes sociales?","3 minutos","30 segundos a 1 minuto","15 minutos","Depende la red",4,en,1
+marketing_101,"Google Analytics mide principalmente:","Las ganancias","El tráfico y comportamiento de usuarios","El ranking en Google","Las ventas directas",2,en,1
+marketing_101,"¿Qué es A/B testing?","Comparar dos versiones para ver cuál funciona mejor","Pauta A antes de la pauta B","Análisis de auditoría","Arquitectura de bases de datos",1,en,1
+marketing_101,"El customer journey map sirve para:","Dibujar figuras","Entender todos los puntos de contacto del cliente","Mapeo físico del negocio","Clasificar archivos",2,en,1
+marketing_101,"¿Cuál es la tasa de apertura promedio en email marketing?","5%","15-25%","50%","80%",2,en,1
+marketing_101,"La segmentación en marketing permite:","Enviar lo mismo a todos","Personalizar mensajes por grupos de audiencia","Ahorrar dinero en publicidad","Ignorar ciertos clientes",2,en,1
+marketing_101,"¿Qué es el retargeting?","Volver a dirigirse a usuarios que visitaron tu sitio","Disparar intentos de venta","Retro-diseño de campañas","Retorno de dinero",1,en,1
+marketing_101,"El marketing de influencers funciona mejor cuando:","El influencer es famoso","El influencer alinea con tu marca y audiencia","Pagas mucho dinero","El influencer es de tu industria",2,en,1
+marketing_101,"¿Cuál es el objetivo del inbound marketing?","Atraer clientes con contenido valioso","Llamadasfrías de venta","Publicidad masiva","Spam en redes",1,en,1
+marketing_101,"El CTR (Click Through Rate) mide:","La cantidad de clientes","El porcentaje de clicks en un anuncio","El tiempo de respuesta","La calidad del contenido",2,en,1
+marketing_101,"La credibilidad en marketing digital se construye con:","Mentiras convincentes","Transparencia y comportamiento consistente","Precios bajos","Muchos anuncios",2,en,1
+marketing_101,"¿Qué es el marketing mix (4 Ps)?","Precio, Producto, Plaza, Promoción","Personal, Plan, Platform, Process","Publicidad, Personas, Procesos, Precio","Paciencia, Persistencia, Pasión, Penetración",1,en,1
+marketing_101,"El landing page debe tener:","Muchos enlaces internos","Un CTA claro y enfocado","Toda la información posible","Videos autoreproducibles",2,en,1
+marketing_101,"¿Cuál es el propósito del marketing automation?","Automatizar todo sin revisión","Automatizar tareas repetitivas para eficiencia","Reemplazar humanos","Reducir costos al mínimo",2,en,1
+marketing_101,"El NPS (Net Promoter Score) mide:","El número de promotores","La probabilidad de que un cliente te recomiende","La nómina de empleados","El rendimiento neto",2,en,1
+marketing_101,"¿Qué es el buyer persona?","El vendedor del negocio","Representación detallada de tu cliente ideal","La persona que compra","El creador de la empresa",2,en,1
+marketing_101,"El marketing de media social requiere:","Posteos diarios sin estrategia","Estrategia, consistencia y conocimiento de la audiencia","Gastarmás dinero que la competencia","Copiar a otros negocios",2,en,1
+marketing_101,"¿La marca es solo el logo?","Sí","No, es la percepción completa del cliente","Es el nombre","Es el color",2,en,1
+marketing_101,"El marketing vertical se enfoca en:","Lo vertical del negocio","Mercados o nichos específicos","Mensajes verticales","Estructura organizacional",2,en,1
+marketing_101,"¿Qué tipo de contenido genera más engagement?","Texto largo","Video y contenido visual","PDFs","Documentos en Word",2,en,1
+marketing_101,"El marketing sustainability apunta a:","Sostenibilidad ambiental","Practicas comerciales responsables y éticas","Solo reducción de costos","Crecimiento sin límite",2,en,1
+marketing_101,"¿Cuál es el ciclo de vida de un producto en marketing?","Introducción, Crecimiento, Madurez, Decline","Creación, Venta, Fin","Inicio, Cambio, Fin","Idea, Producción, Distribución",1,en,1

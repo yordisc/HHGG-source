@@ -1,10 +1,14 @@
 @extends('layouts.app')
 
 @section('content')
-    <section class="mx-auto max-w-4xl overflow-hidden rounded-[2rem] border border-slate-300 bg-white/95 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.45)]">
-        <div class="border-b border-slate-200 bg-gradient-to-r from-[rgba(29,53,87,0.08)] to-[rgba(141,122,59,0.08)] px-6 py-6 sm:px-8">
-            <p class="text-[11px] font-semibold uppercase tracking-[0.3em] text-slate-600">{{ __('app.certificate_title') }}</p>
-            <h1 class="brand-title mt-2 text-3xl font-bold text-[var(--ink)] sm:text-4xl">{{ __('app.certificate_verified') }}</h1>
+    <section
+        class="mx-auto max-w-4xl overflow-hidden rounded-[2rem] border border-slate-300 bg-white/95 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.45)]">
+        <div
+            class="border-b border-slate-200 bg-gradient-to-r from-[rgba(29,53,87,0.08)] to-[rgba(141,122,59,0.08)] px-6 py-6 sm:px-8">
+            <p class="text-[11px] font-semibold uppercase tracking-[0.3em] text-slate-600">{{ __('app.certificate_title') }}
+            </p>
+            <h1 class="brand-title mt-2 text-3xl font-bold text-[var(--ink)] sm:text-4xl">
+                {{ __('app.certificate_verified') }}</h1>
             <p class="mt-2 max-w-2xl text-sm text-slate-700 sm:text-base">{{ __('app.certificate_public_hint') }}</p>
         </div>
 
@@ -12,14 +16,16 @@
         @if ($certificate->hasImage())
             <div class="border-b border-slate-200 px-6 py-6 sm:px-8">
                 <p class="text-xs font-semibold uppercase tracking-wide text-slate-600 mb-4">Imagen del Certificado</p>
-                <img src="{{ $certificate->getImageUrl() }}" alt="Imagen del certificado" class="w-full h-auto rounded-xl border border-slate-200 shadow-sm">
+                <img src="{{ $certificate->getImageUrl() }}" alt="Imagen del certificado"
+                    class="w-full h-auto rounded-xl border border-slate-200 shadow-sm">
             </div>
         @endif
 
         <div class="grid gap-4 px-6 py-6 sm:px-8 lg:grid-cols-[1.2fr_0.8fr]">
             <div class="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5 text-sm text-slate-700">
                 @if ($certificate->revoked_at)
-                    <div class="mb-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-800">
+                    <div
+                        class="mb-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-800">
                         Certificado revocado el {{ $certificate->revoked_at->format('Y-m-d H:i') }}.
                         @if ($certificate->revoked_reason)
                             <p class="mt-1 font-normal">Motivo: {{ $certificate->revoked_reason }}</p>
@@ -27,43 +33,54 @@
                     </div>
                 @endif
                 @if (($verificationChecked ?? false) === true)
-                    <div class="mb-3 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800">
+                    <div
+                        class="mb-3 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800">
                         Verificación firmada válida.
                     </div>
                 @endif
                 <div class="grid gap-3 sm:grid-cols-2">
-                    <p><span class="font-semibold">{{ __('app.full_name') }}:</span> {{ $certificate->first_name }} {{ $certificate->last_name }}</p>
+                    <p><span class="font-semibold">{{ __('app.full_name') }}:</span> {{ $certificate->first_name }}
+                        {{ $certificate->last_name }}</p>
                     <p><span class="font-semibold">{{ __('app.country') }}:</span> {{ $certificate->country }}</p>
                     <p><span class="font-semibold">{{ __('app.serial') }}:</span> {{ $certificate->serial }}</p>
-                    <p><span class="font-semibold">{{ __('app.status') }}:</span> {{ __('app.result_' . $certificate->result_key) }}</p>
-                    <p><span class="font-semibold">{{ __('app.valid_until') }}:</span> {{ $certificate->expires_at?->format('Y-m-d') }}</p>
+                    <p><span class="font-semibold">{{ __('app.status') }}:</span>
+                        {{ __('app.result_' . $certificate->result_key) }}</p>
+                    <p><span class="font-semibold">{{ __('app.valid_until') }}:</span>
+                        {{ $certificate->expires_at?->format('Y-m-d') }}</p>
                 </div>
                 @if (!empty($integrityHash))
-                    <p class="mt-3 break-all text-xs text-slate-500"><span class="font-semibold">Hash de integridad:</span> {{ $integrityHash }}</p>
+                    <p class="mt-3 break-all text-xs text-slate-500"><span class="font-semibold">Hash de integridad:</span>
+                        {{ $integrityHash }}</p>
                 @endif
             </div>
 
             <div class="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm">
-                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('app.certificate_actions_hint') }}</p>
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    {{ __('app.certificate_actions_hint') }}</p>
                 <div class="mt-4 grid gap-3">
                     @if (!$certificate->revoked_at)
-                        <a href="{{ $verificationUrl }}" class="rounded-full border border-emerald-400 bg-emerald-50 px-4 py-3 text-center text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100">
+                        <a href="{{ $verificationUrl }}"
+                            class="rounded-full border border-emerald-400 bg-emerald-50 px-4 py-3 text-center text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100">
                             Verificar autenticidad firmada
                         </a>
                     @endif
-                    <a href="{{ route('result.show', ['serial' => $certificate->serial]) }}" class="rounded-full border border-slate-400 px-4 py-3 text-center text-sm font-semibold text-slate-700 transition hover:border-[var(--accent)] hover:text-[var(--accent)]">
+                    <a href="{{ route('result.show', ['serial' => $certificate->serial]) }}"
+                        class="rounded-full border border-slate-400 px-4 py-3 text-center text-sm font-semibold text-slate-700 transition hover:border-[var(--accent)] hover:text-[var(--accent)]">
                         {{ __('app.view_result') }}
                     </a>
-                    <a href="{{ route('cert.pdf', ['serial' => $certificate->serial]) }}" class="rounded-full bg-[var(--accent)] px-4 py-3 text-center text-sm font-semibold text-white transition hover:brightness-110">
+                    <a href="{{ route('cert.pdf', ['serial' => $certificate->serial]) }}" data-pdf-download
+                        class="rounded-full bg-[var(--accent)] px-4 py-3 text-center text-sm font-semibold text-white transition hover:brightness-110">
                         {{ __('app.download_pdf') }}
                     </a>
-                    <a href="{{ $linkedinUrl }}" target="_blank" rel="noopener noreferrer" class="rounded-full border border-slate-400 bg-white px-4 py-3 text-center text-sm font-semibold text-slate-700 transition hover:border-[var(--accent)] hover:text-[var(--accent)]">
+                    <a href="{{ $linkedinUrl }}" target="_blank" rel="noopener noreferrer"
+                        class="rounded-full border border-slate-400 bg-white px-4 py-3 text-center text-sm font-semibold text-slate-700 transition hover:border-[var(--accent)] hover:text-[var(--accent)]">
                         {{ __('app.add_to_linkedin') }}
                     </a>
                 </div>
                 <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3 text-center">
                     <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">QR de verificación</p>
-                    <img src="{{ $verificationQrUrl }}" alt="QR de verificación" class="mx-auto mt-2 h-28 w-28 rounded-lg border border-slate-200 bg-white p-1">
+                    <img src="{{ $verificationQrUrl }}" alt="QR de verificación"
+                        class="mx-auto mt-2 h-28 w-28 rounded-lg border border-slate-200 bg-white p-1">
                 </div>
             </div>
         </div>

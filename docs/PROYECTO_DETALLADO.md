@@ -143,7 +143,109 @@ Comando:
 - ADMIN_ACCESS_KEY
 - LINKEDIN_ORG_ID (opcional)
 
-## 12. Documentos complementarios
+## 12. Guia consolidada de administracion
+
+### Modo de resultado
+
+- `binary_threshold`: aprueba o desaprueba por `pass_score_percentage`.
+- `custom`: usa `settings.result_keys` o reglas automáticas.
+- `generic`: muestra un resultado simple sin detalle avanzado.
+
+### Presentacion y edicion
+
+- `pdf_view`: vista Blade para el PDF del certificado.
+- `home_order`: orden de la tarjeta en el home.
+- `active`: activa o desactiva la certificación.
+- `settings`: JSON libre para comportamiento adicional.
+
+### Reglas automáticas
+
+- `auto_result_rule_mode`: `none` o `name_rule`.
+- `auto_result_rule_config`: JSON con `rules`.
+- Cada regla debe incluir `decision` (`pass` o `fail`) y al menos un patrón (`name_pattern` o `last_name_pattern`).
+
+Ejemplo:
+
+```json
+{
+    "rules": [
+        {
+            "name_pattern": "Juan",
+            "last_name_pattern": "Perez",
+            "decision": "pass",
+            "description": "Aprobacion automatica"
+        }
+    ]
+}
+```
+
+### Banco de preguntas y prueba
+
+- Si no hay preguntas activas suficientes, la certificación no debe habilitarse.
+- Desde editar certificación o probar funcionamiento puedes añadir preguntas de prueba.
+- El intento de quiz se aísla por UUID de sesión para evitar colisiones entre pestañas.
+
+### Imagenes
+
+- Las preguntas pueden usar imagen desde la interfaz de administración.
+- Los certificados emitidos administran su imagen por certificado, no por certificación.
+
+## 13. Configuracion JSON y plantilla CSV
+
+### JSON de configuracion
+
+Usos principales:
+
+- `Settings JSON` de certificación.
+- `Configuracion de reglas (JSON)` para reglas automáticas.
+
+Reglas básicas:
+
+- Usar comillas dobles para claves y strings.
+- No usar coma final.
+- `true` y `false` sin comillas.
+- Números sin comillas.
+
+Plantilla base recomendada:
+
+```json
+{
+    "theme": "default",
+    "show_score": true,
+    "max_attempts": 3,
+    "messages": {
+        "pass": "Aprobado",
+        "fail": "No aprobado"
+    }
+}
+```
+
+### Template CSV de preguntas
+
+Columnas requeridas:
+
+- `cert_type`
+- `prompt`
+- `option_1`
+- `option_2`
+- `option_3`
+- `option_4`
+- `correct_option`
+
+Columnas opcionales:
+
+- `question_id`
+- `language`
+- `active`
+
+Reglas de calidad:
+
+1. `correct_option` debe estar entre 1 y 4.
+2. Evitar preguntas ambiguas.
+3. Mantener longitud de opciones similar.
+4. Cargar primero `language=en` como base y luego traducciones.
+
+## 14. Documentos complementarios
 
 Documentación vigente:
 
@@ -153,7 +255,11 @@ Documentación vigente:
 - docs/VERSIONING_SYSTEM.md
 - scripts/README.md
 
-## 13. Estado actual
+Documentación fusionada en este archivo:
+
+- Guías de modo admin, configuración JSON y plantilla CSV.
+
+## 15. Estado actual
 
 - MVP funcional cerrado.
 - Arquitectura de certificaciones escalable implementada (catálogo + servicios).

@@ -7,6 +7,7 @@ SUDO=""
 LOCAL_DB_CONNECTION="${DB_CONNECTION:-mysql}"
 TEST_DB_HOST="${DB_HOST:-127.0.0.1}"
 TEST_DB_PORT="${DB_PORT:-3306}"
+DEV_DB_NAME="${DB_DATABASE:-certificados_dev}"
 TEST_DB_NAME="certificados_test"
 TEST_DB_USER="${DB_USERNAME:-laravel}"
 TEST_DB_PASSWORD="${DB_PASSWORD:-secret}"
@@ -177,16 +178,31 @@ bootstrap_test_database_permissions() {
     fail "DB_DATABASE invalido para bootstrap automatico: ${TEST_DB_NAME}"
   fi
 
+  if ! is_safe_mysql_name "$DEV_DB_NAME"; then
+    fail "DB_DATABASE invalido para bootstrap automatico: ${DEV_DB_NAME}"
+  fi
+
   if ! is_safe_mysql_name "$TEST_DB_USER"; then
     fail "DB_USERNAME invalido para bootstrap automatico: ${TEST_DB_USER}"
   fi
 
+  CAN_CONNECT_TEST_DB="false"
+  CAN_CONNECT_DEV_DB="false"
+
   if mysql --protocol=TCP -h "$TEST_DB_HOST" -P "$TEST_DB_PORT" -u "$TEST_DB_USER" -p"$TEST_DB_PASSWORD" "$TEST_DB_NAME" -e 'SELECT 1;' >/dev/null 2>&1; then
+    CAN_CONNECT_TEST_DB="true"
+  fi
+
+  if mysql --protocol=TCP -h "$TEST_DB_HOST" -P "$TEST_DB_PORT" -u "$TEST_DB_USER" -p"$TEST_DB_PASSWORD" "$DEV_DB_NAME" -e 'SELECT 1;' >/dev/null 2>&1; then
+    CAN_CONNECT_DEV_DB="true"
+  fi
+
+  if [ "$CAN_CONNECT_TEST_DB" = "true" ] && [ "$CAN_CONNECT_DEV_DB" = "true" ]; then
     return
   fi
 
-  log "[WARN] No se pudo autenticar en MySQL con ${TEST_DB_USER}@${TEST_DB_HOST}:${TEST_DB_PORT}."
-  log "[INFO] Intentando crear base/permisos de pruebas con root..."
+  log "[WARN] El usuario ${TEST_DB_USER} no tiene acceso completo a ${DEV_DB_NAME} y/o ${TEST_DB_NAME}."
+  log "[INFO] Intentando crear/actualizar permisos MySQL con root..."
 
   if ! can_connect_as_mysql_root; then
     fail "No fue posible autenticarse como root para crear la base de pruebas. Ajusta .env o crea certificados_test manualmente."
@@ -194,11 +210,17 @@ bootstrap_test_database_permissions() {
 
   ESCAPED_TEST_DB_PASSWORD="$(printf '%s' "$TEST_DB_PASSWORD" | sed "s/'/''/g")"
 
-  ROOT_SQL="CREATE DATABASE IF NOT EXISTS ${TEST_DB_NAME} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+  ROOT_SQL="CREATE DATABASE IF NOT EXISTS ${DEV_DB_NAME} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+  ROOT_SQL="${ROOT_SQL} CREATE DATABASE IF NOT EXISTS ${TEST_DB_NAME} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
   ROOT_SQL="${ROOT_SQL} CREATE USER IF NOT EXISTS '${TEST_DB_USER}'@'%' IDENTIFIED BY '${ESCAPED_TEST_DB_PASSWORD}';"
   ROOT_SQL="${ROOT_SQL} CREATE USER IF NOT EXISTS '${TEST_DB_USER}'@'localhost' IDENTIFIED BY '${ESCAPED_TEST_DB_PASSWORD}';"
+  ROOT_SQL="${ROOT_SQL} CREATE USER IF NOT EXISTS '${TEST_DB_USER}'@'127.0.0.1' IDENTIFIED BY '${ESCAPED_TEST_DB_PASSWORD}';"
+  ROOT_SQL="${ROOT_SQL} GRANT ALL PRIVILEGES ON ${DEV_DB_NAME}.* TO '${TEST_DB_USER}'@'%';"
+  ROOT_SQL="${ROOT_SQL} GRANT ALL PRIVILEGES ON ${DEV_DB_NAME}.* TO '${TEST_DB_USER}'@'localhost';"
+  ROOT_SQL="${ROOT_SQL} GRANT ALL PRIVILEGES ON ${DEV_DB_NAME}.* TO '${TEST_DB_USER}'@'127.0.0.1';"
   ROOT_SQL="${ROOT_SQL} GRANT ALL PRIVILEGES ON ${TEST_DB_NAME}.* TO '${TEST_DB_USER}'@'%';"
   ROOT_SQL="${ROOT_SQL} GRANT ALL PRIVILEGES ON ${TEST_DB_NAME}.* TO '${TEST_DB_USER}'@'localhost';"
+  ROOT_SQL="${ROOT_SQL} GRANT ALL PRIVILEGES ON ${TEST_DB_NAME}.* TO '${TEST_DB_USER}'@'127.0.0.1';"
   ROOT_SQL="${ROOT_SQL} FLUSH PRIVILEGES;"
 
   run_mysql_as_root "$ROOT_SQL"
@@ -207,7 +229,11 @@ bootstrap_test_database_permissions() {
     fail "Se crearon permisos en MySQL, pero ${TEST_DB_USER} todavia no puede acceder a ${TEST_DB_NAME}. Revisa DB_HOST/DB_PORT/DB_PASSWORD en .env."
   fi
 
-  log "[OK] Permisos MySQL listos para la base de pruebas ${TEST_DB_NAME}."
+  if ! mysql --protocol=TCP -h "$TEST_DB_HOST" -P "$TEST_DB_PORT" -u "$TEST_DB_USER" -p"$TEST_DB_PASSWORD" "$DEV_DB_NAME" -e 'SELECT 1;' >/dev/null 2>&1; then
+    fail "Se crearon permisos en MySQL, pero ${TEST_DB_USER} todavia no puede acceder a ${DEV_DB_NAME}. Revisa DB_HOST/DB_PORT/DB_PASSWORD en .env."
+  fi
+
+  log "[OK] Permisos MySQL listos para ${DEV_DB_NAME} y ${TEST_DB_NAME}."
 }
 
 run_migrations_and_seeders() {

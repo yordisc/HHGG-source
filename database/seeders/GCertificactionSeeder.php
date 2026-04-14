@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 
-class LifeStyleQuestionsSeeder extends Seeder
+class GCertificactionSeeder extends Seeder
 {
     /**
      * Seed questions for the "good_girl" (Life Style) certification.

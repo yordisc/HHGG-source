@@ -6,6 +6,7 @@ use App\Models\Certification;
 use App\Models\Question;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class AdminQuestionsPhase3FieldsTest extends TestCase
@@ -26,21 +27,21 @@ class AdminQuestionsPhase3FieldsTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_update_question_type(): void
     {
         $response = $this->actingAs($this->adminUser)
             ->withSession(['admin_authenticated' => true])
             ->put(route('admin.questions.update', $this->question), [
-            'cert_type' => $this->certification->slug,
-            'prompt' => 'Updated prompt',
-            'option_1' => 'Option 1',
-            'option_2' => 'Option 2',
-            'option_3' => '',
-            'option_4' => '',
-            'correct_option' => 1,
-            'type' => 'mcq_2',
-        ]);
+                'cert_type' => $this->certification->slug,
+                'prompt' => 'Updated prompt',
+                'option_1' => 'Option 1',
+                'option_2' => 'Option 2',
+                'option_3' => '',
+                'option_4' => '',
+                'correct_option' => 1,
+                'type' => 'mcq_2',
+            ]);
 
         $response->assertRedirect();
 
@@ -48,22 +49,22 @@ class AdminQuestionsPhase3FieldsTest extends TestCase
         $this->assertEquals('mcq_2', $this->question->type);
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_update_question_weight(): void
     {
         $response = $this->actingAs($this->adminUser)
             ->withSession(['admin_authenticated' => true])
             ->put(route('admin.questions.update', $this->question), [
-            'cert_type' => $this->certification->slug,
-            'prompt' => 'Updated prompt',
-            'option_1' => 'Option 1',
-            'option_2' => 'Option 2',
-            'option_3' => 'Option 3',
-            'option_4' => 'Option 4',
-            'correct_option' => 1,
-            'type' => 'mcq_4',
-            'weight' => 2.5,
-        ]);
+                'cert_type' => $this->certification->slug,
+                'prompt' => 'Updated prompt',
+                'option_1' => 'Option 1',
+                'option_2' => 'Option 2',
+                'option_3' => 'Option 3',
+                'option_4' => 'Option 4',
+                'correct_option' => 1,
+                'type' => 'mcq_4',
+                'weight' => 2.5,
+            ]);
 
         $response->assertRedirect();
 
@@ -71,22 +72,22 @@ class AdminQuestionsPhase3FieldsTest extends TestCase
         $this->assertEquals(2.5, $this->question->weight);
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_update_question_sudden_death_mode(): void
     {
         $response = $this->actingAs($this->adminUser)
             ->withSession(['admin_authenticated' => true])
             ->put(route('admin.questions.update', $this->question), [
-            'cert_type' => $this->certification->slug,
-            'prompt' => 'Updated prompt',
-            'option_1' => 'Option 1',
-            'option_2' => 'Option 2',
-            'option_3' => 'Option 3',
-            'option_4' => 'Option 4',
-            'correct_option' => 1,
-            'type' => 'mcq_4',
-            'sudden_death_mode' => 'fail_if_wrong',
-        ]);
+                'cert_type' => $this->certification->slug,
+                'prompt' => 'Updated prompt',
+                'option_1' => 'Option 1',
+                'option_2' => 'Option 2',
+                'option_3' => 'Option 3',
+                'option_4' => 'Option 4',
+                'correct_option' => 1,
+                'type' => 'mcq_4',
+                'sudden_death_mode' => 'fail_if_wrong',
+            ]);
 
         $response->assertRedirect();
 
@@ -94,23 +95,23 @@ class AdminQuestionsPhase3FieldsTest extends TestCase
         $this->assertEquals('fail_if_wrong', $this->question->sudden_death_mode);
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_create_question_with_weight(): void
     {
         $response = $this->actingAs($this->adminUser)
             ->withSession(['admin_authenticated' => true])
             ->post(route('admin.questions.store'), [
-            'cert_type' => $this->certification->slug,
-            'prompt' => 'New question',
-            'option_1' => 'Option 1',
-            'option_2' => 'Option 2',
-            'option_3' => 'Option 3',
-            'option_4' => 'Option 4',
-            'correct_option' => 2,
-            'type' => 'mcq_4',
-            'weight' => 1.5,
-            'sudden_death_mode' => 'pass_if_correct',
-        ]);
+                'cert_type' => $this->certification->slug,
+                'prompt' => 'New question',
+                'option_1' => 'Option 1',
+                'option_2' => 'Option 2',
+                'option_3' => 'Option 3',
+                'option_4' => 'Option 4',
+                'correct_option' => 2,
+                'type' => 'mcq_4',
+                'weight' => 1.5,
+                'sudden_death_mode' => 'pass_if_correct',
+            ]);
 
         $response->assertRedirect();
 
@@ -119,19 +120,19 @@ class AdminQuestionsPhase3FieldsTest extends TestCase
         $this->assertEquals('pass_if_correct', $question->sudden_death_mode);
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_create_mcq2_question(): void
     {
         $response = $this->actingAs($this->adminUser)
             ->withSession(['admin_authenticated' => true])
             ->post(route('admin.questions.store'), [
-            'cert_type' => $this->certification->slug,
-            'prompt' => 'True or False question',
-            'option_1' => 'True',
-            'option_2' => 'False',
-            'correct_option' => 1,
-            'type' => 'mcq_2',
-        ]);
+                'cert_type' => $this->certification->slug,
+                'prompt' => 'True or False question',
+                'option_1' => 'True',
+                'option_2' => 'False',
+                'correct_option' => 1,
+                'type' => 'mcq_2',
+            ]);
 
         $response->assertRedirect();
 
@@ -139,78 +140,78 @@ class AdminQuestionsPhase3FieldsTest extends TestCase
         $this->assertEquals('mcq_2', $question->type);
     }
 
-    /** @test */
+    #[Test]
     public function validation_rejects_invalid_type(): void
     {
         $response = $this->actingAs($this->adminUser)
             ->withSession(['admin_authenticated' => true])
             ->put(route('admin.questions.update', $this->question), [
-            'cert_type' => $this->certification->slug,
-            'prompt' => 'Updated prompt',
-            'option_1' => 'Option 1',
-            'option_2' => 'Option 2',
-            'option_3' => 'Option 3',
-            'option_4' => 'Option 4',
-            'correct_option' => 1,
-            'type' => 'invalid_type',
-        ]);
+                'cert_type' => $this->certification->slug,
+                'prompt' => 'Updated prompt',
+                'option_1' => 'Option 1',
+                'option_2' => 'Option 2',
+                'option_3' => 'Option 3',
+                'option_4' => 'Option 4',
+                'correct_option' => 1,
+                'type' => 'invalid_type',
+            ]);
 
         $response->assertSessionHasErrors('type');
     }
 
-    /** @test */
+    #[Test]
     public function validation_rejects_invalid_weight(): void
     {
         $response = $this->actingAs($this->adminUser)
             ->withSession(['admin_authenticated' => true])
             ->put(route('admin.questions.update', $this->question), [
-            'cert_type' => $this->certification->slug,
-            'prompt' => 'Updated prompt',
-            'option_1' => 'Option 1',
-            'option_2' => 'Option 2',
-            'option_3' => 'Option 3',
-            'option_4' => 'Option 4',
-            'correct_option' => 1,
-            'type' => 'mcq_4',
-            'weight' => -1.0,
-        ]);
+                'cert_type' => $this->certification->slug,
+                'prompt' => 'Updated prompt',
+                'option_1' => 'Option 1',
+                'option_2' => 'Option 2',
+                'option_3' => 'Option 3',
+                'option_4' => 'Option 4',
+                'correct_option' => 1,
+                'type' => 'mcq_4',
+                'weight' => -1.0,
+            ]);
 
         $response->assertSessionHasErrors('weight');
     }
 
-    /** @test */
+    #[Test]
     public function validation_rejects_invalid_sudden_death_mode(): void
     {
         $response = $this->actingAs($this->adminUser)
             ->withSession(['admin_authenticated' => true])
             ->put(route('admin.questions.update', $this->question), [
-            'cert_type' => $this->certification->slug,
-            'prompt' => 'Updated prompt',
-            'option_1' => 'Option 1',
-            'option_2' => 'Option 2',
-            'option_3' => 'Option 3',
-            'option_4' => 'Option 4',
-            'correct_option' => 1,
-            'type' => 'mcq_4',
-            'sudden_death_mode' => 'invalid_mode',
-        ]);
+                'cert_type' => $this->certification->slug,
+                'prompt' => 'Updated prompt',
+                'option_1' => 'Option 1',
+                'option_2' => 'Option 2',
+                'option_3' => 'Option 3',
+                'option_4' => 'Option 4',
+                'correct_option' => 1,
+                'type' => 'mcq_4',
+                'sudden_death_mode' => 'invalid_mode',
+            ]);
 
         $response->assertSessionHasErrors('sudden_death_mode');
     }
 
-    /** @test */
+    #[Test]
     public function mcq2_questions_have_options_3_and_4_as_null(): void
     {
         $this->actingAs($this->adminUser)
             ->withSession(['admin_authenticated' => true])
             ->post(route('admin.questions.store'), [
-            'cert_type' => $this->certification->slug,
-            'prompt' => 'Two option question',
-            'option_1' => 'Yes',
-            'option_2' => 'No',
-            'correct_option' => 1,
-            'type' => 'mcq_2',
-        ]);
+                'cert_type' => $this->certification->slug,
+                'prompt' => 'Two option question',
+                'option_1' => 'Yes',
+                'option_2' => 'No',
+                'correct_option' => 1,
+                'type' => 'mcq_2',
+            ]);
 
         $question = Question::query()->latest('id')->first();
         $this->assertEquals('', $question->option_3);

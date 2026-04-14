@@ -71,7 +71,7 @@ class Certificate extends Model
     public function canRenew(int $days = 30): bool
     {
         $pivot = $this->last_attempt_at ?? $this->issued_at;
-        
+
         if ($pivot === null) {
             return false;
         }
@@ -94,7 +94,7 @@ class Certificate extends Model
     public static function identityLookupHash(string $countryCode, string $documentType, string $document): string
     {
         $normalizedDocument = CountryDocumentService::normalizeDocument($document);
-        $payload = mb_strtolower(trim($countryCode)).'|'.mb_strtolower(trim($documentType)).'|'.$normalizedDocument;
+        $payload = mb_strtolower(trim($countryCode)) . '|' . mb_strtolower(trim($documentType)) . '|' . $normalizedDocument;
 
         return hash_hmac('sha256', $payload, (string) config('app.key'));
     }
@@ -113,6 +113,10 @@ class Certificate extends Model
     {
         if (!$this->certificate_image_path) {
             return null;
+        }
+
+        if (filter_var($this->certificate_image_path, FILTER_VALIDATE_URL)) {
+            return $this->certificate_image_path;
         }
 
         return app(\App\Support\CertificateImageStorageService::class)

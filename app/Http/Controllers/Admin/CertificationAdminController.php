@@ -17,7 +17,6 @@ use App\Support\CertificationVersioningService;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
@@ -163,35 +162,30 @@ class CertificationAdminController extends Controller
     public function wizard(Request $request, int $step = 1): View|RedirectResponse
     {
         $step = max(1, min(5, $step));
+        $draftSessionId = $this->wizardDraftSessionKey();
+        $storedDraftId = $request->session()->get($draftSessionId);
 
-        // Obtener draft existente o crear uno nuevo
-        $draft = CertificationDraft::query()
-            ->where('user_id', Auth::id())
-            ->where(function ($query): void {
-                $query->whereNull('expires_at')
-                    ->orWhere('expires_at', '>', now());
-            })
-            ->orderByDesc('created_at')
-            ->first();
+        // Obtener draft existente por sesión o crear uno nuevo
+        $draft = null;
+
+        if ($storedDraftId !== null) {
+            $draft = CertificationDraft::query()
+                ->whereKey((int) $storedDraftId)
+                ->where(function ($query): void {
+                    $query->whereNull('expires_at')
+                        ->orWhere('expires_at', '>', now());
+                })
+                ->first();
+        }
 
         // Si no hay draft, crear uno nuevo
         if (!$draft) {
-            $draft = CertificationDraft::create([
-                'user_id' => Auth::id(),
-                'current_step' => $step,
-                'slug' => 'draft-' . uniqid(),
-                'name' => 'Borrador sin título',
-                'questions_required' => 30,
-                'pass_score_percentage' => 70,
-                'cooldown_days' => 30,
-                'result_mode' => 'certificate',
-                'pdf_view' => 'full',
-                'home_order' => 999,
-                'expires_at' => now()->addDays(7),
-            ]);
+            $draft = CertificationDraft::create($this->newDraftPayload($step));
+            $request->session()->put($draftSessionId, $draft->id);
         } else {
             // Actualizar paso actual
             $draft->update(['current_step' => $step]);
+            $request->session()->put($draftSessionId, $draft->id);
         }
 
         return view('admin.certifications.wizard', [
@@ -209,32 +203,23 @@ class CertificationAdminController extends Controller
     {
         $step = max(1, min(5, $step));
         $data = $request->validate($this->wizardRules($step));
+        $draftSessionId = $this->wizardDraftSessionKey();
+        $sessionDraftId = $request->session()->get($draftSessionId);
 
         $draftId = $request->input('draft_id');
-        $draftQuery = CertificationDraft::query()->where('user_id', Auth::id());
+        $draftQuery = CertificationDraft::query();
 
         if ($draftId) {
-            $draft = (clone $draftQuery)->findOrFail($draftId);
-        } else {
-            $draft = (clone $draftQuery)
-                ->orderByDesc('updated_at')
-                ->first();
-
-            if (! $draft) {
-                $draft = CertificationDraft::create([
-                    'user_id' => Auth::id(),
-                    'current_step' => $step,
-                    'slug' => 'draft-' . uniqid(),
-                    'name' => 'Borrador sin título',
-                    'questions_required' => 30,
-                    'pass_score_percentage' => 70,
-                    'cooldown_days' => 30,
-                    'result_mode' => 'certificate',
-                    'pdf_view' => 'full',
-                    'home_order' => 999,
-                    'expires_at' => now()->addDays(7),
-                ]);
+            if ($sessionDraftId === null || (int) $sessionDraftId !== (int) $draftId) {
+                abort(403, 'Draft no pertenece a la sesión actual.');
             }
+
+            $draft = (clone $draftQuery)->findOrFail($draftId);
+        } elseif ($sessionDraftId !== null) {
+            $draft = (clone $draftQuery)->findOrFail((int) $sessionDraftId);
+        } else {
+            $draft = CertificationDraft::create($this->newDraftPayload($step));
+            $request->session()->put($draftSessionId, $draft->id);
         }
 
         $nextSettings = $this->mergeWizardSettings($draft, $data);
@@ -259,25 +244,30 @@ class CertificationAdminController extends Controller
         // Si es el último paso, crear la certificación
         if ($step === 5) {
             try {
-                $payload = array_merge(
-                    $draft->only([
-                        'slug',
-                        'name',
-                        'description',
-                        'questions_required',
-                        'pass_score_percentage',
-                        'cooldown_days',
-                        'result_mode',
-                        'pdf_view',
-                        'home_order',
-                    ]),
-                    is_array($draft->settings) ? $draft->settings : [],
-                    $data
-                );
-                $certification = Certification::query()->create($this->normalizeData($payload));
+                $certification = DB::transaction(function () use ($draft, $data): Certification {
+                    $payload = array_merge(
+                        $draft->only([
+                            'slug',
+                            'name',
+                            'description',
+                            'questions_required',
+                            'pass_score_percentage',
+                            'cooldown_days',
+                            'result_mode',
+                            'pdf_view',
+                            'home_order',
+                        ]),
+                        is_array($draft->settings) ? $draft->settings : [],
+                        $data
+                    );
 
-                // Eliminar draft
-                $draft->delete();
+                    $certification = Certification::query()->create($this->normalizeData($payload));
+                    $draft->delete();
+
+                    return $certification;
+                });
+
+                $request->session()->forget($draftSessionId);
 
                 return redirect()
                     ->route('admin.certifications.edit', $certification)
@@ -296,13 +286,20 @@ class CertificationAdminController extends Controller
     public function wizardReset(Request $request): RedirectResponse
     {
         $draftId = $request->input('draft_id');
+        $draftSessionId = $this->wizardDraftSessionKey();
+        $sessionDraftId = $request->session()->get($draftSessionId);
 
         if ($draftId) {
+            if ($sessionDraftId === null || (int) $sessionDraftId !== (int) $draftId) {
+                abort(403, 'Draft no pertenece a la sesión actual.');
+            }
+
             // Eliminar un draft específico
             CertificationDraft::query()
-                ->where('user_id', Auth::id())
                 ->findOrFail($draftId)
                 ->delete();
+
+            $request->session()->forget($draftSessionId);
 
             return redirect()
                 ->route('admin.certifications.wizard.drafts')
@@ -310,18 +307,15 @@ class CertificationAdminController extends Controller
         }
 
         // Eliminar el draft actual (para reiniciar desde el wizard)
-        $draft = CertificationDraft::query()
-            ->where('user_id', Auth::id())
-            ->where(function ($query): void {
-                $query->whereNull('expires_at')
-                    ->orWhere('expires_at', '>', now());
-            })
-            ->latest('updated_at')
-            ->first();
+        $draft = $request->session()->has($draftSessionId)
+            ? CertificationDraft::query()->find($request->session()->get($draftSessionId))
+            : null;
 
         if ($draft) {
             $draft->delete();
         }
+
+        $request->session()->forget($draftSessionId);
 
         return redirect()
             ->route('admin.certifications.wizard', ['step' => 1])
@@ -333,11 +327,20 @@ class CertificationAdminController extends Controller
         $draftId = $request->input('draft_id');
         $step = $request->input('step', 1);
         $data = $request->input('data', []);
+        $draftSessionId = $this->wizardDraftSessionKey();
+        $sessionDraftId = $request->session()->get($draftSessionId);
 
         try {
-            $draft = CertificationDraft::query()
-                ->where('user_id', Auth::id())
-                ->findOrFail($draftId);
+            if ($draftId !== null && ($sessionDraftId === null || (int) $sessionDraftId !== (int) $draftId)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Draft no pertenece a la sesión actual.',
+                ], 403);
+            }
+
+            $draft = $draftId
+                ? CertificationDraft::query()->findOrFail($draftId)
+                : CertificationDraft::query()->findOrFail((int) $sessionDraftId);
 
             // Actualizar campos directos del draft
             $updateData = [];
@@ -379,6 +382,11 @@ class CertificationAdminController extends Controller
                 'draft' => $draft,
                 'saved_at' => now()->format('H:i:s'),
             ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No se encontró un borrador activo en esta sesión.',
+            ], 404);
         } catch (\Exception $e) {
             Log::error('wizard.autosave.failed', ['error' => $e->getMessage()]);
             return response()->json([
@@ -390,10 +398,11 @@ class CertificationAdminController extends Controller
 
     public function wizardDrafts(): View
     {
-        $drafts = CertificationDraft::query()
-            ->where('user_id', Auth::id())
-            ->orderByDesc('updated_at')
-            ->get()
+        $draft = session()->has($this->wizardDraftSessionKey())
+            ? CertificationDraft::query()->find(session()->get($this->wizardDraftSessionKey()))
+            : null;
+
+        $drafts = collect($draft ? [$draft] : [])
             ->map(function ($draft) {
                 return [
                     'id' => $draft->id,
@@ -747,6 +756,28 @@ class CertificationAdminController extends Controller
             \App\Enums\ResultMode::BINARY_THRESHOLD->value => \App\Enums\ResultMode::BINARY_THRESHOLD->value,
             \App\Enums\ResultMode::CUSTOM->value => \App\Enums\ResultMode::CUSTOM->value,
             \App\Enums\ResultMode::GENERIC->value => \App\Enums\ResultMode::GENERIC->value,
+        ];
+    }
+
+    private function wizardDraftSessionKey(): string
+    {
+        return 'admin_certification_wizard_draft_id';
+    }
+
+    private function newDraftPayload(int $step): array
+    {
+        return [
+            'user_id' => null,
+            'current_step' => $step,
+            'slug' => 'draft-' . uniqid(),
+            'name' => 'Borrador sin título',
+            'questions_required' => 30,
+            'pass_score_percentage' => 70,
+            'cooldown_days' => 30,
+            'result_mode' => 'binary_threshold',
+            'pdf_view' => 'pdf.certificate',
+            'home_order' => 999,
+            'expires_at' => now()->addDays(7),
         ];
     }
 

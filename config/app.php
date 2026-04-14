@@ -54,6 +54,9 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
+    // Datos de certificacion/usuarios de prueba para QA (solo seeding no-productivo).
+    'enable_sandbox_seed_data' => env('ENABLE_SANDBOX_SEED_DATA', false),
+
     // demo: mantiene mensajes lúdicos y disclaimer; official: oculta disclaimer legal en PDF oficial.
     'certificate_mode' => env('CERTIFICATE_MODE', 'demo'),
 

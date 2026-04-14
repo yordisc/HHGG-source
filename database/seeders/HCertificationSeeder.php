@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 
-class SocialEnergyQuestionsSeeder extends Seeder
+class HCertificationSeeder extends Seeder
 {
     /**
      * Seed questions for the "hetero" (Social Energy) certification.

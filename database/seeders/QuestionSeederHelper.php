@@ -4,14 +4,13 @@ namespace Database\Seeders;
 
 use App\Models\Certification;
 use App\Models\Question;
-use Carbon\Carbon;
 
 /**
  * Helper class for seeding questions for certifications.
- * 
+ *
  * Provides reusable methods to seed questions, reducing code duplication
  * across certification-specific seeders.
- * 
+ *
  * Usage:
  *   QuestionSeederHelper::seedQuestionsForCertification(
  *       certificationSlug: 'hetero',
@@ -27,7 +26,7 @@ class QuestionSeederHelper
 {
     /**
      * Seed questions for a specific certification.
-     * 
+     *
      * @param string $certificationSlug The certification slug (e.g., 'hetero', 'good_girl')
      * @param array $questions Array of question data: [['prompt' => '...', 'correct' => 1], ...]
      * @param int $minCount Minimum question count before seeding (skip if already present)
@@ -42,37 +41,57 @@ class QuestionSeederHelper
     ): int {
         $options = $options ?? ['Siempre', 'A veces', 'Raramente', 'Nunca'];
 
-        // Skip if questions already seeded for this certification
-        $existingCount = Question::query()
-            ->whereHas('certification', fn ($q) => $q->where('slug', $certificationSlug))
-            ->count();
-
-        if ($existingCount >= $minCount) {
-            return 0;
-        }
-
         // Resolve certification
         $certification = Certification::query()
             ->where('slug', $certificationSlug)
             ->firstOrFail();
 
-        // Build rows with all question data
+        $existingPrompts = Question::query()
+            ->where('certification_id', $certification->id)
+            ->pluck('prompt')
+            ->map(static fn($prompt) => trim((string) $prompt))
+            ->filter(static fn(string $prompt) => $prompt !== '')
+            ->flip()
+            ->all();
+
+        $existingCount = count($existingPrompts);
+        if ($existingCount >= $minCount && $existingCount >= count($questions)) {
+            return 0;
+        }
+
+        // Insert only prompts that are missing for this certification.
         $rows = [];
         $now = now();
+        $seenInBatch = [];
 
         foreach ($questions as $q) {
+            $prompt = trim((string) ($q['prompt'] ?? ''));
+            if ($prompt === '') {
+                continue;
+            }
+
+            if (isset($existingPrompts[$prompt]) || isset($seenInBatch[$prompt])) {
+                continue;
+            }
+
+            $seenInBatch[$prompt] = true;
+
             $rows[] = [
                 'certification_id' => $certification->id,
-                'prompt' => $q['prompt'],
+                'prompt' => $prompt,
                 'option_1' => $options[0] ?? 'Siempre',
                 'option_2' => $options[1] ?? 'A veces',
                 'option_3' => $options[2] ?? 'Raramente',
                 'option_4' => $options[3] ?? 'Nunca',
-                'correct_option' => $q['correct'],
+                'correct_option' => (int) ($q['correct'] ?? 1),
                 'active' => true,
                 'created_at' => $now,
                 'updated_at' => $now,
             ];
+        }
+
+        if ($rows === []) {
+            return 0;
         }
 
         return Question::insert($rows) ? count($rows) : 0;

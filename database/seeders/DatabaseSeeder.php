@@ -14,10 +14,19 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             CertificationSeeder::class,
-            SocialEnergyQuestionsSeeder::class,
-            LifeStyleQuestionsSeeder::class,
+            HCertificationSeeder::class,
+            GCertificactionSeeder::class,
             QuestionTranslationsSeeder::class,
             LocalizedQuestionTranslationsSeeder::class,
         ]);
+
+        if (!app()->environment('production') && (bool) config('app.enable_sandbox_seed_data', false)) {
+            $this->call([
+                SandboxCertificationSeeder::class,
+                QuestionTranslationsSeeder::class,
+                LocalizedQuestionTranslationsSeeder::class,
+                SandboxUsersSeeder::class,
+            ]);
+        }
     }
 }

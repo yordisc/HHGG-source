@@ -8,22 +8,25 @@
 
     <div class="mb-5 h-2 rounded-sm bg-slate-200">
         <div class="h-2 rounded-sm bg-[var(--accent)] transition-all"
-             style="width: {{ max(3, (($currentIndex + 1) / max($total, 1)) * 100) }}%"></div>
+            style="width: {{ max(3, (($currentIndex + 1) / max($total, 1)) * 100) }}%"></div>
     </div>
 
     <p class="mb-2 text-sm text-slate-600">{{ __('app.quiz_select_prompt') }}</p>
     <p class="mb-5 text-base font-semibold text-slate-900 sm:text-lg">{{ $currentQuestion['prompt'] ?? '' }}</p>
 
     <div class="space-y-3">
-        @foreach (($currentQuestion['options'] ?? []) as $optionIndex => $optionText)
-            <button
-                type="button"
-                wire:click="answer({{ $optionIndex + 1 }})"
-                class="w-full rounded-md border border-slate-400 bg-white px-4 py-3 text-left text-sm font-medium text-slate-700 transition hover:border-[var(--accent)] hover:bg-slate-50"
-            >
+        @foreach ($currentQuestion['options'] ?? [] as $optionIndex => $optionText)
+            <button type="button" wire:click="answer({{ $optionIndex + 1 }})" wire:loading.attr="disabled"
+                wire:target="answer"
+                class="w-full rounded-md border border-slate-400 bg-white px-4 py-3 text-left text-sm font-medium text-slate-700 transition hover:border-[var(--accent)] hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60">
                 {{ $optionText }}
             </button>
         @endforeach
+    </div>
+
+    <div wire:loading wire:target="answer"
+        class="mt-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-800">
+        Procesando respuesta... evita hacer multiples clics.
     </div>
 
     <p class="mt-4 text-sm text-slate-600">{{ __('app.quiz_progress_hint') }}</p>

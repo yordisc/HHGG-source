@@ -13,8 +13,10 @@ use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\CertificateImageController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\QuizController;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -50,6 +52,38 @@ Route::get('/locale/{locale}', function (Request $request, string $locale): Redi
     // Use back() which safely handles the referer header
     return back(fallback: route('home'));
 });
+
+Route::post('/api/webhooks/scheduler', function (Request $request) {
+    $configuredKey = trim((string) env('ADMIN_ACCESS_KEY', ''));
+
+    if ($configuredKey === '') {
+        return response()->json([
+            'success' => false,
+            'message' => 'Webhook scheduler no configurado.',
+        ], 503);
+    }
+
+    $providedKey = trim((string) ($request->header('X-Admin-Access-Key')
+        ?? $request->bearerToken()
+        ?? ''));
+
+    if ($providedKey === '' || !hash_equals($configuredKey, $providedKey)) {
+        return response()->json([
+            'success' => false,
+            'message' => 'No autorizado.',
+        ], 403);
+    }
+
+    $exitCode = Artisan::call('schedule:run');
+
+    return response()->json([
+        'success' => $exitCode === 0,
+        'exit_code' => $exitCode,
+        'output' => trim((string) Artisan::output()),
+    ], $exitCode === 0 ? 200 : 500);
+})
+    ->withoutMiddleware([ValidateCsrfToken::class])
+    ->middleware('throttle:30,1');
 
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/login', [AdminAuthController::class, 'showLogin'])->name('login');
@@ -100,14 +134,20 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         // API Endpoints for certification editing
         Route::prefix('api')->name('api.certifications.')->group(function () {
-            Route::get('/certifications/{certification}/available-questions', 
-                [CertificationApiController::class, 'availableQuestions'])
+            Route::get(
+                '/certifications/{certification}/available-questions',
+                [CertificationApiController::class, 'availableQuestions']
+            )
                 ->name('available-questions');
-            Route::get('/certifications/{certification}/active-attempts',
-                [CertificationApiController::class, 'activeAttempts'])
+            Route::get(
+                '/certifications/{certification}/active-attempts',
+                [CertificationApiController::class, 'activeAttempts']
+            )
                 ->name('active-attempts');
-            Route::get('/certifications/{certification}/versions/{versionId}/compare',
-                [CertificationApiController::class, 'compareVersions'])
+            Route::get(
+                '/certifications/{certification}/versions/{versionId}/compare',
+                [CertificationApiController::class, 'compareVersions']
+            )
                 ->name('versions.compare');
         });
 
@@ -160,13 +200,19 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
 // Backward-compatible named API routes expected by some tests.
 Route::middleware('admin.auth')->prefix('admin/api')->name('api.certifications.')->group(function () {
-    Route::get('/certifications/{certification}/available-questions',
-        [CertificationApiController::class, 'availableQuestions'])
+    Route::get(
+        '/certifications/{certification}/available-questions',
+        [CertificationApiController::class, 'availableQuestions']
+    )
         ->name('available-questions');
-    Route::get('/certifications/{certification}/active-attempts',
-        [CertificationApiController::class, 'activeAttempts'])
+    Route::get(
+        '/certifications/{certification}/active-attempts',
+        [CertificationApiController::class, 'activeAttempts']
+    )
         ->name('active-attempts');
-    Route::get('/certifications/{certification}/versions/{versionId}/compare',
-        [CertificationApiController::class, 'compareVersions'])
+    Route::get(
+        '/certifications/{certification}/versions/{versionId}/compare',
+        [CertificationApiController::class, 'compareVersions']
+    )
         ->name('versions.compare');
 });

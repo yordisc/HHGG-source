@@ -7,6 +7,7 @@ use App\Models\Certificate;
 use App\Support\CertificationExpirationService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class CertificationExpirationServiceTest extends TestCase
@@ -21,7 +22,7 @@ class CertificationExpirationServiceTest extends TestCase
         $this->service = app(CertificationExpirationService::class);
     }
 
-    /** @test */
+    #[Test]
     public function it_calculates_indefinite_expiry_as_null(): void
     {
         $certification = Certification::factory()->create([
@@ -34,7 +35,7 @@ class CertificationExpirationServiceTest extends TestCase
         $this->assertNull($expiry);
     }
 
-    /** @test */
+    #[Test]
     public function it_calculates_fixed_expiry_date(): void
     {
         $certification = Certification::factory()->create([
@@ -53,7 +54,7 @@ class CertificationExpirationServiceTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function it_checks_if_certificate_is_expired(): void
     {
         $certification = Certification::factory()->create([
@@ -75,7 +76,7 @@ class CertificationExpirationServiceTest extends TestCase
         $this->assertFalse($this->service->isCertificateExpired($activeCert));
     }
 
-    /** @test */
+    #[Test]
     public function it_checks_if_download_is_expired(): void
     {
         $certification = Certification::factory()->create([
@@ -90,7 +91,7 @@ class CertificationExpirationServiceTest extends TestCase
         $this->assertTrue($this->service->isDownloadExpired($expiredCert));
     }
 
-    /** @test */
+    #[Test]
     public function it_gets_days_until_expiry(): void
     {
         $certification = Certification::factory()->create([
@@ -110,7 +111,7 @@ class CertificationExpirationServiceTest extends TestCase
         $this->assertLessThanOrEqual(15, $days);
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_null_for_days_until_expiry_when_no_expiry(): void
     {
         $certificate = Certificate::factory()->create([
@@ -122,7 +123,7 @@ class CertificationExpirationServiceTest extends TestCase
         $this->assertNull($days);
     }
 
-    /** @test */
+    #[Test]
     public function it_allows_historical_download(): void
     {
         $certification = Certification::factory()->create([
@@ -133,7 +134,7 @@ class CertificationExpirationServiceTest extends TestCase
         $this->assertTrue($this->service->allowsHistoricalDownload($certification));
     }
 
-    /** @test */
+    #[Test]
     public function it_denies_historical_download_when_disabled(): void
     {
         $certification = Certification::factory()->create([

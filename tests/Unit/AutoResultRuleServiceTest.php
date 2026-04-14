@@ -5,6 +5,7 @@ namespace Tests\Unit;
 use App\Models\Certification;
 use App\Support\AutoResultRuleService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class AutoResultRuleServiceTest extends TestCase
@@ -19,7 +20,7 @@ class AutoResultRuleServiceTest extends TestCase
         $this->service = app(AutoResultRuleService::class);
     }
 
-    /** @test */
+    #[Test]
     public function it_evaluates_exact_name_match(): void
     {
         $certification = Certification::factory()->create([
@@ -40,7 +41,7 @@ class AutoResultRuleServiceTest extends TestCase
         $this->assertEquals('pass', $result['decision']);
     }
 
-    /** @test */
+    #[Test]
     public function it_evaluates_wildcard_name_match(): void
     {
         $certification = Certification::factory()->create([
@@ -60,7 +61,7 @@ class AutoResultRuleServiceTest extends TestCase
         $this->assertEquals('pass', $result['decision']);
     }
 
-    /** @test */
+    #[Test]
     public function it_evaluates_apellido_match(): void
     {
         $certification = Certification::factory()->create([
@@ -80,7 +81,7 @@ class AutoResultRuleServiceTest extends TestCase
         $this->assertEquals('pass', $result['decision']);
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_false_when_no_match(): void
     {
         $certification = Certification::factory()->create([
@@ -100,7 +101,7 @@ class AutoResultRuleServiceTest extends TestCase
         $this->assertEquals('none', $result['decision']);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_rules_in_order(): void
     {
         $certification = Certification::factory()->create([
@@ -119,7 +120,7 @@ class AutoResultRuleServiceTest extends TestCase
         $this->assertEquals('fail', $result['decision']); // A* fails, so Alice fails
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_none_when_mode_is_none(): void
     {
         $certification = Certification::factory()->create([
@@ -130,7 +131,7 @@ class AutoResultRuleServiceTest extends TestCase
         $this->assertEquals('none', $result['decision']);
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_none_when_config_has_no_rules(): void
     {
         $certification = Certification::factory()->create([
@@ -142,7 +143,7 @@ class AutoResultRuleServiceTest extends TestCase
         $this->assertEquals('none', $result['decision']);
     }
 
-    /** @test */
+    #[Test]
     public function it_validates_config_structure(): void
     {
         $validConfig = [
@@ -158,7 +159,7 @@ class AutoResultRuleServiceTest extends TestCase
         $this->assertTrue($result['valid']);
     }
 
-    /** @test */
+    #[Test]
     public function it_creates_empty_config(): void
     {
         $config = $this->service->createEmptyConfig();
@@ -169,7 +170,7 @@ class AutoResultRuleServiceTest extends TestCase
         $this->assertEmpty($config['rules']);
     }
 
-    /** @test */
+    #[Test]
     public function it_gets_mode_name(): void
     {
         $name = $this->service->getModeName('name_rule');
@@ -179,7 +180,7 @@ class AutoResultRuleServiceTest extends TestCase
         $this->assertIsString($name);
     }
 
-    /** @test */
+    #[Test]
     public function it_adds_rule_to_config(): void
     {
         $config = $this->service->createEmptyConfig();

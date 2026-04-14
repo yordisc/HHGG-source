@@ -6,15 +6,15 @@ use Illuminate\Database\Seeder;
 
 /**
  * Seeder Template para crear nuevas certificaciones con sus preguntas
- * 
+ *
  * INSTRUCCIONES:
  * 1. Copia este archivo y renómbralo: NewCertificationSeeder.php
  * 2. Modifica el nombre de la clase: class NewCertificationSeeder
  * 3. Completa los datos abajo (slug, nombre, descripción, preguntas)
  * 4. Ejecuta: php artisan db:seed --class=NewCertificationSeeder
- * 
+ *
  * EJEMPLO COMPLETO:
- * 
+ *
  * php artisan db:seed --class="Database\Seeders\NewCertificationSeeder"
  */
 class CertificationSeederTemplate extends Seeder
@@ -57,8 +57,8 @@ class CertificationSeederTemplate extends Seeder
         // PASO 3: Las opciones estándar son: Siempre, A veces, Raramente, Nunca
         // Si deseas opciones personalizadas, descomenta abajo:
         // $options = ['Opción A', 'Opción B', 'Opción C', 'Opción D'];
-        
-        // PASO 4: Enirá las preguntas a la certificación
+
+        // PASO 4: Enlaza las preguntas a la certificación
         QuestionSeederHelper::seedQuestionsForCertification(
             certificationSlug: $certification->slug,
             questions: $questions,
@@ -72,6 +72,11 @@ class CertificationSeederTemplate extends Seeder
      */
     private function createCertification(array $data): \App\Models\Certification
     {
-        return \App\Models\Certification::query()->create($data);
+        $slug = (string) ($data['slug'] ?? '');
+
+        return \App\Models\Certification::query()->updateOrCreate(
+            ['slug' => $slug],
+            $data
+        );
     }
 }

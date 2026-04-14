@@ -5,6 +5,7 @@ namespace Tests\Unit;
 use App\Models\Question;
 use App\Support\SuddenDeathRuleService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class SuddenDeathRuleServiceTest extends TestCase
@@ -19,7 +20,7 @@ class SuddenDeathRuleServiceTest extends TestCase
         $this->service = app(SuddenDeathRuleService::class);
     }
 
-    /** @test */
+    #[Test]
     public function it_evaluates_fail_if_wrong_on_correct_answer(): void
     {
         $question = Question::factory()->create([
@@ -32,7 +33,7 @@ class SuddenDeathRuleServiceTest extends TestCase
         $this->assertNull($result['decision']);
     }
 
-    /** @test */
+    #[Test]
     public function it_evaluates_fail_if_wrong_on_wrong_answer(): void
     {
         $question = Question::factory()->create([
@@ -45,7 +46,7 @@ class SuddenDeathRuleServiceTest extends TestCase
         $this->assertEquals('fail', $result['decision']);
     }
 
-    /** @test */
+    #[Test]
     public function it_evaluates_pass_if_correct_on_correct_answer(): void
     {
         $question = Question::factory()->create([
@@ -58,7 +59,7 @@ class SuddenDeathRuleServiceTest extends TestCase
         $this->assertEquals('pass', $result['decision']);
     }
 
-    /** @test */
+    #[Test]
     public function it_evaluates_pass_if_correct_on_wrong_answer(): void
     {
         $question = Question::factory()->create([
@@ -71,7 +72,7 @@ class SuddenDeathRuleServiceTest extends TestCase
         $this->assertNull($result['decision']);
     }
 
-    /** @test */
+    #[Test]
     public function it_ignores_none_mode(): void
     {
         $question = Question::factory()->create([
@@ -84,7 +85,7 @@ class SuddenDeathRuleServiceTest extends TestCase
         $this->assertNull($result['decision']);
     }
 
-    /** @test */
+    #[Test]
     public function it_evaluates_batch_and_returns_first_death(): void
     {
         $q1 = Question::factory()->create(['sudden_death_mode' => 'fail_if_wrong']);
@@ -115,7 +116,7 @@ class SuddenDeathRuleServiceTest extends TestCase
         $this->assertEquals('fail', $result['decision']);
     }
 
-    /** @test */
+    #[Test]
     public function it_has_sudden_death_mode(): void
     {
         $this->assertTrue($this->service->hasSuddenDeathMode(
@@ -129,7 +130,7 @@ class SuddenDeathRuleServiceTest extends TestCase
         ));
     }
 
-    /** @test */
+    #[Test]
     public function it_validates_mode(): void
     {
         $this->assertTrue($this->service->isValidMode('fail_if_wrong'));
@@ -138,7 +139,7 @@ class SuddenDeathRuleServiceTest extends TestCase
         $this->assertFalse($this->service->isValidMode('invalid'));
     }
 
-    /** @test */
+    #[Test]
     public function it_counts_sudden_death_questions_by_mode(): void
     {
         $certification = \App\Models\Certification::factory()->create();
@@ -170,7 +171,7 @@ class SuddenDeathRuleServiceTest extends TestCase
         $this->assertEquals(1, $counts['pass_if_correct']);
     }
 
-    /** @test */
+    #[Test]
     public function it_gets_mode_name_for_display(): void
     {
         $this->assertIsString($this->service->getModeName('fail_if_wrong'));

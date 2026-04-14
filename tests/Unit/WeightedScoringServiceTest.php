@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use App\Support\WeightedScoringService;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class WeightedScoringServiceTest extends TestCase
@@ -15,7 +16,7 @@ class WeightedScoringServiceTest extends TestCase
         $this->service = app(WeightedScoringService::class);
     }
 
-    /** @test */
+    #[Test]
     public function it_calculates_weighted_score_correctly(): void
     {
         $answers = [
@@ -34,7 +35,7 @@ class WeightedScoringServiceTest extends TestCase
         $this->assertLessThan(67, $score);
     }
 
-    /** @test */
+    #[Test]
     public function it_handles_zero_weight(): void
     {
         $answers = [
@@ -46,7 +47,7 @@ class WeightedScoringServiceTest extends TestCase
         $this->assertEquals(0, $score);
     }
 
-    /** @test */
+    #[Test]
     public function it_handles_all_correct_answers(): void
     {
         $answers = [
@@ -60,7 +61,7 @@ class WeightedScoringServiceTest extends TestCase
         $this->assertEquals(100, $score);
     }
 
-    /** @test */
+    #[Test]
     public function it_handles_all_incorrect_answers(): void
     {
         $answers = [
@@ -74,7 +75,7 @@ class WeightedScoringServiceTest extends TestCase
         $this->assertEquals(0, $score);
     }
 
-    /** @test */
+    #[Test]
     public function it_calculates_scoring_statistics(): void
     {
         $answers = [
@@ -92,7 +93,7 @@ class WeightedScoringServiceTest extends TestCase
         $this->assertEquals(1, $stats['questions_incorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function it_normalizes_weights_to_sum_100(): void
     {
         $answers = [
@@ -110,7 +111,7 @@ class WeightedScoringServiceTest extends TestCase
         $this->assertEquals(50, $normalized[2]['normalized_weight']);
     }
 
-    /** @test */
+    #[Test]
     public function it_validates_weights(): void
     {
         $validAnswers = [
@@ -130,7 +131,7 @@ class WeightedScoringServiceTest extends TestCase
         $this->assertFalse($result['valid']);
     }
 
-    /** @test */
+    #[Test]
     public function it_gets_weight_distribution(): void
     {
         $answers = [

@@ -6,6 +6,7 @@ use App\Models\Certification;
 use App\Models\Question;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class AdminCertificationPhase3FieldsTest extends TestCase
@@ -30,24 +31,24 @@ class AdminCertificationPhase3FieldsTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_update_certification_with_expiry_fields(): void
     {
         $response = $this->actingAs($this->adminUser)
             ->withSession(['admin_authenticated' => true])
             ->put(route('admin.certifications.update', $this->certification), [
-            'slug' => 'test-cert',
-            'name' => 'Test Certification',
-            'home_order' => 1,
-            'active' => true,
-            'questions_required' => 10,
-            'pass_score_percentage' => 70,
-            'cooldown_days' => 7,
-            'result_mode' => 'binary_threshold',
-            'expiry_mode' => 'fixed',
-            'expiry_days' => 30,
-            'allow_certificate_download_after_deactivation' => true,
-        ]);
+                'slug' => 'test-cert',
+                'name' => 'Test Certification',
+                'home_order' => 1,
+                'active' => true,
+                'questions_required' => 10,
+                'pass_score_percentage' => 70,
+                'cooldown_days' => 7,
+                'result_mode' => 'binary_threshold',
+                'expiry_mode' => 'fixed',
+                'expiry_days' => 30,
+                'allow_certificate_download_after_deactivation' => true,
+            ]);
 
         $response->assertRedirect(route('admin.certifications.edit', $this->certification));
 
@@ -57,22 +58,22 @@ class AdminCertificationPhase3FieldsTest extends TestCase
         $this->assertTrue($this->certification->allow_certificate_download_after_deactivation);
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_update_certification_with_retention_fields(): void
     {
         $response = $this->actingAs($this->adminUser)
             ->withSession(['admin_authenticated' => true])
             ->put(route('admin.certifications.update', $this->certification), [
-            'slug' => 'test-cert',
-            'name' => 'Test Certification',
-            'home_order' => 1,
-            'active' => false,
-            'questions_required' => 1,
-            'pass_score_percentage' => 70,
-            'cooldown_days' => 7,
-            'result_mode' => 'binary_threshold',
-            'manual_user_data_purge_enabled' => true,
-        ]);
+                'slug' => 'test-cert',
+                'name' => 'Test Certification',
+                'home_order' => 1,
+                'active' => false,
+                'questions_required' => 1,
+                'pass_score_percentage' => 70,
+                'cooldown_days' => 7,
+                'result_mode' => 'binary_threshold',
+                'manual_user_data_purge_enabled' => true,
+            ]);
 
         $response->assertRedirect();
 
@@ -80,23 +81,23 @@ class AdminCertificationPhase3FieldsTest extends TestCase
         $this->assertTrue($this->certification->manual_user_data_purge_enabled);
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_update_certification_with_randomization_fields(): void
     {
         $response = $this->actingAs($this->adminUser)
             ->withSession(['admin_authenticated' => true])
             ->put(route('admin.certifications.update', $this->certification), [
-            'slug' => 'test-cert',
-            'name' => 'Test Certification',
-            'home_order' => 1,
-            'active' => false,
-            'questions_required' => 1,
-            'pass_score_percentage' => 70,
-            'cooldown_days' => 7,
-            'result_mode' => 'binary_threshold',
-            'shuffle_questions' => true,
-            'shuffle_options' => true,
-        ]);
+                'slug' => 'test-cert',
+                'name' => 'Test Certification',
+                'home_order' => 1,
+                'active' => false,
+                'questions_required' => 1,
+                'pass_score_percentage' => 70,
+                'cooldown_days' => 7,
+                'result_mode' => 'binary_threshold',
+                'shuffle_questions' => true,
+                'shuffle_options' => true,
+            ]);
 
         $response->assertRedirect();
 
@@ -105,22 +106,22 @@ class AdminCertificationPhase3FieldsTest extends TestCase
         $this->assertTrue($this->certification->shuffle_options);
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_update_certification_with_question_bank_requirement(): void
     {
         $response = $this->actingAs($this->adminUser)
             ->withSession(['admin_authenticated' => true])
             ->put(route('admin.certifications.update', $this->certification), [
-            'slug' => 'test-cert',
-            'name' => 'Test Certification',
-            'home_order' => 1,
-            'active' => false,
-            'questions_required' => 1,
-            'pass_score_percentage' => 70,
-            'cooldown_days' => 7,
-            'result_mode' => 'binary_threshold',
-            'require_question_bank_for_activation' => true,
-        ]);
+                'slug' => 'test-cert',
+                'name' => 'Test Certification',
+                'home_order' => 1,
+                'active' => false,
+                'questions_required' => 1,
+                'pass_score_percentage' => 70,
+                'cooldown_days' => 7,
+                'result_mode' => 'binary_threshold',
+                'require_question_bank_for_activation' => true,
+            ]);
 
         $response->assertRedirect();
 
@@ -128,7 +129,7 @@ class AdminCertificationPhase3FieldsTest extends TestCase
         $this->assertTrue($this->certification->require_question_bank_for_activation);
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_update_certification_with_auto_rules(): void
     {
         $config = [
@@ -144,17 +145,17 @@ class AdminCertificationPhase3FieldsTest extends TestCase
         $response = $this->actingAs($this->adminUser)
             ->withSession(['admin_authenticated' => true])
             ->put(route('admin.certifications.update', $this->certification), [
-            'slug' => 'test-cert',
-            'name' => 'Test Certification',
-            'home_order' => 1,
-            'active' => false,
-            'questions_required' => 1,
-            'pass_score_percentage' => 70,
-            'cooldown_days' => 7,
-            'result_mode' => 'binary_threshold',
-            'auto_result_rule_mode' => 'name_rule',
-            'auto_result_rule_config' => json_encode($config),
-        ]);
+                'slug' => 'test-cert',
+                'name' => 'Test Certification',
+                'home_order' => 1,
+                'active' => false,
+                'questions_required' => 1,
+                'pass_score_percentage' => 70,
+                'cooldown_days' => 7,
+                'result_mode' => 'binary_threshold',
+                'auto_result_rule_mode' => 'name_rule',
+                'auto_result_rule_config' => json_encode($config),
+            ]);
 
         $response->assertRedirect();
 
@@ -163,65 +164,65 @@ class AdminCertificationPhase3FieldsTest extends TestCase
         $this->assertIsArray($this->certification->auto_result_rule_config);
     }
 
-    /** @test */
+    #[Test]
     public function validation_rejects_invalid_expiry_mode(): void
     {
         $response = $this->actingAs($this->adminUser)
             ->withSession(['admin_authenticated' => true])
             ->put(route('admin.certifications.update', $this->certification), [
-            'slug' => 'test-cert',
-            'name' => 'Test Certification',
-            'home_order' => 1,
-            'active' => false,
-            'questions_required' => 1,
-            'pass_score_percentage' => 70,
-            'cooldown_days' => 7,
-            'result_mode' => 'binary_threshold',
-            'expiry_mode' => 'invalid_mode',
-        ]);
+                'slug' => 'test-cert',
+                'name' => 'Test Certification',
+                'home_order' => 1,
+                'active' => false,
+                'questions_required' => 1,
+                'pass_score_percentage' => 70,
+                'cooldown_days' => 7,
+                'result_mode' => 'binary_threshold',
+                'expiry_mode' => 'invalid_mode',
+            ]);
 
         $response->assertSessionHasErrors('expiry_mode');
     }
 
-    /** @test */
+    #[Test]
     public function validation_requires_expiry_days_for_fixed_mode(): void
     {
         $response = $this->actingAs($this->adminUser)
             ->withSession(['admin_authenticated' => true])
             ->put(route('admin.certifications.update', $this->certification), [
-            'slug' => 'test-cert',
-            'name' => 'Test Certification',
-            'home_order' => 1,
-            'active' => false,
-            'questions_required' => 1,
-            'pass_score_percentage' => 70,
-            'cooldown_days' => 7,
-            'result_mode' => 'binary_threshold',
-            'expiry_mode' => 'fixed',
-            'expiry_days' => null,
-        ]);
+                'slug' => 'test-cert',
+                'name' => 'Test Certification',
+                'home_order' => 1,
+                'active' => false,
+                'questions_required' => 1,
+                'pass_score_percentage' => 70,
+                'cooldown_days' => 7,
+                'result_mode' => 'binary_threshold',
+                'expiry_mode' => 'fixed',
+                'expiry_days' => null,
+            ]);
 
         $response->assertSessionHasErrors('expiry_days');
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_create_certification_with_phase3_fields(): void
     {
         $response = $this->actingAs($this->adminUser)
             ->withSession(['admin_authenticated' => true])
             ->post(route('admin.certifications.store'), [
-            'slug' => 'new-cert',
-            'name' => 'New Certification',
-            'home_order' => 1,
-            'active' => true,
-            'questions_required' => 10,
-            'pass_score_percentage' => 75,
-            'cooldown_days' => 14,
-            'result_mode' => 'binary_threshold',
-            'expiry_mode' => 'indefinite',
-            'shuffle_questions' => true,
-            'shuffle_options' => false,
-        ]);
+                'slug' => 'new-cert',
+                'name' => 'New Certification',
+                'home_order' => 1,
+                'active' => true,
+                'questions_required' => 10,
+                'pass_score_percentage' => 75,
+                'cooldown_days' => 14,
+                'result_mode' => 'binary_threshold',
+                'expiry_mode' => 'indefinite',
+                'shuffle_questions' => true,
+                'shuffle_options' => false,
+            ]);
 
         $response->assertRedirect();
 

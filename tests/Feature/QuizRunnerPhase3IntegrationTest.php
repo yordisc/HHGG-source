@@ -7,6 +7,7 @@ use App\Models\Question;
 use App\Models\QuestionTranslation;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class QuizRunnerPhase3IntegrationTest extends TestCase
@@ -26,7 +27,7 @@ class QuizRunnerPhase3IntegrationTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function quiz_respects_shuffle_questions_setting(): void
     {
         // Create questions
@@ -45,7 +46,7 @@ class QuizRunnerPhase3IntegrationTest extends TestCase
         $this->assertFalse($cert->shuffle_questions);
     }
 
-    /** @test */
+    #[Test]
     public function quiz_respects_shuffle_options_setting(): void
     {
         $this->certification->update(['shuffle_options' => true]);
@@ -53,7 +54,7 @@ class QuizRunnerPhase3IntegrationTest extends TestCase
         $this->assertTrue($this->certification->shuffle_options);
     }
 
-    /** @test */
+    #[Test]
     public function quiz_handles_weighted_scoring(): void
     {
         // Create questions with different weights
@@ -77,7 +78,7 @@ class QuizRunnerPhase3IntegrationTest extends TestCase
         $this->assertEquals(3.0, $totalWeight);
     }
 
-    /** @test */
+    #[Test]
     public function quiz_evaluates_sudden_death_questions(): void
     {
         Question::factory()->create([
@@ -93,7 +94,7 @@ class QuizRunnerPhase3IntegrationTest extends TestCase
         $this->assertCount(1, $questions);
     }
 
-    /** @test */
+    #[Test]
     public function quiz_applies_auto_result_rules(): void
     {
         $this->certification->update([
@@ -114,7 +115,7 @@ class QuizRunnerPhase3IntegrationTest extends TestCase
         $this->assertCount(1, $config['rules']);
     }
 
-    /** @test */
+    #[Test]
     public function quiz_requires_question_bank_for_activation(): void
     {
         $cert = Certification::factory()->create([
@@ -126,7 +127,7 @@ class QuizRunnerPhase3IntegrationTest extends TestCase
         $this->assertFalse($cert->questions()->exists());
     }
 
-    /** @test */
+    #[Test]
     public function quiz_shows_language_selector_when_multiple_banks(): void
     {
         $cert = Certification::factory()->create([
@@ -151,7 +152,7 @@ class QuizRunnerPhase3IntegrationTest extends TestCase
         $this->assertGreaterThan(0, $spanishQuestions);
     }
 
-    /** @test */
+    #[Test]
     public function certificate_includes_expiry_date_if_configured(): void
     {
         $this->certification->update([
@@ -169,7 +170,7 @@ class QuizRunnerPhase3IntegrationTest extends TestCase
         $this->assertEquals(30, $attrs['expiry_days']);
     }
 
-    /** @test */
+    #[Test]
     public function quiz_includes_question_metadata(): void
     {
         $question = Question::factory()->create([
@@ -185,7 +186,7 @@ class QuizRunnerPhase3IntegrationTest extends TestCase
         $this->assertEquals('mcq_4', $question->type);
     }
 
-    /** @test */
+    #[Test]
     public function mcq2_question_has_only_two_options(): void
     {
         $question = Question::factory()->create([
@@ -204,7 +205,7 @@ class QuizRunnerPhase3IntegrationTest extends TestCase
         $this->assertEquals('', $question->option_4);
     }
 
-    /** @test */
+    #[Test]
     public function mcq4_question_has_four_options(): void
     {
         $question = Question::factory()->create([

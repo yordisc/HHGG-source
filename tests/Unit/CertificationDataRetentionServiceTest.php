@@ -6,6 +6,7 @@ use App\Models\Certification;
 use App\Models\Certificate;
 use App\Support\CertificationDataRetentionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class CertificationDataRetentionServiceTest extends TestCase
@@ -20,7 +21,7 @@ class CertificationDataRetentionServiceTest extends TestCase
         $this->service = app(CertificationDataRetentionService::class);
     }
 
-    /** @test */
+    #[Test]
     public function it_purges_expired_certification_data(): void
     {
         $certification = Certification::factory()->create([
@@ -46,7 +47,7 @@ class CertificationDataRetentionServiceTest extends TestCase
         $this->assertEquals(3, $stats['certificates_deleted']);
     }
 
-    /** @test */
+    #[Test]
     public function it_does_not_purge_when_disabled(): void
     {
         $certification = Certification::factory()->create([
@@ -64,7 +65,7 @@ class CertificationDataRetentionServiceTest extends TestCase
         $this->assertDatabaseCount('certificates', 3);
     }
 
-    /** @test */
+    #[Test]
     public function it_manually_purges_user_data(): void
     {
         $certification = Certification::factory()->create([
@@ -82,7 +83,7 @@ class CertificationDataRetentionServiceTest extends TestCase
         $this->assertDatabaseCount('certificates', 0);
     }
 
-    /** @test */
+    #[Test]
     public function it_gets_purge_statistics(): void
     {
         $certification = Certification::factory()->create([
@@ -105,7 +106,7 @@ class CertificationDataRetentionServiceTest extends TestCase
         $this->assertEquals(5, $stats['expired_certificates']);
     }
 
-    /** @test */
+    #[Test]
     public function it_handles_indefinite_expiry_correctly(): void
     {
         $certification = Certification::factory()->create([
@@ -124,7 +125,7 @@ class CertificationDataRetentionServiceTest extends TestCase
         $this->assertEquals(0, $stats['certificates_deleted']);
     }
 
-    /** @test */
+    #[Test]
     public function it_respects_download_expiry_window(): void
     {
         $certification = Certification::factory()->create([

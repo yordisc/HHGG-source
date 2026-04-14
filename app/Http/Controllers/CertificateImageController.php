@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Certificate;
 use App\Support\CertificateImageStorageService;
+use App\Support\RemoteImageUrlValidator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -21,15 +22,24 @@ class CertificateImageController extends Controller
         $certificate = Certificate::where('serial', $serial)->firstOrFail();
 
         $validated = $request->validate([
+            'image_url' => [
+                'nullable',
+                'url',
+                'max:2048',
+                'required_without:image',
+            ],
             'image' => [
-                'required',
+                'nullable',
                 'file',
                 'image',
                 'max:5120', // 5 MB en kilobytes
                 'mimes:jpeg,png,webp,gif',
+                'required_without:image_url',
             ],
         ], [
-            'image.required' => 'Se requiere una imagen.',
+            'image_url.required_without' => 'Debes enviar una URL de imagen o un archivo.',
+            'image_url.url' => 'La URL de imagen no es valida.',
+            'image.required_without' => 'Debes enviar una URL de imagen o un archivo.',
             'image.file' => 'El archivo debe ser un archivo válido.',
             'image.image' => 'El archivo debe ser una imagen válida.',
             'image.max' => 'La imagen no debe exceder 5 MB.',
@@ -37,16 +47,19 @@ class CertificateImageController extends Controller
         ]);
 
         try {
-            $storageService = new CertificateImageStorageService();
+            if (!empty($validated['image_url'])) {
+                $imagePath = app(RemoteImageUrlValidator::class)->validate((string) $validated['image_url']);
+                $imageUrl = $imagePath;
+            } else {
+                $storageService = new CertificateImageStorageService();
 
-            // Eliminar imagen anterior si existe
-            if ($certificate->certificate_image_path) {
-                $storageService->delete($certificate->certificate_image_path);
+                if ($certificate->certificate_image_path && !filter_var($certificate->certificate_image_path, FILTER_VALIDATE_URL)) {
+                    $storageService->delete($certificate->certificate_image_path);
+                }
+
+                $imagePath = $storageService->store($validated['image']);
+                $imageUrl = $storageService->url($imagePath);
             }
-
-            // Guardar nueva imagen
-            $imagePath = $storageService->store($validated['image']);
-            $imageUrl = $storageService->url($imagePath);
 
             // Actualizar registro
             $certificate->update([
@@ -91,8 +104,10 @@ class CertificateImageController extends Controller
         }
 
         try {
-            $storageService = new CertificateImageStorageService();
-            $storageService->delete($certificate->certificate_image_path);
+            if (!filter_var($certificate->certificate_image_path, FILTER_VALIDATE_URL)) {
+                $storageService = new CertificateImageStorageService();
+                $storageService->delete($certificate->certificate_image_path);
+            }
 
             $certificate->update([
                 'certificate_image_path' => null,
