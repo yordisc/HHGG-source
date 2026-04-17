@@ -134,11 +134,12 @@ class CertificateController extends Controller
         $certificate = $this->ensureIntegrityMetadata($certificate, $integrity);
         $verificationUrl = $integrity->verificationUrl($certificate);
         $verificationQrUrl = $integrity->verificationQrUrl($certificate);
+        $allowPdfImages = $this->isGdAvailable();
 
         if ($template !== null && trim((string) $template->html_template) !== '') {
             $pdf = Pdf::loadView('pdf.certificate-template', [
                 'cssTemplate' => (string) ($template->css_template ?? ''),
-                'renderedHtml' => $this->renderTemplateHtml($template->html_template, $certificate, $verificationUrl, $verificationQrUrl),
+                'renderedHtml' => $this->renderTemplateHtml($template->html_template, $certificate, $verificationUrl, $verificationQrUrl, $allowPdfImages),
             ]);
         } else {
             $pdf = Pdf::loadView('pdf.certificate', [
@@ -147,6 +148,7 @@ class CertificateController extends Controller
                 'verificationQrUrl' => $verificationQrUrl,
                 'integrityHash' => $certificate->content_hash,
                 'showLegalDisclaimer' => ! $this->isOfficialCertificateMode(),
+                'allowPdfImages' => $allowPdfImages,
             ]);
         }
 
@@ -192,7 +194,7 @@ class CertificateController extends Controller
         return CertificateTemplate::getDefault();
     }
 
-    private function renderTemplateHtml(string $htmlTemplate, Certificate $certificate, string $verificationUrl, string $verificationQrUrl): string
+    private function renderTemplateHtml(string $htmlTemplate, Certificate $certificate, string $verificationUrl, string $verificationQrUrl, bool $allowPdfImages = true): string
     {
         $issuedAt = $certificate->issued_at ?? $certificate->created_at ?? now();
         $validUntil = $certificate->expires_at?->format('Y-m-d') ?? '';
@@ -206,13 +208,25 @@ class CertificateController extends Controller
             '{{pais}}' => (string) $certificate->country,
             '{{vigencia}}' => $validUntil,
             '{{verificacion_url}}' => $verificationUrl,
-            '{{verificacion_qr}}' => $verificationQrUrl,
+            '{{verificacion_qr}}' => $allowPdfImages ? $verificationQrUrl : '',
             '{{integridad_hash}}' => (string) ($certificate->content_hash ?? ''),
-            '{{logo_institucion}}' => public_path('apple-touch-icon.png'),
-            '{{firma_director}}' => public_path('Signature/Benjamin_Netanyahu.png'),
+            '{{logo_institucion}}' => $allowPdfImages ? public_path('apple-touch-icon.png') : '',
+            '{{firma_director}}' => $allowPdfImages ? public_path('Signature/Benjamin_Netanyahu.png') : '',
         ];
 
-        return str_replace(array_keys($replacements), array_values($replacements), $htmlTemplate);
+        $rendered = str_replace(array_keys($replacements), array_values($replacements), $htmlTemplate);
+
+        if (! $allowPdfImages) {
+            // Prevent Dompdf from trying to load image resources when GD is not available.
+            $rendered = (string) preg_replace('/<img\b[^>]*>/i', '', $rendered);
+        }
+
+        return $rendered;
+    }
+
+    private function isGdAvailable(): bool
+    {
+        return extension_loaded('gd');
     }
 
     private function isOfficialCertificateMode(): bool

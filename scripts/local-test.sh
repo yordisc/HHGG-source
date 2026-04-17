@@ -238,6 +238,7 @@ bootstrap_test_database_permissions() {
 
 run_migrations_and_seeders() {
   log "[INFO] Ejecutando migraciones y seeders en MySQL local..."
+  XDEBUG_MODE=off \
   APP_ENV=local \
   DB_CONNECTION=mysql \
   DB_HOST="${DB_HOST:-127.0.0.1}" \
@@ -255,6 +256,7 @@ run_migrations_and_seeders() {
 
 run_test_migrations() {
   log "[INFO] Preparando la base de datos de pruebas..."
+  XDEBUG_MODE=off \
   APP_ENV=testing \
   DB_CONNECTION=mysql \
   DB_HOST="$TEST_DB_HOST" \
@@ -281,10 +283,10 @@ run_tests() {
   set +e
   {
     printf '%s\n' "[INFO] Ejecutando pruebas Feature..."
-    php artisan test --testsuite=Feature --stop-on-failure
+    XDEBUG_MODE=off php artisan test --testsuite=Feature --stop-on-failure
 
     printf '%s\n' "[INFO] Ejecutando pruebas Unit..."
-    php artisan test --testsuite=Unit --stop-on-failure
+    XDEBUG_MODE=off php artisan test --testsuite=Unit --stop-on-failure
   } > "$TEST_LOG_FILE" 2>&1
 
   TEST_EXIT_CODE=$?

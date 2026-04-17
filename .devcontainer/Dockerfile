@@ -7,6 +7,9 @@ RUN set -eux; \
   done; \
     apt-get update; \
     apt-get install -y --no-install-recommends \
+      libpng16-16 \
+      libjpeg62-turbo \
+      libfreetype6 \
       build-essential \
       autoconf \
       pkg-config \
