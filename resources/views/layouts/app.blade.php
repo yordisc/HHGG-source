@@ -5,6 +5,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ __('app.brand_name') }}</title>
+    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
+    <link rel="icon" type="image/x-icon" sizes="32x32" href="{{ asset('favicon-32x32.ico') }}">
+    <link rel="icon" type="image/x-icon" sizes="16x16" href="{{ asset('favicon-16x16.ico') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -74,9 +78,15 @@
     <header class="sticky top-0 z-20 border-b border-slate-300/80 glass">
         <div
             class="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-            <a href="{{ route('home') }}" class="block">
-                <p class="brand-title text-base font-bold text-[var(--ink)] sm:text-lg">{{ __('app.brand_name') }}</p>
-                <p class="text-xs text-slate-700">{{ __('app.brand_tagline') }}</p>
+            <a href="{{ route('home') }}" class="flex items-center gap-3 rounded-lg pr-2 transition hover:opacity-90"
+                aria-label="{{ __('app.menu_home') }}">
+                <img src="{{ asset('apple-touch-icon.png') }}" alt="{{ __('app.brand_name') }}"
+                    class="h-11 w-11 rounded-lg border border-slate-300/90 bg-white object-cover shadow-sm">
+                <span class="block">
+                    <p class="brand-title text-base font-bold text-[var(--ink)] sm:text-lg">{{ __('app.brand_name') }}
+                    </p>
+                    <p class="text-xs text-slate-700">{{ __('app.brand_tagline') }}</p>
+                </span>
             </a>
 
             <div class="flex flex-wrap items-center gap-2 text-xs font-semibold">
