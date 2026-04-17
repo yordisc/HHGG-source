@@ -4,6 +4,7 @@ This guide covers common issues and their solutions when using the certification
 
 ## Table of Contents
 
+- [Critical Issues - Recently Fixed](#critical-issues---recently-fixed)
 - [Common Issues](#common-issues)
 - [Testing Issues](#testing-issues)
 - [Form & Validation Issues](#form--validation-issues)
@@ -13,6 +14,100 @@ This guide covers common issues and their solutions when using the certification
 - [API Issues](#api-issues)
 - [Database Issues](#database-issues)
 - [Getting Help](#getting-help)
+
+---
+
+## Critical Issues - Recently Fixed
+
+**These issues have been identified and resolved in the latest update.**
+
+### Issue: Blade Template Parser Error on Certificate Template Creation Page (HTTP 500)
+
+**Symptom:** When accessing the certificate template creation page (`admin.certificates.templates.create`), the application returns a fatal error (HTTP 500). Check browser console or server logs for `ParseError: syntax error, unexpected '..'`.
+
+**Root Cause:** A Blade template syntax conflict in [`resources/views/admin/certificates/templates/create.blade.php`](../resources/views/admin/certificates/templates/create.blade.php#L55). The file attempted to use Laravel's `old()` helper with literal placeholder variables (`{{nombre}}`, `{{fecha}}`, etc.) within double curly braces. The Blade compiler's regex pattern interprets the inner `}}` as the closing delimiter of the outer expression, causing malformed PHP code generation.
+
+**Status:** ✅ **FIXED**
+
+**Solution Applied:**
+Instead of trying to escape Blade syntax, the solution passes the default HTML template from the PHP controller to the view. This avoids the syntax conflict entirely while keeping the logic in PHP where it belongs.
+
+**Modified Files:**
+
+- [`app/Http/Controllers/Admin/CertificateTemplateController.php`](../app/Http/Controllers/Admin/CertificateTemplateController.php#L28)
+- [`resources/views/admin/certificates/templates/create.blade.php`](../resources/views/admin/certificates/templates/create.blade.php#L55)
+
+**Code Changes:**
+
+In the Controller:
+
+```php
+public function create(): View
+{
+    return view('admin.certificates.templates.create', [
+        'template' => new CertificateTemplate(),
+        'defaultHtmlTemplate' => '<div class="certificate"><h1>{{nombre}}</h1><p>Fecha: {{fecha}}</p></div>',
+        // ...
+    ]);
+}
+```
+
+In the Blade template:
+
+```blade
+<!-- BEFORE (broken) -->
+<textarea name="html_template">{{ old('html_template', '<div>{{nombre}}</div>') }}</textarea>
+
+<!-- AFTER (fixed) -->
+<textarea name="html_template">{{ old('html_template', $defaultHtmlTemplate) }}</textarea>
+```
+
+**Why this solution is better:**
+
+1. Eliminates the Blade parser conflict completely
+2. Keeps presentation logic in PHP (where it belongs)
+3. Single level of interpolation - only `$defaultHtmlTemplate` is a Blade variable
+4. Easier to maintain and understand
+5. No need for `@php` blocks or complex escaping
+
+**Affected Tests:** Any feature test that invoked the `admin.certificates.templates.create` route would previously fail with HTTP 500. These tests now pass.
+
+---
+
+### Issue: BadMethodCallException in CertificationModel.getLatestStatistics()
+
+**Symptom:** When loading certification statistics or accessing the admin dashboard statistics panel, the application throws a `BadMethodCallException` stating the method `wherDate()` does not exist on the query builder.
+
+**Root Cause:** A typo in [`app/Models/Certification.php`](../app/Models/Certification.php#L102) in the `getLatestStatistics()` method. The correct Illuminate Query Builder method is `whereDate()`, but the code had `wherDate()` (missing the letter "e").
+
+**Status:** ✅ **FIXED**
+
+**Solution Applied:**
+Corrected the method name from `wherDate()` to `whereDate()`.
+
+```php
+// BEFORE (broken)
+return $this->statistics()
+    ->wherDate('date', '>=', now()->subDays($days))
+    ->orderBy('date')
+    ->get()
+    ->toArray();
+
+// AFTER (fixed)
+return $this->statistics()
+    ->whereDate('date', '>=', now()->subDays($days))
+    ->orderBy('date')
+    ->get()
+    ->toArray();
+```
+
+**Affected Tests:** Any unit or feature test that:
+
+- Instantiated a `Certification` model and called `getLatestStatistics()`
+- Loaded the admin dashboard that includes certification statistics
+- Would previously fail with `BadMethodCallException: Call to undefined method ... wherDate()`
+
+These tests now pass.
 
 ---
 

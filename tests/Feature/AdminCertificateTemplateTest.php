@@ -176,4 +176,30 @@ class AdminCertificateTemplateTest extends TestCase
         $this->assertFalse($first->is_default);
         $this->assertTrue($second->is_default);
     }
+
+    public function test_admin_can_view_create_template_form(): void
+    {
+        $this->asAdmin()
+            ->get(route('admin.certificates.templates.create'))
+            ->assertStatus(200)
+            ->assertSee('Nueva plantilla de certificado')
+            ->assertSee('Variables disponibles en la plantilla')
+            ->assertSee('nombre')
+            ->assertSee('fecha');
+    }
+
+    public function test_create_template_form_renders_with_html_placeholder_without_error(): void
+    {
+        // This test specifically validates that the fixed view rendering works correctly.
+        // The old syntax caused HTTP 500 due to conflicting {{ }} delimiters.
+        // The fix passes the default template from the controller.
+        $response = $this->asAdmin()
+            ->get(route('admin.certificates.templates.create'));
+
+        $response->assertStatus(200);
+        // Verify the form renders correctly with all required elements
+        $response->assertSee('Nueva plantilla de certificado');
+        $response->assertSee('html_template');
+        $response->assertSee('Variables disponibles');
+    }
 }

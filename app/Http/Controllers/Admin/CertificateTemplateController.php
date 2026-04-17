@@ -29,6 +29,7 @@ class CertificateTemplateController extends Controller
     {
         return view('admin.certificates.templates.create', [
             'template' => new CertificateTemplate(),
+            'defaultHtmlTemplate' => '<div class="certificate"><h1>{{nombre}}</h1><p>Fecha: {{fecha}}</p></div>',
             'certifications' => Certification::query()->active()->ordered()->get(),
             'currentLocale' => app()->getLocale(),
             'supportedLocales' => config('app.supported_locales', ['en']),
@@ -76,7 +77,7 @@ class CertificateTemplateController extends Controller
     public function update(Request $request, CertificateTemplate $template): RedirectResponse
     {
         $data = $request->validate([
-            'slug' => ['required', 'string', 'max:255', 'unique:certificate_templates,slug,'.$template->id],
+            'slug' => ['required', 'string', 'max:255', 'unique:certificate_templates,slug,' . $template->id],
             'name' => ['required', 'string', 'max:255'],
             'html_template' => ['required', 'string'],
             'css_template' => ['nullable', 'string'],
@@ -144,18 +145,18 @@ class CertificateTemplateController extends Controller
             $oldTemplate = CertificateTemplate::query()
                 ->where('certification_id', $certification->id)
                 ->first();
-            
+
             $templateData = [
-                'slug' => $certification->slug.'_custom',
-                'name' => $certification->name.' (Personalizada)',
+                'slug' => $certification->slug . '_custom',
+                'name' => $certification->name . ' (Personalizada)',
                 'html_template' => $data['html_template'],
                 'css_template' => $data['css_template'],
                 'is_default' => false,
             ];
-            
+
             if ($oldTemplate) {
                 $oldTemplate->update($templateData);
-                AuditLog::log('update', 'CertificateTemplate', $oldTemplate->id, $certification->name.' (custom)', [
+                AuditLog::log('update', 'CertificateTemplate', $oldTemplate->id, $certification->name . ' (custom)', [
                     'html_template' => 'updated',
                     'css_template' => 'updated',
                 ]);
@@ -163,7 +164,7 @@ class CertificateTemplateController extends Controller
                 $template = CertificateTemplate::query()->create(
                     array_merge($templateData, ['certification_id' => $certification->id])
                 );
-                AuditLog::log('create', 'CertificateTemplate', $template->id, $certification->name.' (custom)', [
+                AuditLog::log('create', 'CertificateTemplate', $template->id, $certification->name . ' (custom)', [
                     'html_template' => 'created',
                     'css_template' => 'created',
                 ]);
@@ -172,10 +173,10 @@ class CertificateTemplateController extends Controller
             $oldTemplate = CertificateTemplate::query()
                 ->where('certification_id', $certification->id)
                 ->first();
-            
+
             if ($oldTemplate) {
                 $oldTemplate->delete();
-                AuditLog::log('delete', 'CertificateTemplate', $oldTemplate->id, $certification->name.' (custom)');
+                AuditLog::log('delete', 'CertificateTemplate', $oldTemplate->id, $certification->name . ' (custom)');
             }
         }
 
@@ -191,11 +192,11 @@ class CertificateTemplateController extends Controller
             'sampleData' => [
                 'nombre' => 'Juan Pérez',
                 'fecha' => now()->format('d/m/Y'),
-                'serial' => 'CERT-'.strtoupper(uniqid()),
+                'serial' => 'CERT-' . strtoupper(uniqid()),
                 'competencia' => 'Competencia Ejemplar',
                 'nota' => 'Aprobado',
                 'verificacion_url' => url('/cert/verify/CERT-DEMO/TOKEN-DEMO'),
-                'verificacion_qr' => 'https://quickchart.io/qr?size=220&text='.urlencode(url('/cert/verify/CERT-DEMO/TOKEN-DEMO')),
+                'verificacion_qr' => 'https://quickchart.io/qr?size=220&text=' . urlencode(url('/cert/verify/CERT-DEMO/TOKEN-DEMO')),
                 'integridad_hash' => hash('sha256', 'CERT-DEMO-INTEGRIDAD'),
             ],
         ]);

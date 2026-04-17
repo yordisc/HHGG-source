@@ -97,7 +97,7 @@ class Certification extends Model
     public function getLatestStatistics(int $days = 30): array
     {
         return $this->statistics()
-            ->wherDate('date', '>=', now()->subDays($days))
+            ->whereDate('date', '>=', now()->subDays($days))
             ->orderBy('date')
             ->get()
             ->toArray();
