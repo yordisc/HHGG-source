@@ -198,6 +198,8 @@ class CertificateTemplateController extends Controller
                 'verificacion_url' => url('/cert/verify/CERT-DEMO/TOKEN-DEMO'),
                 'verificacion_qr' => 'https://quickchart.io/qr?size=220&text=' . urlencode(url('/cert/verify/CERT-DEMO/TOKEN-DEMO')),
                 'integridad_hash' => hash('sha256', 'CERT-DEMO-INTEGRIDAD'),
+                'logo_institucion' => public_path('apple-touch-icon.png'),
+                'firma_director' => public_path('Signature/Benjamin_Netanyahu.png'),
             ],
         ]);
     }

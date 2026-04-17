@@ -10,8 +10,19 @@ RUN set -eux; \
       build-essential \
       autoconf \
       pkg-config \
+      libpng-dev \
+      libjpeg62-turbo-dev \
+      libfreetype6-dev \
       default-libmysqlclient-dev \
       default-mysql-client; \
-    docker-php-ext-install pdo_mysql; \
-    apt-get purge -y --auto-remove build-essential autoconf pkg-config default-libmysqlclient-dev; \
+    docker-php-ext-configure gd --with-freetype --with-jpeg; \
+    docker-php-ext-install gd pdo_mysql; \
+    apt-get purge -y --auto-remove \
+      build-essential \
+      autoconf \
+      pkg-config \
+      libpng-dev \
+      libjpeg62-turbo-dev \
+      libfreetype6-dev \
+      default-libmysqlclient-dev; \
     rm -rf /var/lib/apt/lists/*

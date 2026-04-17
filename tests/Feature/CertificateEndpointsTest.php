@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Certificate;
+use App\Models\CertificateTemplate;
 use App\Models\Certification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -31,6 +32,25 @@ class CertificateEndpointsTest extends TestCase
         $response->assertOk();
         $response->assertHeader('Content-Type', 'application/pdf');
         $response->assertHeader('Content-Disposition');
+    }
+
+    public function test_certificate_pdf_endpoint_renders_harvard_default_template_with_local_assets(): void
+    {
+        CertificateTemplate::query()->create([
+            'slug' => 'harvard-default-test',
+            'name' => 'Harvard Default Test',
+            'is_default' => true,
+            'html_template' => '<div class="certificate"><img src="{{logo_institucion}}"><p>{{nombre}}</p><img src="{{firma_director}}"><img src="{{verificacion_qr}}"></div>',
+            'css_template' => '.certificate{font-family:serif;}',
+        ]);
+
+        $certificate = $this->createCertificate();
+
+        $response = $this->get(route('cert.pdf', ['serial' => $certificate->serial]));
+
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'application/pdf');
+        $this->assertStringStartsWith('%PDF', (string) $response->getContent());
     }
 
     private function createCertificate(): Certificate

@@ -226,7 +226,7 @@ install_deps() {
     run_privileged apt-get update -y
 
     if ! run_privileged apt-get install -y \
-      "$php_package_prefix" "$php_package_prefix"-cli "$php_package_prefix"-mbstring "$php_package_prefix"-xml "$php_package_prefix"-curl "$mysql_php_package" "$php_package_prefix"-zip \
+      "$php_package_prefix" "$php_package_prefix"-cli "$php_package_prefix"-mbstring "$php_package_prefix"-xml "$php_package_prefix"-curl "$mysql_php_package" "$php_package_prefix"-zip "$php_package_prefix"-gd \
       "$php_package_prefix"-bcmath "$php_package_prefix"-intl composer nodejs npm \
       git unzip curl rsync; then
       log "[ERROR] No se pudieron instalar las dependencias requeridas con apt-get."

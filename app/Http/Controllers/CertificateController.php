@@ -46,7 +46,7 @@ class CertificateController extends Controller
             'integrity_hash' => $certificate->content_hash,
             'verification_checked_at' => now()->toAtomString(),
             'certificate' => [
-                'full_name' => trim($certificate->first_name.' '.$certificate->last_name),
+                'full_name' => trim($certificate->first_name . ' ' . $certificate->last_name),
                 'result_key' => $certificate->result_key,
                 'issued_at' => $certificate->issued_at?->toAtomString(),
                 'expires_at' => $certificate->expires_at?->toAtomString(),
@@ -154,7 +154,7 @@ class CertificateController extends Controller
 
         return response($pdf->output(), 200, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'attachment; filename="'.$certificate->serial.'.pdf"',
+            'Content-Disposition' => 'attachment; filename="' . $certificate->serial . '.pdf"',
         ]);
     }
 
@@ -166,7 +166,7 @@ class CertificateController extends Controller
 
         $params = [
             'startTask' => 'CERTIFICATION_NAME',
-            'name' => __('app.brand_name').' - '.__('app.result_'.$certificate->result_key),
+            'name' => __('app.brand_name') . ' - ' . __('app.result_' . $certificate->result_key),
             'issueYear' => $issuedAt->format('Y'),
             'issueMonth' => $issuedAt->format('m'),
             'expirationYear' => $expiresAt->format('Y'),
@@ -179,7 +179,7 @@ class CertificateController extends Controller
             $params['organizationId'] = $organizationId;
         }
 
-        return 'https://www.linkedin.com/profile/add?'.http_build_query($params);
+        return 'https://www.linkedin.com/profile/add?' . http_build_query($params);
     }
 
     private function resolveTemplateForCertificate(Certificate $certificate): ?CertificateTemplate
@@ -198,16 +198,18 @@ class CertificateController extends Controller
         $validUntil = $certificate->expires_at?->format('Y-m-d') ?? '';
 
         $replacements = [
-            '{{nombre}}' => trim($certificate->first_name.' '.$certificate->last_name),
+            '{{nombre}}' => trim($certificate->first_name . ' ' . $certificate->last_name),
             '{{fecha}}' => $issuedAt->format('d/m/Y'),
             '{{serial}}' => $certificate->serial,
             '{{competencia}}' => (string) ($certificate->certification?->name ?? __('app.brand_name', [], 'en')),
-            '{{nota}}' => (string) __('app.result_'.$certificate->result_key, [], 'en'),
+            '{{nota}}' => (string) __('app.result_' . $certificate->result_key, [], 'en'),
             '{{pais}}' => (string) $certificate->country,
             '{{vigencia}}' => $validUntil,
             '{{verificacion_url}}' => $verificationUrl,
             '{{verificacion_qr}}' => $verificationQrUrl,
             '{{integridad_hash}}' => (string) ($certificate->content_hash ?? ''),
+            '{{logo_institucion}}' => public_path('apple-touch-icon.png'),
+            '{{firma_director}}' => public_path('Signature/Benjamin_Netanyahu.png'),
         ];
 
         return str_replace(array_keys($replacements), array_values($replacements), $htmlTemplate);

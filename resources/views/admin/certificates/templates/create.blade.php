@@ -41,6 +41,10 @@
                         URL de imagen QR para mostrar en plantilla</li>
                     <li>• <code class="text-yellow-600">{{ '{{' }}integridad_hash{{ ' ?>' }}'}}</code> -
                         Hash de integridad del certificado</li>
+                    <li>• <code class="text-yellow-600">{{ '{{' }}logo_institucion{{ ' ?>' }}'}}</code> -
+                        Ruta absoluta al logo institucional (archivo local)</li>
+                    <li>• <code class="text-yellow-600">{{ '{{' }}firma_director{{ ' ?>' }}'}}</code> -
+                        Ruta absoluta a la firma oficial (archivo local)</li>
                 </ul>
             </div>
 
