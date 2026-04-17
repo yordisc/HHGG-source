@@ -295,6 +295,75 @@ prepare_application_state() {
   QUEUE_CONNECTION="$LOCAL_QUEUE_CONNECTION" \
   MAIL_MAILER="$LOCAL_MAIL_MAILER" \
   XDEBUG_MODE=off php artisan migrate --force --no-interaction
+
+  ensure_default_certifications_loaded
+}
+
+get_seeded_certification_slugs() {
+  php artisan tinker --execute '
+    $slugs = \App\Models\Certification::query()
+      ->whereIn("slug", ["hetero", "good_girl"])
+      ->pluck("slug")
+      ->all();
+    echo implode(",", $slugs);
+  ' 2>/dev/null || true
+}
+
+seed_default_certifications() {
+  log "[INFO] Cargando certificaciones base y banco de preguntas por defecto..."
+  XDEBUG_MODE=off php artisan db:seed --class=CertificationSeeder --no-interaction
+  XDEBUG_MODE=off php artisan db:seed --class=HCertificationSeeder --no-interaction
+  XDEBUG_MODE=off php artisan db:seed --class=GCertificactionSeeder --no-interaction
+  log "[OK] Certificaciones por defecto cargadas."
+}
+
+ensure_default_certifications_loaded() {
+  SEEDED_SLUGS="$(get_seeded_certification_slugs)"
+  MISSING_SLUGS=""
+
+  case ",${SEEDED_SLUGS}," in
+    *,hetero,*)
+      ;;
+    *)
+      MISSING_SLUGS="hetero"
+      ;;
+  esac
+
+  case ",${SEEDED_SLUGS}," in
+    *,good_girl,*)
+      ;;
+    *)
+      if [ -n "$MISSING_SLUGS" ]; then
+        MISSING_SLUGS="${MISSING_SLUGS}, good_girl"
+      else
+        MISSING_SLUGS="good_girl"
+      fi
+      ;;
+  esac
+
+  if [ -z "$MISSING_SLUGS" ]; then
+    return
+  fi
+
+  log "[WARN] Faltan certificaciones base en BD: ${MISSING_SLUGS}"
+
+  if [ ! -t 0 ]; then
+    log "[WARN] Terminal no interactiva: no se puede pedir confirmacion."
+    log "[INFO] Para cargarlas manualmente usa: php artisan db:seed --class=CertificationSeeder && php artisan db:seed --class=HCertificationSeeder && php artisan db:seed --class=GCertificactionSeeder"
+    return
+  fi
+
+  printf '¿Deseas cargarlas ahora? [y/N]: '
+  read -r ANSWER
+
+  case "$ANSWER" in
+    y|Y|yes|YES)
+      seed_default_certifications
+      ;;
+    *)
+      log "[INFO] Se omitio la carga de certificaciones base."
+      ;;
+  esac
 }
 
 has_pcntl() {

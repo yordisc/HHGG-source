@@ -18,6 +18,7 @@ Acciones soportadas:
 - `update`: actualiza nombre, correo y/o password de un admin.
 - `delete`: quita rol admin sin borrar usuario.
 - `delete --hard`: elimina el usuario por completo.
+- `sync-env`: crea/actualiza admin principal desde `ADMIN_PRIMARY_*` en `.env`.
 
 Ejemplos:
 
@@ -26,6 +27,7 @@ bash scripts/manage-admin.sh add --email admin@miempresa.com --name "Admin" --pa
 bash scripts/manage-admin.sh update --email admin@miempresa.com --name "Admin Ops"
 bash scripts/manage-admin.sh delete --email admin@miempresa.com
 bash scripts/manage-admin.sh delete --email admin@miempresa.com --hard --force
+bash scripts/manage-admin.sh sync-env --force
 ```
 
 ---

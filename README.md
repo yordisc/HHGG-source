@@ -83,6 +83,7 @@ sh scripts/dev-local.sh --all
 - CACHE_STORE / SESSION_DRIVER / SESSION_LIFETIME / QUEUE_CONNECTION
 - REDIS_URL o REDIS_HOST / REDIS_PORT / REDIS_USERNAME / REDIS_PASSWORD
 - ADMIN_ACCESS_KEY (requerida para panel admin y webhook scheduler)
+- ADMIN_PRIMARY_NAME / ADMIN_PRIMARY_EMAIL / ADMIN_PRIMARY_PASSWORD (opcional, para aprovisionar admin principal)
 - ENABLE_SANDBOX_SEED_DATA / SANDBOX_TEST_PASSWORD (solo local/dev)
 - CERTIFICATE_MODE (demo u official)
 - LINKEDIN_ORG_ID (opcional)
@@ -183,6 +184,11 @@ Deshabilitar rapido desde admin:
 - Plantilla CSV: disponible desde /admin/questions
 
 Requiere ADMIN_ACCESS_KEY en entorno.
+
+Provisionamiento rapido de admin principal desde `.env`:
+
+- Define `ADMIN_PRIMARY_NAME`, `ADMIN_PRIMARY_EMAIL`, `ADMIN_PRIMARY_PASSWORD`.
+- Ejecuta: `bash scripts/manage-admin.sh sync-env --force`
 
 Gestion de cuentas admin:
 

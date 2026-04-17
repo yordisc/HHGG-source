@@ -13,6 +13,7 @@ PASSWORD=""
 NEW_EMAIL=""
 HARD_DELETE="0"
 FORCE="0"
+PRIMARY_FROM_ENV="0"
 
 print_usage() {
   cat <<'EOF'
@@ -23,6 +24,7 @@ Acciones:
   add       Agrega un admin nuevo o convierte un usuario existente en admin.
   update    Modifica datos de un admin existente.
   delete    Quita privilegios admin (por defecto) o elimina el usuario.
+  sync-env  Crea/actualiza el admin principal usando ADMIN_PRIMARY_* del .env.
 
 Opciones generales:
   --email <correo>         Correo del admin objetivo.
@@ -39,6 +41,7 @@ Ejemplos:
   ./scripts/manage-admin.sh update --email admin@miempresa.com --new-email ops@miempresa.com
   ./scripts/manage-admin.sh delete --email admin@miempresa.com
   ./scripts/manage-admin.sh delete --email admin@miempresa.com --hard --force
+  ./scripts/manage-admin.sh sync-env --force
 EOF
 }
 
@@ -164,7 +167,7 @@ run_tinker() {
 
 validate_action() {
   case "$ACTION" in
-    add|update|delete)
+    add|update|delete|sync-env)
       ;;
     -h|--help|"")
       print_usage
@@ -348,6 +351,59 @@ do_delete() {
   success "Operacion completada"
 }
 
+do_sync_env() {
+  PRIMARY_FROM_ENV="1"
+
+  info "Leyendo ADMIN_PRIMARY_NAME, ADMIN_PRIMARY_EMAIL y ADMIN_PRIMARY_PASSWORD desde .env"
+
+  run_tinker '
+    $name = trim((string) env("ADMIN_PRIMARY_NAME", ""));
+    $email = trim((string) env("ADMIN_PRIMARY_EMAIL", ""));
+    $password = (string) env("ADMIN_PRIMARY_PASSWORD", "");
+
+    if ($email === "" || $password === "") {
+        fwrite(STDERR, "Faltan ADMIN_PRIMARY_EMAIL o ADMIN_PRIMARY_PASSWORD en .env\n");
+        exit(2);
+    }
+
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        fwrite(STDERR, "ADMIN_PRIMARY_EMAIL no es valido\n");
+        exit(3);
+    }
+
+    if (strlen($password) < 6) {
+        fwrite(STDERR, "ADMIN_PRIMARY_PASSWORD debe tener al menos 6 caracteres\n");
+        exit(4);
+    }
+
+    $user = \App\Models\User::query()->where("email", $email)->first();
+
+    if ($user) {
+        $user->name = $name !== "" ? $name : $user->name;
+        $user->password = $password;
+        $user->is_admin = true;
+        if (!$user->email_verified_at) {
+            $user->email_verified_at = now();
+        }
+        $user->save();
+        echo "Admin principal actualizado: {$user->email}\n";
+        exit(0);
+    }
+
+    $newUser = \App\Models\User::query()->create([
+        "name" => $name !== "" ? $name : "Admin Principal",
+        "email" => $email,
+        "email_verified_at" => now(),
+        "password" => $password,
+        "is_admin" => true,
+    ]);
+
+    echo "Admin principal creado: {$newUser->email}\n";
+  '
+
+  success "Admin principal sincronizado desde .env"
+}
+
 main() {
   require_tools
   validate_action
@@ -362,6 +418,9 @@ main() {
       ;;
     delete)
       do_delete
+      ;;
+    sync-env)
+      do_sync_env
       ;;
   esac
 }
