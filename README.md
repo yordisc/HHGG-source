@@ -75,25 +75,29 @@ sh scripts/dev-local.sh --all
 
 ## Variables de entorno clave
 
-- APP_NAME
-- APP_ENV
-- APP_URL
-- APP_LOCALE
-- APP_FALLBACK_LOCALE
-- DB_CONNECTION
-- DB_URL / DATABASE_URL
-- DB_SSLMODE
-- CACHE_STORE
-- SESSION_DRIVER
-- QUEUE_CONNECTION
-- REDIS_HOST / REDIS_PORT / REDIS_PASSWORD
-- ADMIN_ACCESS_KEY (requerida para panel admin)
+- APP_NAME / APP_ENV / APP_URL / APP_DEBUG
+- APP_TIMEZONE / APP_LOCALE / APP_FALLBACK_LOCALE / APP_FAKER_LOCALE
+- DB_CONNECTION / DB_HOST / DB_PORT / DB_DATABASE / DB_USERNAME / DB_PASSWORD
+- DB_URL o DATABASE_URL (si tu proveedor entrega URL unica)
+- DB_SSLMODE (recomendado en DB externa)
+- CACHE_STORE / SESSION_DRIVER / SESSION_LIFETIME / QUEUE_CONNECTION
+- REDIS_URL o REDIS_HOST / REDIS_PORT / REDIS_USERNAME / REDIS_PASSWORD
+- ADMIN_ACCESS_KEY (requerida para panel admin y webhook scheduler)
+- ENABLE_SANDBOX_SEED_DATA / SANDBOX_TEST_PASSWORD (solo local/dev)
+- CERTIFICATE_MODE (demo u official)
 - LINKEDIN_ORG_ID (opcional)
+- MYMEMORY_EMAIL (opcional)
+- MAIL_MAILER / MAIL_FROM_ADDRESS / MAIL_FROM_NAME
+- VITE_APP_NAME
 
 Plantillas disponibles:
 
 - `.env.example` para desarrollo local.
 - `.env.production.example` para despliegue en Render + Neon/Aiven + Upstash.
+
+Consejo:
+
+- Si ya tienes `.env`, puedes reordenarlo y actualizarlo tomando como base la estructura de `.env.example`.
 
 ## Despliegue en Render
 
@@ -179,6 +183,11 @@ Deshabilitar rapido desde admin:
 - Plantilla CSV: disponible desde /admin/questions
 
 Requiere ADMIN_ACCESS_KEY en entorno.
+
+Gestion de cuentas admin:
+
+- Script recomendado: `bash scripts/manage-admin.sh --help`
+- Permite agregar, modificar y eliminar (o revocar rol admin) de forma segura.
 
 ## Operacion y mantenimiento
 

@@ -20,6 +20,8 @@ Referencia rapida: puedes partir de la plantilla [../.env.production.example](..
 - `APP_KEY`
 - `APP_DEBUG=false`
 - `APP_URL`
+- `APP_TIMEZONE`, `APP_LOCALE`, `APP_FALLBACK_LOCALE`, `APP_FAKER_LOCALE`
+- `LOG_CHANNEL=stack`, `LOG_DEPRECATIONS_CHANNEL=null`, `LOG_LEVEL=info`
 - `DB_CONNECTION=pgsql` para Neon o `DB_CONNECTION=mysql` para Aiven
 - `DB_URL` o `DATABASE_URL` si tu proveedor entrega una cadena unica de conexion
 - `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` si usas variables separadas
@@ -28,7 +30,10 @@ Referencia rapida: puedes partir de la plantilla [../.env.production.example](..
 - `SESSION_DRIVER=redis`
 - `QUEUE_CONNECTION=sync`
 - `REDIS_URL` (Upstash Redis)
-- `ADMIN_ACCESS_KEY` (solo para webhook de scheduler)
+- `ADMIN_ACCESS_KEY` (panel admin y webhook de scheduler)
+- `ENABLE_SANDBOX_SEED_DATA=false`
+- `MAIL_MAILER`, `MAIL_FROM_ADDRESS`, `MAIL_FROM_NAME`
+- `VITE_APP_NAME`
 
 ## Checklist exacta de variables
 
@@ -41,7 +46,12 @@ Usa esta lista para no dejar huecos al desplegar:
 - `APP_KEY`
 - `APP_DEBUG=false`
 - `APP_URL`
+- `APP_TIMEZONE=UTC`
+- `APP_LOCALE=en`
+- `APP_FALLBACK_LOCALE=en`
+- `APP_FAKER_LOCALE=en_US`
 - `LOG_CHANNEL=stack`
+- `LOG_DEPRECATIONS_CHANNEL=null`
 - `LOG_LEVEL=info`
 - `CACHE_STORE=redis`
 - `SESSION_DRIVER=redis`
@@ -49,10 +59,12 @@ Usa esta lista para no dejar huecos al desplegar:
 - `QUEUE_CONNECTION=sync`
 - `REDIS_URL` (Upstash)
 - `REDIS_CLIENT=phpredis`
-- `ADMIN_ACCESS_KEY` (solo para webhook de scheduler)
+- `ADMIN_ACCESS_KEY` (panel admin y webhook de scheduler)
+- `ENABLE_SANDBOX_SEED_DATA=false`
 - `MAIL_MAILER=log` o el proveedor SMTP que uses
 - `MAIL_FROM_ADDRESS`
 - `MAIL_FROM_NAME`
+- `VITE_APP_NAME`
 
 ### Neon PostgreSQL
 
@@ -89,6 +101,7 @@ Usa esta lista para no dejar huecos al desplegar:
 - `LINKEDIN_ORG_ID`
 - `MYMEMORY_EMAIL`
 - `CERTIFICATE_MODE=demo` o `CERTIFICATE_MODE=official`
+- `SANDBOX_TEST_PASSWORD` (solo tiene efecto si habilitas sandbox en un entorno no productivo)
 
 ## Render
 

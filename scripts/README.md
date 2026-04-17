@@ -1,12 +1,38 @@
-# Scripts para Crear Certificaciones
+# Scripts de Operacion
 
-Este directorio contiene herramientas para crear nuevas certificaciones/cursos de forma fácil y segura.
+Este directorio contiene herramientas para crear certificaciones, gestionar administradores y automatizar flujos locales de desarrollo y validacion.
 
-## 🚀 Métodos Disponibles
+## 🚀 Scripts Disponibles
 
-### 1. **Artisan Command (Recomendado)**
+### 1. Gestion de admins
 
-El método más flexible y recomendado.
+Script recomendado para altas, cambios y bajas de administradores.
+
+```bash
+bash scripts/manage-admin.sh --help
+```
+
+Acciones soportadas:
+
+- `add`: crea un admin o convierte un usuario existente en admin.
+- `update`: actualiza nombre, correo y/o password de un admin.
+- `delete`: quita rol admin sin borrar usuario.
+- `delete --hard`: elimina el usuario por completo.
+
+Ejemplos:
+
+```bash
+bash scripts/manage-admin.sh add --email admin@miempresa.com --name "Admin" --password "Secret123!"
+bash scripts/manage-admin.sh update --email admin@miempresa.com --name "Admin Ops"
+bash scripts/manage-admin.sh delete --email admin@miempresa.com
+bash scripts/manage-admin.sh delete --email admin@miempresa.com --hard --force
+```
+
+---
+
+### 2. Crear certificaciones (Artisan)
+
+Metodo flexible y recomendado.
 
 #### Modo Interactivo:
 
@@ -35,7 +61,7 @@ php artisan certification:create \
 
 ---
 
-### 2. **Script Bash**
+### 3. Crear certificaciones (Bash)
 
 Para usuarios avanzados que quieren máximo control.
 
@@ -85,7 +111,7 @@ php artisan db:seed --class=MarketingCertificationSeeder
 
 ---
 
-### 4. **CSV a Seeder**
+### 4. CSV a Seeder
 
 Si tienes preguntas en un archivo CSV.
 
@@ -97,25 +123,27 @@ php scripts/csv-to-seeder.php marketing_101 database/templates/questions-example
 
 ## 📋 Resumen de Archivos
 
-| Archivo                                               | Descripción             |
-| ----------------------------------------------------- | ----------------------- |
-| `create-certification.sh`                             | Script bash interactivo |
-| `database/templates/questions-example.csv`            | Ejemplo de formato CSV  |
-| `database/seeders/CertificationSeederTemplate.php`    | Template para seeders   |
-| `app/Console/Commands/CreateCertificationCommand.php` | Comando Artisan         |
-| `scripts/README.md`                                   | Documentación completa  |
+| Archivo                   | Descripcion                             |
+| ------------------------- | --------------------------------------- |
+| `manage-admin.sh`         | Gestion de admins (add/update/delete)   |
+| `create-certification.sh` | Creacion interactiva de certificaciones |
+| `dev-local.sh`            | Arranque local (app + cola + frontend)  |
+| `local-test.sh`           | Preparacion local + suite de pruebas    |
+| `setup-local.sh`          | Bootstrap del entorno local             |
+| `profile-serving.sh`      | Perfilado de latencia y serving         |
+| `scripts/README.md`       | Documentacion de scripts                |
 
 ---
 
-## ⚡ Inicio Rápido
+## ⚡ Inicio Rapido
 
-### Opción A: La más fácil
+### Opcion A: Crear certificacion (rapido)
 
 ```bash
 php artisan certification:create --interactive
 ```
 
-### Opción B: Si tienes datos listos
+### Opcion B: Crear certificacion con parametros
 
 ```bash
 php artisan certification:create \
@@ -124,13 +152,19 @@ php artisan certification:create \
   --questions=30
 ```
 
-### Opción C: Desde bash
+### Opcion C: Crear certificacion desde bash
 
 ```bash
 bash scripts/create-certification.sh
 ```
 
-### Opción D: Desde CSV
+### Opcion D: Gestionar admins
+
+```bash
+bash scripts/manage-admin.sh --help
+```
+
+### Opcion E: Desde CSV
 
 ```bash
 # 1. Prepara tu CSV
@@ -159,6 +193,12 @@ Antes de crear una certificación, asegúrate de tener:
 - [ ] Las preguntas con sus 4 opciones cada una
 - [ ] La opción correcta para cada pregunta
 
+Si vas a gestionar admins:
+
+- [ ] Definir correo institucional
+- [ ] Usar password fuerte (minimo 6, recomendado 12+)
+- [ ] Confirmar si quieres revocar rol (`delete`) o eliminar cuenta (`delete --hard`)
+
 ---
 
 ## 🆘 Ayuda
@@ -181,6 +221,13 @@ php artisan tinker
 1. Visita home: http://localhost:8000
 2. Verifica que aparezca tu certificación
 3. Haz clic para probar el flujo
+
+### Verificar admins existentes:
+
+```bash
+php artisan tinker
+>>> \App\Models\User::query()->where('is_admin', true)->get(['id','name','email'])
+```
 
 ---
 
