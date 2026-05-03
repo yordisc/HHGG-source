@@ -137,6 +137,13 @@ class QuestionAdminController extends Controller
         }
 
         $certifications = $this->certificationOptions();
+        $paginationQuery = array_filter([
+            'cert_type' => $filterType,
+            'active' => $filterActive,
+            'search' => $search,
+            'sort' => $sortBy,
+            'per_page' => $perPage,
+        ], static fn($value) => $value !== '' && $value !== null);
 
         $questions = Question::query()
             ->when(array_key_exists($filterType, $certifications), function ($query) use ($filterType): void {
@@ -162,6 +169,8 @@ class QuestionAdminController extends Controller
             })
             ->paginate($perPage);
 
+        $questions->appends($paginationQuery);
+
         return view('admin.questions.index', [
             'questions' => $questions,
             'filterType' => $filterType,
@@ -170,6 +179,7 @@ class QuestionAdminController extends Controller
             'sortBy' => $sortBy,
             'perPage' => $perPage,
             'certifications' => $certifications,
+            'paginationQuery' => $paginationQuery,
             'currentLocale' => app()->getLocale(),
             'supportedLocales' => config('app.supported_locales', ['en']),
         ]);

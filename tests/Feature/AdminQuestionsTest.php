@@ -95,4 +95,26 @@ class AdminQuestionsTest extends TestCase
             ->assertSee('Gestión de Preguntas')
             ->assertSee('Pregunta robusta');
     }
+
+    public function test_admin_questions_pagination_keeps_active_filters(): void
+    {
+        $certification = Certification::query()->create([
+            'slug' => 'hetero',
+            'name' => 'Certificado Hetero',
+            'active' => true,
+        ]);
+
+        Question::factory()
+            ->count(25)
+            ->create([
+                'certification_id' => $certification->id,
+                'active' => true,
+            ]);
+
+        $response = $this->asAdmin()->get('/admin/questions?cert_type=hetero&per_page=20');
+
+        $response->assertOk();
+        $response->assertSee('page=2');
+        $response->assertSee('cert_type=hetero');
+    }
 }

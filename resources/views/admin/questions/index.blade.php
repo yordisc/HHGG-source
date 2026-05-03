@@ -315,9 +315,41 @@
             </div>
 
             <!-- Pagination -->
-            <div class="mt-6">
-                {{ $questions->render() }}
-            </div>
+            @if ($questions->hasPages())
+                <div
+                    class="mt-6 flex flex-col gap-4 rounded-xl border border-slate-200 bg-white px-4 py-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+                    <p class="text-sm text-slate-600">
+                        Mostrando {{ $questions->firstItem() }} a {{ $questions->lastItem() }} de
+                        {{ $questions->total() }} preguntas
+                    </p>
+
+                    <div class="flex items-center gap-2">
+                        @if ($questions->onFirstPage())
+                            <span
+                                class="inline-flex items-center rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-400">
+                                Anterior
+                            </span>
+                        @else
+                            <a href="{{ $questions->previousPageUrl() }}"
+                                class="inline-flex items-center rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-blue-500 hover:text-blue-700">
+                                Anterior
+                            </a>
+                        @endif
+
+                        @if ($questions->hasMorePages())
+                            <a href="{{ $questions->nextPageUrl() }}"
+                                class="inline-flex items-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-blue-700">
+                                Siguiente
+                            </a>
+                        @else
+                            <span
+                                class="inline-flex items-center rounded-lg bg-slate-200 px-3 py-2 text-sm font-semibold text-slate-500">
+                                Siguiente
+                            </span>
+                        @endif
+                    </div>
+                </div>
+            @endif
         </div>
     </section>
 @endsection

@@ -43,7 +43,6 @@
                         as $key
                     ) {
                         $value = $sampleData[$key] ?? '';
-                        // Support both formats: {{ key }} and {{ key }}
                         $replacements['{{ ' . $key . ' }}'] = $value;
                         $replacements['{{ ' . $key . ' }}'] = $value;
                     }
