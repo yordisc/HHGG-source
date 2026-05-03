@@ -19,6 +19,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class CertificationAdminController extends Controller
@@ -40,6 +41,10 @@ class CertificationAdminController extends Controller
     public function store(StoreCertificationRequest $request): RedirectResponse
     {
         $data = $this->normalizeData($request->validated());
+        if ($request->hasFile('featured_image')) {
+            $data['featured_image_path'] = $request->file('featured_image')->store('certifications', 'public');
+        }
+
         $certification = Certification::query()->create($data);
 
         AuditLog::log('create', 'Certification', $certification->id, $certification->name, $data);
@@ -72,6 +77,14 @@ class CertificationAdminController extends Controller
                     ->route('admin.certifications.edit', $certification)
                     ->withInput()
                     ->with('error', $reason);
+            }
+
+            if ($request->hasFile('featured_image')) {
+                if (is_string($certification->featured_image_path) && $certification->featured_image_path !== '') {
+                    Storage::disk('public')->delete($certification->featured_image_path);
+                }
+
+                $certification->featured_image_path = $request->file('featured_image')->store('certifications', 'public');
             }
 
             // Perform the update
@@ -428,31 +441,9 @@ class CertificationAdminController extends Controller
         $certification->loadMissing(['questions.translations']);
         $diagnostics = app(CertificationValidationService::class)->review($certification);
 
-        $sampleQuestions = $certification->questions
-            ->where('active', true)
-            ->shuffle()
-            ->take(3)
-            ->map(function (Question $question): array {
-                $translation = $question->translations->firstWhere('language', 'es')
-                    ?? $question->translations->first();
-
-                return [
-                    'id' => $question->id,
-                    'prompt' => $translation?->prompt ?? $question->prompt,
-                    'options' => [
-                        $translation?->option_1 ?? $question->option_1,
-                        $translation?->option_2 ?? $question->option_2,
-                        $translation?->option_3 ?? $question->option_3,
-                        $translation?->option_4 ?? $question->option_4,
-                    ],
-                ];
-            })
-            ->values();
-
         return view('admin.certifications.test', [
             'certification' => $certification,
             'diagnostics' => $diagnostics,
-            'sampleQuestions' => $sampleQuestions,
             'currentLocale' => app()->getLocale(),
             'supportedLocales' => config('app.supported_locales', ['en']),
         ]);

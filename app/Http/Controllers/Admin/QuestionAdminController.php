@@ -122,11 +122,19 @@ class QuestionAdminController extends Controller
 
     public function index(Request $request): View
     {
-        $filterType = (string) $request->query('cert_type', '');
-        $filterActive = $request->query('active', '');
-        $search = (string) $request->query('search', '');
-        $sortBy = (string) $request->query('sort', 'latest');
-        $perPage = (int) $request->query('per_page', 20);
+        $filterType = $this->queryString($request, 'cert_type');
+        $filterActive = $this->queryString($request, 'active');
+        $search = $this->queryString($request, 'search');
+        $sortBy = $this->queryString($request, 'sort', 'latest');
+        $perPage = $this->queryInt($request, 'per_page', 20);
+
+        if (!in_array($sortBy, ['latest', 'oldest', 'alphabetical'], true)) {
+            $sortBy = 'latest';
+        }
+
+        if (!in_array($perPage, [20, 50, 100], true)) {
+            $perPage = 20;
+        }
 
         $certifications = $this->certificationOptions();
 
@@ -152,8 +160,7 @@ class QuestionAdminController extends Controller
             ->when($sortBy !== 'oldest' && $sortBy !== 'alphabetical', function ($query) {
                 $query->latest('id');
             })
-            ->paginate($perPage)
-            ->withQueryString();
+            ->paginate($perPage);
 
         return view('admin.questions.index', [
             'questions' => $questions,
@@ -640,6 +647,28 @@ class QuestionAdminController extends Controller
             ->ordered()
             ->pluck('name', 'slug')
             ->all();
+    }
+
+    private function queryString(Request $request, string $key, string $default = ''): string
+    {
+        $value = $request->query($key, $default);
+
+        if (!is_scalar($value)) {
+            return $default;
+        }
+
+        return trim((string) $value);
+    }
+
+    private function queryInt(Request $request, string $key, int $default): int
+    {
+        $value = $request->query($key, $default);
+
+        if (!is_scalar($value) || !is_numeric((string) $value)) {
+            return $default;
+        }
+
+        return (int) $value;
     }
 
     private function resolveCertificationId(string $slug): int

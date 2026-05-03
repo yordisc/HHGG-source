@@ -11,6 +11,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.bunny.net">
     <link
         href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Source+Serif+4:wght@500;600;700&display=swap"
         rel="stylesheet">
@@ -108,6 +109,26 @@
                 @endforeach
             </nav>
         </div>
+
+        @if (request()->routeIs('admin.*'))
+            <div class="border-t border-slate-300/70 bg-white/75">
+                <div
+                    class="mx-auto flex max-w-6xl flex-wrap items-center gap-2 px-4 py-3 text-xs font-semibold sm:px-6">
+                    <span class="rounded-full bg-[var(--accent)] px-3 py-1.5 text-white">Administración</span>
+                    @if (!request()->routeIs('admin.dashboard'))
+                        <a href="{{ route('admin.dashboard') }}"
+                            class="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-slate-700 transition hover:border-[var(--accent)] hover:text-[var(--accent)]">Volver
+                            al panel</a>
+                    @endif
+                    <a href="{{ route('admin.certifications.index') }}"
+                        class="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-slate-700 transition hover:border-[var(--accent)] hover:text-[var(--accent)]">Certificaciones</a>
+                    <a href="{{ route('admin.questions.index') }}"
+                        class="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-slate-700 transition hover:border-[var(--accent)] hover:text-[var(--accent)]">Preguntas</a>
+                    <a href="{{ route('admin.users.index') }}"
+                        class="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-slate-700 transition hover:border-[var(--accent)] hover:text-[var(--accent)]">Usuarios</a>
+                </div>
+            </div>
+        @endif
     </header>
 
     <main class="mx-auto max-w-6xl px-4 py-8 sm:px-6">
@@ -117,6 +138,13 @@
     <footer class="mx-auto max-w-6xl px-4 pb-10 sm:px-6">
         <div class="rounded-lg border border-slate-300/80 bg-white/90 p-4 text-xs text-slate-700 shadow-sm">
             <p>{{ __('app.disclaimer_full') }}</p>
+            <div class="mt-3 flex flex-wrap items-center gap-3 font-semibold">
+                <a href="{{ route('legal.terms') }}" class="transition hover:text-[var(--accent)]">Términos y
+                    condiciones</a>
+                <span class="text-slate-400">•</span>
+                <a href="{{ route('legal.privacy') }}" class="transition hover:text-[var(--accent)]">Política de
+                    privacidad</a>
+            </div>
         </div>
     </footer>
     @livewireScripts

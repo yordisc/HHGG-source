@@ -19,6 +19,8 @@ class AdminDashboardController extends Controller
         $totalQuestions = Question::count();
         $totalCertificates = Certificate::count();
         $totalUsers = User::count();
+        $adminUsersCount = User::query()->where('is_admin', true)->count();
+        $regularUsersCount = User::query()->where('is_admin', false)->count();
 
         // Estadísticas de los últimos 30 días
         $certStats = CertificationStatistic::whereBetween('date', [
@@ -30,7 +32,7 @@ class AdminDashboardController extends Controller
         $totalCompletions = $certStats->sum('completions_count');
         $totalPasses = $certStats->sum('passes_count');
         $totalAbandonments = $certStats->sum('abandonment_count');
-        
+
         $averagePassRate = $totalCompletions > 0
             ? ($totalPasses / $totalCompletions) * 100
             : 0;
@@ -50,14 +52,14 @@ class AdminDashboardController extends Controller
         })->values();
 
         // Preparar etiquetas y datos para Chart.js
-        $chartDates = $dailyData->count() > 0 
-            ? $dailyData->pluck('date')->map(fn ($date) => $date->format('M d'))->toJson()
+        $chartDates = $dailyData->count() > 0
+            ? $dailyData->pluck('date')->map(fn($date) => $date->format('M d'))->toJson()
             : json_encode([]);
-        
+
         $chartAttempts = $dailyData->count() > 0
             ? $dailyData->pluck('attempts')->toJson()
             : json_encode([]);
-        
+
         $chartCompletions = $dailyData->count() > 0
             ? $dailyData->pluck('completions')->toJson()
             : json_encode([]);
@@ -82,11 +84,11 @@ class AdminDashboardController extends Controller
                 $stats = CertificationStatistic::where('certification_id', $certId)
                     ->whereBetween('date', [now()->subDays(30), now()])
                     ->get();
-                
+
                 $attempts = $stats->sum('attempts_count');
                 $passes = $stats->sum('passes_count');
                 $passRate = $attempts > 0 ? ($passes / $attempts) * 100 : 0;
-                
+
                 return [
                     'name' => $certName,
                     'attempts' => $attempts,
@@ -104,6 +106,8 @@ class AdminDashboardController extends Controller
             'activeCertificationsCount' => $activeCertifications,
             'questionsCount' => $totalQuestions,
             'usersCount' => $totalUsers,
+            'adminUsersCount' => $adminUsersCount,
+            'regularUsersCount' => $regularUsersCount,
             'certificatesCount' => $totalCertificates,
             'totalAttempts' => $totalAttempts,
             'totalCompletions' => $totalCompletions,
@@ -126,4 +130,3 @@ class AdminDashboardController extends Controller
         ]);
     }
 }
-

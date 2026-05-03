@@ -12,14 +12,16 @@
     </div>
 
     <p class="mb-2 text-sm text-slate-600">{{ __('app.quiz_select_prompt') }}</p>
-    <p class="mb-5 text-base font-semibold text-slate-900 sm:text-lg">{{ $currentQuestion['prompt'] ?? '' }}</p>
+    <p class="mb-5 whitespace-normal break-words text-base font-semibold leading-relaxed text-slate-900 sm:text-lg">
+        {{ $currentQuestion['prompt'] ?? '' }}
+    </p>
 
     <div class="space-y-3">
         @foreach ($currentQuestion['options'] ?? [] as $optionIndex => $optionText)
             <button type="button" wire:click="answer({{ $optionIndex + 1 }})" wire:loading.attr="disabled"
                 wire:target="answer"
-                class="w-full rounded-md border border-slate-400 bg-white px-4 py-3 text-left text-sm font-medium text-slate-700 transition hover:border-[var(--accent)] hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60">
-                {{ $optionText }}
+                class="flex w-full items-start rounded-md border border-slate-400 bg-white px-4 py-3 text-left text-sm font-medium leading-relaxed text-slate-700 transition hover:border-[var(--accent)] hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60">
+                <span class="whitespace-normal break-words">{{ $optionText }}</span>
             </button>
         @endforeach
     </div>

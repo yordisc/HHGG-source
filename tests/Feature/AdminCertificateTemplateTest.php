@@ -80,7 +80,7 @@ class AdminCertificateTemplateTest extends TestCase
         $template = CertificateTemplate::create([
             'slug' => 'preview-test',
             'name' => 'Preview Test',
-            'html_template' => '<div>Nombre: {{nombre}}, Fecha: {{fecha}}</div>',
+            'html_template' => '<div>Nombre: {{nombre_completo}} | DNI: {{documento_identidad}} | País: {{pais_origen}} | Certificación: {{nombre_certificacion}}</div>',
             'css_template' => null,
             'is_default' => false,
         ]);
@@ -88,7 +88,10 @@ class AdminCertificateTemplateTest extends TestCase
         $this->asAdmin()
             ->get(route('admin.certificates.templates.preview', $template))
             ->assertOk()
-            ->assertSee('Nombre:');
+            ->assertSee('Juan Pérez')
+            ->assertSee('CC 12345678')
+            ->assertSee('Colombia')
+            ->assertSee('Competencia Ejemplar');
     }
 
     public function test_admin_can_create_custom_certification_template(): void
@@ -183,9 +186,10 @@ class AdminCertificateTemplateTest extends TestCase
             ->get(route('admin.certificates.templates.create'))
             ->assertStatus(200)
             ->assertSee('Nueva plantilla de certificado')
-            ->assertSee('Variables disponibles en la plantilla')
-            ->assertSee('nombre')
-            ->assertSee('fecha');
+            ->assertSee('Contenido de la plantilla (HTML + CSS)')
+            ->assertSee('Media disponible')
+            ->assertSee('nombre_completo')
+            ->assertSee('template_content');
     }
 
     public function test_create_template_form_renders_with_html_placeholder_without_error(): void

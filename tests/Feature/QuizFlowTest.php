@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Certification;
 use App\Models\Question;
 use App\Models\QuestionTranslation;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -64,6 +65,53 @@ class QuizFlowTest extends TestCase
         $this->assertTrue(session()->has('quiz_candidate.hetero'));
     }
 
+    public function test_quiz_start_flow_lands_on_exam_page_with_candidate_session(): void
+    {
+        $this->seedQuestionBank(30);
+
+        $response = $this->from(route('quiz.register', ['certType' => 'hetero']))
+            ->post(route('quiz.start'), [
+                'first_name' => 'Ana',
+                'last_name' => 'Lopez',
+                'document' => 'CC-123456789',
+                'country_code' => 'CO',
+                'document_type' => 'CC',
+                'cert_type' => 'hetero',
+            ]);
+
+        $response->assertRedirect(route('quiz.show', ['certType' => 'hetero']));
+
+        $this->assertTrue(session()->has('quiz_candidate.hetero'));
+
+        $this->get(route('quiz.show', ['certType' => 'hetero']))
+            ->assertOk()
+            ->assertSee('Quiz')
+            ->assertSee('Question 1');
+    }
+
+    public function test_admin_user_can_take_the_quiz_flow_without_being_blocked(): void
+    {
+        $this->seedQuestionBank(30);
+
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)
+            ->from(route('quiz.register', ['certType' => 'hetero']))
+            ->post(route('quiz.start'), [
+                'first_name' => 'Ana',
+                'last_name' => 'Lopez',
+                'document' => 'CC-123456789',
+                'country_code' => 'CO',
+                'document_type' => 'CC',
+                'cert_type' => 'hetero',
+            ])
+            ->assertRedirect(route('quiz.show', ['certType' => 'hetero']));
+
+        $this->get(route('quiz.show', ['certType' => 'hetero']))
+            ->assertOk()
+            ->assertSee('Quiz');
+    }
+
     public function test_quiz_show_redirects_to_register_when_session_is_missing(): void
     {
         $response = $this->get(route('quiz.show', ['certType' => 'hetero']));
@@ -73,28 +121,7 @@ class QuizFlowTest extends TestCase
 
     public function test_quiz_show_returns_ok_when_candidate_session_exists(): void
     {
-        for ($i = 1; $i <= 30; $i++) {
-            $question = Question::create([
-                'certification_id' => $this->heteroCertificationId,
-                'prompt' => 'Question '.$i,
-                'option_1' => 'A',
-                'option_2' => 'B',
-                'option_3' => 'C',
-                'option_4' => 'D',
-                'correct_option' => 1,
-                'active' => true,
-            ]);
-
-            QuestionTranslation::create([
-                'question_id' => $question->id,
-                'language' => app()->getLocale(),
-                'prompt' => 'Question '.$i,
-                'option_1' => 'A',
-                'option_2' => 'B',
-                'option_3' => 'C',
-                'option_4' => 'D',
-            ]);
-        }
+        $this->seedQuestionBank(30);
 
         $response = $this->withSession([
             'quiz_candidate.hetero' => [
@@ -111,5 +138,31 @@ class QuizFlowTest extends TestCase
             ],
         ])->get(route('quiz.show', ['certType' => 'hetero']));
         $response->assertOk();
+    }
+
+    private function seedQuestionBank(int $count): void
+    {
+        for ($i = 1; $i <= $count; $i++) {
+            $question = Question::create([
+                'certification_id' => $this->heteroCertificationId,
+                'prompt' => 'Question ' . $i,
+                'option_1' => 'A',
+                'option_2' => 'B',
+                'option_3' => 'C',
+                'option_4' => 'D',
+                'correct_option' => 1,
+                'active' => true,
+            ]);
+
+            QuestionTranslation::create([
+                'question_id' => $question->id,
+                'language' => app()->getLocale(),
+                'prompt' => 'Question ' . $i,
+                'option_1' => 'A',
+                'option_2' => 'B',
+                'option_3' => 'C',
+                'option_4' => 'D',
+            ]);
+        }
     }
 }

@@ -20,21 +20,34 @@ class UserAdminController extends Controller
     public function index(Request $request): View
     {
         $search = trim((string) $request->query('search', ''));
+        $role = (string) $request->query('role', 'all');
+        if (!in_array($role, ['all', 'admins', 'users'], true)) {
+            $role = 'all';
+        }
 
-        $users = User::query()
+        $query = User::query()
             ->when($search !== '', function ($query) use ($search): void {
                 $query->where(function ($nestedQuery) use ($search): void {
-                    $nestedQuery->where('name', 'like', '%'.$search.'%')
-                        ->orWhere('email', 'like', '%'.$search.'%');
+                    $nestedQuery->where('name', 'like', '%' . $search . '%')
+                        ->orWhere('email', 'like', '%' . $search . '%');
                 });
             })
-            ->orderBy('id', 'desc')
+            ->when($role === 'admins', fn($query) => $query->where('is_admin', true))
+            ->when($role === 'users', fn($query) => $query->where('is_admin', false));
+
+        $users = $query->orderBy('id', 'desc')
             ->paginate(20)
             ->withQueryString();
+
+        $adminUsersCount = User::query()->where('is_admin', true)->count();
+        $regularUsersCount = User::query()->where('is_admin', false)->count();
 
         return view('admin.users.index', [
             'users' => $users,
             'search' => $search,
+            'role' => $role,
+            'adminUsersCount' => $adminUsersCount,
+            'regularUsersCount' => $regularUsersCount,
             'currentLocale' => app()->getLocale(),
             'supportedLocales' => config('app.supported_locales', ['en']),
         ]);
@@ -109,11 +122,18 @@ class UserAdminController extends Controller
     public function exportCsv(Request $request): StreamedResponse
     {
         $search = trim((string) $request->query('search', ''));
-        $fileName = 'users_export_'.now()->format('Ymd_His').'.csv';
+        $role = (string) $request->query('role', 'all');
+        if (!in_array($role, ['all', 'admins', 'users'], true)) {
+            $role = 'all';
+        }
+        $fileName = 'users_export_' . now()->format('Ymd_His') . '.csv';
 
-        AuditLog::log('export', 'User', null, 'CSV export', ['search' => $search ?: '*']);
+        AuditLog::log('export', 'User', null, 'CSV export', [
+            'search' => $search ?: '*',
+            'role' => $role,
+        ]);
 
-        return response()->streamDownload(function () use ($search): void {
+        return response()->streamDownload(function () use ($search, $role): void {
             $output = fopen('php://output', 'wb');
 
             if ($output === false) {
@@ -132,10 +152,12 @@ class UserAdminController extends Controller
             User::query()
                 ->when($search !== '', function ($query) use ($search): void {
                     $query->where(function ($nestedQuery) use ($search): void {
-                        $nestedQuery->where('name', 'like', '%'.$search.'%')
-                            ->orWhere('email', 'like', '%'.$search.'%');
+                        $nestedQuery->where('name', 'like', '%' . $search . '%')
+                            ->orWhere('email', 'like', '%' . $search . '%');
                     });
                 })
+                ->when($role === 'admins', fn($query) => $query->where('is_admin', true))
+                ->when($role === 'users', fn($query) => $query->where('is_admin', false))
                 ->orderBy('id')
                 ->chunkById(200, function ($users) use ($output): void {
                     foreach ($users as $user) {
@@ -153,7 +175,7 @@ class UserAdminController extends Controller
             fclose($output);
         }, $fileName, [
             'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="'.$fileName.'"',
+            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
         ]);
     }
 
@@ -208,7 +230,7 @@ class UserAdminController extends Controller
 
                 $name = trim((string) $row[1]);
                 if ($name === '') {
-                    $errors[] = 'Fila '.$rowNumber.': nombre vacío';
+                    $errors[] = 'Fila ' . $rowNumber . ': nombre vacío';
                     continue;
                 }
 
@@ -245,7 +267,7 @@ class UserAdminController extends Controller
 
             $message = "Importacion completada: {$created} usuarios creados, {$updated} actualizados";
             if (! empty($errors)) {
-                $message .= '. Errores: '.implode('; ', array_slice($errors, 0, 5));
+                $message .= '. Errores: ' . implode('; ', array_slice($errors, 0, 5));
             }
 
             return redirect()
@@ -256,7 +278,7 @@ class UserAdminController extends Controller
 
             return redirect()
                 ->route('admin.users.import.form')
-                ->with('error', 'Error inesperado al importar CSV: '.$e->getMessage());
+                ->with('error', 'Error inesperado al importar CSV: ' . $e->getMessage());
         } finally {
             if (is_resource($handle)) {
                 fclose($handle);
@@ -283,7 +305,7 @@ class UserAdminController extends Controller
 
         do {
             $suffix = Str::lower(Str::random(10));
-            $email = $base.'.'.$suffix.'@users.local';
+            $email = $base . '.' . $suffix . '@users.local';
         } while (User::query()->where('email', $email)->exists());
 
         return $email;

@@ -54,4 +54,21 @@ class HomeAndSearchTest extends TestCase
 
         $response->assertRedirect(route('cert.show', ['serial' => $certificate->serial]));
     }
+
+    public function test_home_shows_featured_image_for_certification_cards(): void
+    {
+        Certification::query()->create([
+            'slug' => 'with-image',
+            'name' => 'Certificacion con imagen',
+            'description' => 'Tarjeta con portada destacada',
+            'active' => true,
+            'featured_image_path' => 'certifications/portada.jpg',
+            'home_order' => 1,
+        ]);
+
+        $response = $this->get('/');
+
+        $response->assertOk();
+        $response->assertSee('storage/certifications/portada.jpg');
+    }
 }

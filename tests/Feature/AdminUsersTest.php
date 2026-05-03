@@ -71,4 +71,30 @@ class AdminUsersTest extends TestCase
             'id' => $existingUser->id,
         ]);
     }
+
+    public function test_admin_users_index_can_filter_admins_and_regular_users(): void
+    {
+        User::factory()->admin()->create(['name' => 'Admin Uno', 'email' => 'admin1@example.com']);
+        User::factory()->admin()->create(['name' => 'Admin Dos', 'email' => 'admin2@example.com']);
+        User::factory()->create(['name' => 'Usuario Uno', 'email' => 'user1@example.com']);
+        User::factory()->create(['name' => 'Usuario Dos', 'email' => 'user2@example.com']);
+
+        $this->asAdmin()
+            ->get(route('admin.users.index', ['role' => 'admins']))
+            ->assertOk()
+            ->assertSee('Admin Uno')
+            ->assertSee('Admin Dos')
+            ->assertDontSee('Usuario Uno')
+            ->assertDontSee('Usuario Dos')
+            ->assertSee('Administradores');
+
+        $this->asAdmin()
+            ->get(route('admin.users.index', ['role' => 'users']))
+            ->assertOk()
+            ->assertSee('Usuario Uno')
+            ->assertSee('Usuario Dos')
+            ->assertDontSee('Admin Uno')
+            ->assertDontSee('Admin Dos')
+            ->assertSee('Usuarios');
+    }
 }

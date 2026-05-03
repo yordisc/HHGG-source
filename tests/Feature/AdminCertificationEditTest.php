@@ -7,6 +7,8 @@ use App\Models\Certification;
 use App\Models\Question;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class AdminCertificationEditTest extends TestCase
@@ -78,6 +80,36 @@ class AdminCertificationEditTest extends TestCase
         $this->assertEquals('New description', $this->certification->description);
         $this->assertEquals(35, $this->certification->questions_required);
         $this->assertEquals(75.0, $this->certification->pass_score_percentage);
+    }
+
+    public function test_admin_can_upload_featured_image_for_certification(): void
+    {
+        Storage::fake('public');
+
+        $response = $this->actingAs($this->admin)
+            ->put(route('admin.certifications.update', $this->certification), [
+                'slug' => $this->certification->slug,
+                'name' => $this->certification->name,
+                'active' => 1,
+                'questions_required' => 30,
+                'pass_score_percentage' => 70.0,
+                'cooldown_days' => 30,
+                'result_mode' => 'binary_threshold',
+                'pdf_view' => 'pdf.certificate',
+                'home_order' => 1,
+                'featured_image' => UploadedFile::fake()->image('portada.jpg'),
+            ]);
+
+        $response->assertRedirect(route('admin.certifications.edit', $this->certification));
+
+        $this->certification->refresh();
+
+        $this->assertNotEmpty($this->certification->featured_image_path);
+        $this->assertTrue(Storage::disk('public')->exists($this->certification->featured_image_path));
+        $this->assertDatabaseHas('certifications', [
+            'id' => $this->certification->id,
+            'featured_image_path' => $this->certification->featured_image_path,
+        ]);
     }
 
     public function test_slug_must_be_unique(): void

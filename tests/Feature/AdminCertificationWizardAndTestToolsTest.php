@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Certification;
 use App\Models\CertificationDraft;
+use App\Models\CertificationVersion;
 use App\Models\Question;
 use App\Models\QuestionTranslation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -138,7 +139,51 @@ class AdminCertificationWizardAndTestToolsTest extends TestCase
             ->get(route('admin.certifications.test', $certification))
             ->assertOk()
             ->assertSee('Prueba de funcionamiento')
-            ->assertSee('Pregunta base');
+            ->assertSee('Pregunta base')
+            ->assertSee('wire:click="answer(1)"', false);
+    }
+
+    public function test_admin_can_open_certification_edit_page_with_array_changes_in_version_history(): void
+    {
+        $certification = Certification::create([
+            'slug' => 'version-array-test',
+            'name' => 'Version Array Test',
+            'description' => 'Certificacion con historial complejo',
+            'active' => true,
+            'questions_required' => 1,
+            'pass_score_percentage' => 66.67,
+            'cooldown_days' => 30,
+            'result_mode' => 'binary_threshold',
+            'pdf_view' => 'pdf.certificate',
+            'home_order' => 3,
+            'settings' => ['theme' => 'light', 'layout' => ['pages' => 2]],
+        ]);
+
+        CertificationVersion::create([
+            'certification_id' => $certification->id,
+            'version_number' => 1,
+            'snapshot' => ['settings' => ['theme' => 'dark']],
+            'questions_snapshot' => [],
+            'change_reason' => 'Ajuste de configuracion',
+            'changes' => [
+                'settings' => [
+                    'old' => ['theme' => 'dark', 'layout' => ['pages' => 1]],
+                    'new' => ['theme' => 'light', 'layout' => ['pages' => 2]],
+                ],
+                'questions_required' => [
+                    'old' => 3,
+                    'new' => 1,
+                ],
+            ],
+        ]);
+
+        $this->asAdmin()
+            ->get(route('admin.certifications.edit', $certification))
+            ->assertOk()
+            ->assertSee('Historial de versiones')
+            ->assertSee('settings')
+            ->assertSee('layout')
+            ->assertSee('Questions required');
     }
 
     public function test_wizard_rejects_draft_id_that_does_not_belong_to_session(): void

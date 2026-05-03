@@ -21,6 +21,7 @@ class Certification extends Model
         'cooldown_days',
         'result_mode',
         'pdf_view',
+        'featured_image_path',
         'home_order',
         'settings',
         // Expiry & Retention

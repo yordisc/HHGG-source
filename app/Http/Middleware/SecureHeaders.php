@@ -19,8 +19,8 @@ class SecureHeaders
         $response->headers->set('X-XSS-Protection', '1; mode=block');
         $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
 
-        $scriptSrc = "'self' 'unsafe-inline' https://cdn.jsdelivr.net";
-        $styleSrc = "'self' 'unsafe-inline' https://fonts.googleapis.com";
+        $scriptSrc = "'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net";
+        $styleSrc = "'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.bunny.net";
         $connectSrc = "'self'";
 
         if (app()->environment('local')) {
@@ -42,7 +42,7 @@ class SecureHeaders
 
         $response->headers->set(
             'Content-Security-Policy',
-            "default-src 'self'; img-src 'self' data: https:; style-src {$styleSrc}; font-src 'self' https://fonts.gstatic.com data:; script-src {$scriptSrc}; connect-src {$connectSrc}; frame-ancestors 'self';"
+            "default-src 'self'; img-src 'self' data: https:; style-src {$styleSrc}; font-src 'self' https://fonts.gstatic.com https://fonts.bunny.net data:; script-src {$scriptSrc}; connect-src {$connectSrc}; frame-ancestors 'self';"
         );
 
         return $response;

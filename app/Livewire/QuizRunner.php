@@ -23,6 +23,7 @@ class QuizRunner extends Component
 {
     #[Locked]
     public string $certType;
+    public bool $previewMode = false;
 
     #[Locked]
     public ?int $certificationId = null;
@@ -49,9 +50,10 @@ class QuizRunner extends Component
     public array $availableLanguages = [];
     public array $answerDetails = [];
 
-    public function mount(string $certType): void
+    public function mount(string $certType, bool $previewMode = false): void
     {
         $this->certType = $certType;
+        $this->previewMode = $previewMode;
         $this->currentLocale = app()->getLocale();
 
         $certification = Certification::query()->active()->where('slug', $certType)->first();
@@ -68,7 +70,7 @@ class QuizRunner extends Component
         $this->resultMode = (string) ($certification->result_mode ?: ResultMode::BINARY_THRESHOLD->value);
         $this->resultSettings = is_array($certification->settings) ? $certification->settings : [];
 
-        if (!session()->has("quiz_candidate.{$certType}")) {
+        if (!$this->previewMode && !session()->has("quiz_candidate.{$certType}")) {
             $this->redirectRoute('quiz.register', ['certType' => $certType], true);
             return;
         }
@@ -196,6 +198,12 @@ class QuizRunner extends Component
         }
 
         $this->currentIndex++;
+
+        if ($this->previewMode && $this->currentIndex >= $this->total) {
+            $this->currentIndex = 0;
+            $this->setCurrentQuestion($attempt);
+            return;
+        }
 
         if ($this->currentIndex >= $this->total) {
             $this->finishAttempt();

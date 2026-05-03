@@ -21,6 +21,7 @@ class StoreCertificationRequest extends UpdateCertificationRequest
             'result_mode' => ['required', 'string', Rule::in(ResultMode::values())],
             'pdf_view' => ['nullable', 'string', 'max:120'],
             'home_order' => ['required', 'integer', 'min:0', 'max:9999'],
+            'featured_image' => ['nullable', 'file', 'image', 'max:4096'],
             'settings' => ['nullable', 'json'],
             // Phase 3: Expiry & Retention
             'expiry_mode' => ['nullable', 'string', Rule::in(['indefinite', 'fixed'])],

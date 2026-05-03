@@ -198,20 +198,49 @@ class CertificateController extends Controller
     {
         $issuedAt = $certificate->issued_at ?? $certificate->created_at ?? now();
         $validUntil = $certificate->expires_at?->format('Y-m-d') ?? '';
+        $certificationSettings = is_array($certificate->certification?->settings) ? $certificate->certification->settings : [];
+        $documentIdentity = trim(implode(' ', array_filter([
+            $certificate->document_type,
+            $certificate->doc_partial,
+        ])));
 
         $replacements = [
             '{{nombre}}' => trim($certificate->first_name . ' ' . $certificate->last_name),
+            '{{ nombre }}' => trim($certificate->first_name . ' ' . $certificate->last_name),
+            '{{nombre_completo}}' => trim($certificate->first_name . ' ' . $certificate->last_name),
+            '{{ nombre_completo }}' => trim($certificate->first_name . ' ' . $certificate->last_name),
             '{{fecha}}' => $issuedAt->format('d/m/Y'),
+            '{{ fecha }}' => $issuedAt->format('d/m/Y'),
             '{{serial}}' => $certificate->serial,
+            '{{ serial }}' => $certificate->serial,
             '{{competencia}}' => (string) ($certificate->certification?->name ?? __('app.brand_name', [], 'en')),
+            '{{ competencia }}' => (string) ($certificate->certification?->name ?? __('app.brand_name', [], 'en')),
+            '{{nombre_certificacion}}' => (string) ($certificate->certification?->name ?? __('app.brand_name', [], 'en')),
+            '{{ nombre_certificacion }}' => (string) ($certificate->certification?->name ?? __('app.brand_name', [], 'en')),
             '{{nota}}' => (string) __('app.result_' . $certificate->result_key, [], 'en'),
+            '{{ nota }}' => (string) __('app.result_' . $certificate->result_key, [], 'en'),
             '{{pais}}' => (string) $certificate->country,
+            '{{ pais }}' => (string) $certificate->country,
+            '{{pais_origen}}' => (string) $certificate->country,
+            '{{ pais_origen }}' => (string) $certificate->country,
             '{{vigencia}}' => $validUntil,
+            '{{ vigencia }}' => $validUntil,
+            '{{documento_identidad}}' => $documentIdentity,
+            '{{ documento_identidad }}' => $documentIdentity,
+            '{{horas_cursadas}}' => (string) ($certificationSettings['horas_cursadas'] ?? $certificationSettings['duration_hours'] ?? ''),
+            '{{ horas_cursadas }}' => (string) ($certificationSettings['horas_cursadas'] ?? $certificationSettings['duration_hours'] ?? ''),
+            '{{mencion_honorifica}}' => (string) ($certificationSettings['mencion_honorifica'] ?? ''),
+            '{{ mencion_honorifica }}' => (string) ($certificationSettings['mencion_honorifica'] ?? ''),
             '{{verificacion_url}}' => $verificationUrl,
+            '{{ verificacion_url }}' => $verificationUrl,
             '{{verificacion_qr}}' => $allowPdfImages ? $verificationQrUrl : '',
+            '{{ verificacion_qr }}' => $allowPdfImages ? $verificationQrUrl : '',
             '{{integridad_hash}}' => (string) ($certificate->content_hash ?? ''),
+            '{{ integridad_hash }}' => (string) ($certificate->content_hash ?? ''),
             '{{logo_institucion}}' => $allowPdfImages ? public_path('apple-touch-icon.png') : '',
+            '{{ logo_institucion }}' => $allowPdfImages ? public_path('apple-touch-icon.png') : '',
             '{{firma_director}}' => $allowPdfImages ? public_path('Signature/Benjamin_Netanyahu.png') : '',
+            '{{ firma_director }}' => $allowPdfImages ? public_path('Signature/Benjamin_Netanyahu.png') : '',
         ];
 
         $rendered = str_replace(array_keys($replacements), array_values($replacements), $htmlTemplate);

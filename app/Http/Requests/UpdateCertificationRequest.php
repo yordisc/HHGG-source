@@ -76,6 +76,7 @@ class UpdateCertificationRequest extends FormRequest
             'result_mode' => ['required', 'string', Rule::in(ResultMode::values())],
             'pdf_view' => ['nullable', 'string', 'max:120'],
             'home_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
+            'featured_image' => ['nullable', 'file', 'image', 'max:4096'],
             'settings' => [
                 'nullable',
                 function ($attribute, $value, $fail) {

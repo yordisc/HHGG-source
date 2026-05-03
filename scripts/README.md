@@ -23,7 +23,7 @@ Acciones soportadas:
 Ejemplos:
 
 ```bash
-bash scripts/manage-admin.sh add --email admin@miempresa.com --name "Admin" --password "Secret123!"
+bash scripts/manage-admin.sh add --email yordiscujar@gmail.com --name "Yordis" --password "1234567890"
 bash scripts/manage-admin.sh update --email admin@miempresa.com --name "Admin Ops"
 bash scripts/manage-admin.sh delete --email admin@miempresa.com
 bash scripts/manage-admin.sh delete --email admin@miempresa.com --hard --force

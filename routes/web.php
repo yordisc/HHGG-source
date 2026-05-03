@@ -21,6 +21,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::post('/search', [HomeController::class, 'search'])->name('search');
+Route::view('/terminos-y-condiciones', 'legal.terms')->name('legal.terms');
+Route::view('/politica-de-privacidad', 'legal.privacy')->name('legal.privacy');
 
 Route::get('/exam/{certType}/register', [QuizController::class, 'register'])->name('quiz.register');
 Route::post('/exam/start', [QuizController::class, 'start'])

@@ -27,10 +27,14 @@ class CertificateTemplateController extends Controller
 
     public function create(): View
     {
+        $defaultHtmlTemplate = '<div class="certificate"><h1>{{nombre_completo}}</h1><p>Fecha: {{fecha}}</p></div>';
+        $defaultCssTemplate = '.certificate { font-family: serif; text-align: center; padding: 2rem; }';
+
         return view('admin.certificates.templates.create', [
             'template' => new CertificateTemplate(),
-            'defaultHtmlTemplate' => '<div class="certificate"><h1>{{nombre}}</h1><p>Fecha: {{fecha}}</p></div>',
+            'templateContent' => $this->composeTemplateContent($defaultHtmlTemplate, $defaultCssTemplate),
             'certifications' => Certification::query()->active()->ordered()->get(),
+            'templateResources' => $this->templateResources(),
             'currentLocale' => app()->getLocale(),
             'supportedLocales' => config('app.supported_locales', ['en']),
         ]);
@@ -68,7 +72,9 @@ class CertificateTemplateController extends Controller
     {
         return view('admin.certificates.templates.edit', [
             'template' => $template,
+            'templateContent' => $this->composeTemplateContent($template->html_template, $template->css_template),
             'certifications' => Certification::query()->active()->ordered()->get(),
+            'templateResources' => $this->templateResources(),
             'currentLocale' => app()->getLocale(),
             'supportedLocales' => config('app.supported_locales', ['en']),
         ]);
@@ -124,10 +130,19 @@ class CertificateTemplateController extends Controller
             ->where('certification_id', $certification->id)
             ->first();
 
+        $defaultTemplate = CertificateTemplate::getDefault();
+
         return view('admin.certificates.templates.certification', [
             'certification' => $certification,
             'customTemplate' => $customTemplate,
-            'defaultTemplate' => CertificateTemplate::getDefault(),
+            'defaultTemplate' => $defaultTemplate,
+            'defaultTemplateContent' => $defaultTemplate
+                ? $this->composeTemplateContent($defaultTemplate->html_template, $defaultTemplate->css_template)
+                : $this->composeTemplateContent('<div class="certificate"><h1>{{nombre_completo}}</h1><p>{{fecha}}</p></div>', '.certificate { font-family: serif; text-align: center; padding: 2rem; }'),
+            'customTemplateContent' => $customTemplate
+                ? $this->composeTemplateContent($customTemplate->html_template, $customTemplate->css_template)
+                : $this->composeTemplateContent('<div class="certificate"><h1>{{nombre_completo}}</h1><p>{{fecha}}</p></div>', '.certificate { font-family: serif; text-align: center; padding: 2rem; }'),
+            'templateResources' => $this->templateResources(),
             'currentLocale' => app()->getLocale(),
             'supportedLocales' => config('app.supported_locales', ['en']),
         ]);
@@ -190,11 +205,17 @@ class CertificateTemplateController extends Controller
         return view('admin.certificates.templates.preview', [
             'template' => $template,
             'sampleData' => [
-                'nombre' => 'Juan Pérez',
+                'nombre' => 'Juan',
+                'nombre_completo' => 'Juan Pérez',
                 'fecha' => now()->format('d/m/Y'),
                 'serial' => 'CERT-' . strtoupper(uniqid()),
                 'competencia' => 'Competencia Ejemplar',
+                'nombre_certificacion' => 'Competencia Ejemplar',
                 'nota' => 'Aprobado',
+                'pais_origen' => 'Colombia',
+                'documento_identidad' => 'CC 12345678',
+                'horas_cursadas' => '40',
+                'mencion_honorifica' => 'Mencion honorifica',
                 'verificacion_url' => url('/cert/verify/CERT-DEMO/TOKEN-DEMO'),
                 'verificacion_qr' => 'https://quickchart.io/qr?size=220&text=' . urlencode(url('/cert/verify/CERT-DEMO/TOKEN-DEMO')),
                 'integridad_hash' => hash('sha256', 'CERT-DEMO-INTEGRIDAD'),
@@ -202,5 +223,57 @@ class CertificateTemplateController extends Controller
                 'firma_director' => public_path('Signature/Benjamin_Netanyahu.png'),
             ],
         ]);
+    }
+
+    private function composeTemplateContent(?string $htmlTemplate, ?string $cssTemplate): string
+    {
+        $htmlTemplate = trim((string) $htmlTemplate);
+        $cssTemplate = trim((string) $cssTemplate);
+
+        if ($cssTemplate === '') {
+            return $htmlTemplate;
+        }
+
+        return "<style>\n{$cssTemplate}\n</style>\n\n{$htmlTemplate}";
+    }
+
+    /**
+     * @return array<int, array{name:string, path:string, url:string, type:string, previewUrl:string, isImage:bool}>
+     */
+    private function templateResources(): array
+    {
+        $groups = [
+            ['type' => 'Certificates', 'directory' => public_path('Certificates')],
+            ['type' => 'Signature', 'directory' => public_path('Signature')],
+        ];
+
+        $resources = [];
+        $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'];
+
+        foreach ($groups as $group) {
+            $files = glob($group['directory'] . '/*') ?: [];
+            sort($files);
+
+            foreach ($files as $file) {
+                if (!is_file($file)) {
+                    continue;
+                }
+
+                $relativePath = ltrim(str_replace(public_path(), '', $file), DIRECTORY_SEPARATOR);
+                $extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+                $isImage = in_array($extension, $imageExtensions);
+
+                $resources[] = [
+                    'type' => $group['type'],
+                    'name' => basename($file),
+                    'path' => '/' . str_replace(DIRECTORY_SEPARATOR, '/', $relativePath),
+                    'url' => asset($relativePath),
+                    'previewUrl' => $isImage ? asset($relativePath) : null,
+                    'isImage' => $isImage,
+                ];
+            }
+        }
+
+        return $resources;
     }
 }

@@ -19,33 +19,36 @@
 
         <div class="rounded-2xl border border-slate-200 bg-slate-50 p-6">
             <div class="prose max-w-none rounded-xl bg-white p-8 shadow-sm dark:prose-invert">
-                {!! str_replace(
-                    [
-                        '{{ nombre }}',
-                        '{{ fecha }}',
-                        '{{ serial }}',
-                        '{{ competencia }}',
-                        '{{ nota }}',
-                        '{{ verificacion_url }}',
-                        '{{ verificacion_qr }}',
-                        '{{ integridad_hash }}',
-                        '{{ logo_institucion }}',
-                        '{{ firma_director }}',
-                    ],
-                    [
-                        $sampleData['nombre'],
-                        $sampleData['fecha'],
-                        $sampleData['serial'],
-                        $sampleData['competencia'],
-                        $sampleData['nota'],
-                        $sampleData['verificacion_url'],
-                        $sampleData['verificacion_qr'],
-                        $sampleData['integridad_hash'],
-                        $sampleData['logo_institucion'],
-                        $sampleData['firma_director'],
-                    ],
-                    $template->html_template,
-                ) !!}
+                @php
+                    $replacements = [];
+                    foreach (
+                        [
+                            'nombre',
+                            'nombre_completo',
+                            'fecha',
+                            'serial',
+                            'competencia',
+                            'nombre_certificacion',
+                            'nota',
+                            'pais_origen',
+                            'documento_identidad',
+                            'horas_cursadas',
+                            'mencion_honorifica',
+                            'verificacion_url',
+                            'verificacion_qr',
+                            'integridad_hash',
+                            'logo_institucion',
+                            'firma_director',
+                        ]
+                        as $key
+                    ) {
+                        $value = $sampleData[$key] ?? '';
+                        // Support both formats: {{ key }} and {{ key }}
+                        $replacements['{{ ' . $key . ' }}'] = $value;
+                        $replacements['{{ ' . $key . ' }}'] = $value;
+                    }
+                @endphp
+                {!! str_replace(array_keys($replacements), array_values($replacements), $template->html_template) !!}
             </div>
         </div>
     </section>

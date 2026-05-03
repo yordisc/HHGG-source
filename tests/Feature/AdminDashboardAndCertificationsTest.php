@@ -35,6 +35,20 @@ class AdminDashboardAndCertificationsTest extends TestCase
             ->assertSee('Panel Admin');
     }
 
+    public function test_dashboard_separates_admin_and_regular_user_counts(): void
+    {
+        User::factory()->count(2)->admin()->create();
+        User::factory()->count(3)->create();
+
+        $this->asAdmin()
+            ->get(route('admin.dashboard'))
+            ->assertOk()
+            ->assertSeeInOrder(['Administradores', '2', 'Ver solo cuentas admin'])
+            ->assertSeeInOrder(['Usuarios', '3', 'Ver cuentas regulares'])
+            ->assertSee(route('admin.users.index', ['role' => 'admins']))
+            ->assertSee(route('admin.users.index', ['role' => 'users']));
+    }
+
     public function test_admin_can_create_update_and_delete_certification(): void
     {
         $this->asAdmin()

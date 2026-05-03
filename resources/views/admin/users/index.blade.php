@@ -8,44 +8,82 @@
                 <div>
                     <h1 class="text-3xl font-bold text-slate-900">Gestión de Usuarios</h1>
                     <p class="mt-2 text-slate-600">Crea, edita y gestiona cuentas de usuario del sistema</p>
-                    <p class="mt-1 text-xs text-slate-500">Usa importación para cargas masivas y exportación para respaldos o actualizaciones.</p>
+                    <p class="mt-1 text-xs text-slate-500">Usa importación para cargas masivas y exportación para respaldos o
+                        actualizaciones.</p>
                 </div>
                 <div class="flex flex-wrap items-center gap-3">
-                    <a href="{{ route('admin.users.import.form') }}" class="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-2.5 font-semibold text-slate-700 shadow-sm transition hover:border-blue-500 hover:bg-blue-50 hover:text-blue-600">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    <a href="{{ route('admin.users.import.form') }}"
+                        class="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-2.5 font-semibold text-slate-700 shadow-sm transition hover:border-blue-500 hover:bg-blue-50 hover:text-blue-600">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
                         Importar
                     </a>
-                    <a href="{{ route('admin.users.export.csv', ['search' => $search ?: null]) }}" class="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-2.5 font-semibold text-slate-700 shadow-sm transition hover:border-emerald-500 hover:bg-emerald-50 hover:text-emerald-600">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    <a href="{{ route('admin.users.export.csv', ['search' => $search ?: null, 'role' => $role !== 'all' ? $role : null]) }}"
+                        class="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-2.5 font-semibold text-slate-700 shadow-sm transition hover:border-emerald-500 hover:bg-emerald-50 hover:text-emerald-600">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
                         Exportar
                     </a>
-                    <a href="{{ route('admin.users.create') }}" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-5 py-2.5 font-semibold text-white shadow-lg transition hover:shadow-xl hover:-translate-y-0.5">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    <a href="{{ route('admin.users.create') }}"
+                        class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-5 py-2.5 font-semibold text-white shadow-lg transition hover:shadow-xl hover:-translate-y-0.5">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
                         Nuevo
                     </a>
                 </div>
             </div>
 
             @if (session('status'))
-                <div class="mt-6 flex items-start gap-3 rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-emerald-50/50 p-4 shadow-sm">
-                    <svg class="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                <div
+                    class="mt-6 flex items-start gap-3 rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-emerald-50/50 p-4 shadow-sm">
+                    <svg class="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                            clip-rule="evenodd" />
+                    </svg>
                     <p class="text-sm font-medium text-emerald-900">{{ session('status') }}</p>
                 </div>
             @endif
+        </div>
+
+        <!-- Role Tabs -->
+        <div class="mx-auto max-w-7xl">
+            <div class="flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
+                <a href="{{ route('admin.users.index', ['search' => $search ?: null]) }}"
+                    class="rounded-xl px-4 py-2 text-sm font-semibold transition {{ $role === 'all' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100' }}">
+                    Todos <span class="ml-2 text-xs opacity-80">({{ $adminUsersCount + $regularUsersCount }})</span>
+                </a>
+                <a href="{{ route('admin.users.index', ['search' => $search ?: null, 'role' => 'admins']) }}"
+                    class="rounded-xl px-4 py-2 text-sm font-semibold transition {{ $role === 'admins' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100' }}">
+                    Administradores <span class="ml-2 text-xs opacity-80">({{ $adminUsersCount }})</span>
+                </a>
+                <a href="{{ route('admin.users.index', ['search' => $search ?: null, 'role' => 'users']) }}"
+                    class="rounded-xl px-4 py-2 text-sm font-semibold transition {{ $role === 'users' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100' }}">
+                    Usuarios <span class="ml-2 text-xs opacity-80">({{ $regularUsersCount }})</span>
+                </a>
+            </div>
         </div>
 
         <!-- Search -->
         <div class="mx-auto max-w-7xl">
             <form method="GET" class="flex flex-col gap-3 sm:flex-row">
                 <div class="flex-1">
-                    <input type="text" name="search" value="{{ $search }}" placeholder="Buscar por nombre o email..." 
-                           class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm transition focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                    <input type="text" name="search" value="{{ $search }}"
+                        placeholder="Buscar por nombre o email..."
+                        class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm transition focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500">
                 </div>
-                <button type="submit" class="rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-3 font-semibold text-white shadow-lg transition hover:shadow-xl">
+                <input type="hidden" name="role" value="{{ $role !== 'all' ? $role : '' }}">
+                <button type="submit"
+                    class="rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-3 font-semibold text-white shadow-lg transition hover:shadow-xl">
                     Buscar
                 </button>
-                @if($search)
-                    <a href="{{ route('admin.users.index') }}" class="rounded-xl border border-slate-300 bg-white px-6 py-3 font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50">
+                @if ($search)
+                    <a href="{{ route('admin.users.index', ['role' => $role !== 'all' ? $role : null]) }}"
+                        class="rounded-xl border border-slate-300 bg-white px-6 py-3 font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50">
                         Limpiar
                     </a>
                 @endif
@@ -58,19 +96,28 @@
                 <table class="w-full">
                     <thead>
                         <tr class="border-b border-slate-200 bg-gradient-to-r from-slate-50 to-slate-50">
-                            <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">ID</th>
-                            <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Nombre</th>
-                            <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Email</th>
-                            <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Estado</th>
-                            <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Creado</th>
-                            <th class="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-600">Acciones</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">ID
+                            </th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                                Nombre</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                                Email</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                                Rol</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                                Estado</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                                Creado</th>
+                            <th class="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-600">
+                                Acciones</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
                         @forelse ($users as $user)
                             <tr class="transition hover:bg-slate-50">
                                 <td class="px-6 py-4">
-                                    <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-700">
+                                    <span
+                                        class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-700">
                                         #{{ $user->id }}
                                     </span>
                                 </td>
@@ -81,13 +128,30 @@
                                     <p class="font-mono text-sm text-slate-600">{{ $user->email }}</p>
                                 </td>
                                 <td class="px-6 py-4">
-                                    @if($user->email_verified_at)
-                                        <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+                                    @if ($user->is_admin)
+                                        <span
+                                            class="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
+                                            <span class="h-2 w-2 rounded-full bg-amber-600"></span>
+                                            Administrador
+                                        </span>
+                                    @else
+                                        <span
+                                            class="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
+                                            <span class="h-2 w-2 rounded-full bg-blue-600"></span>
+                                            Usuario
+                                        </span>
+                                    @endif
+                                </td>
+                                <td class="px-6 py-4">
+                                    @if ($user->email_verified_at)
+                                        <span
+                                            class="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
                                             <span class="h-2 w-2 rounded-full bg-emerald-600"></span>
                                             Verificado
                                         </span>
                                     @else
-                                        <span class="inline-flex items-center gap-1.5 rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-600">
+                                        <span
+                                            class="inline-flex items-center gap-1.5 rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-600">
                                             <span class="h-2 w-2 rounded-full bg-slate-500"></span>
                                             Pendiente
                                         </span>
@@ -98,27 +162,44 @@
                                 </td>
                                 <td class="px-6 py-4 text-right">
                                     <div class="flex justify-end gap-2">
-                                        <a href="{{ route('admin.users.edit', $user) }}" class="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 transition hover:bg-blue-100">
-                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                        <a href="{{ route('admin.users.edit', $user) }}"
+                                            class="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 transition hover:bg-blue-100">
+                                            <svg class="h-4 w-4" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                            </svg>
                                             Editar
                                         </a>
-                                        <form action="{{ route('admin.users.destroy', $user) }}" method="POST" class="inline" onsubmit="return confirm('¿Confirmas eliminar este usuario?');">
+                                        <form action="{{ route('admin.users.destroy', $user) }}" method="POST"
+                                            class="inline"
+                                            onsubmit="return confirm('¿Confirmas eliminar este usuario?');">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="inline-flex items-center gap-1 rounded-lg bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-100">
-                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                            <button type="submit"
+                                                class="inline-flex items-center gap-1 rounded-lg bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-100">
+                                                <svg class="h-4 w-4" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
                                                 Eliminar
                                             </button>
                                         </form>
                                     </div>
-                                    <p class="mt-2 text-right text-[11px] text-slate-500">Editar: actualiza datos. Eliminar: quita el usuario del sistema.</p>
+                                    <p class="mt-2 text-right text-[11px] text-slate-500">Editar: actualiza datos.
+                                        Eliminar: quita el usuario del sistema.</p>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="px-6 py-12 text-center">
+                                <td colspan="7" class="px-6 py-12 text-center">
                                     <div class="flex flex-col items-center gap-2">
-                                        <svg class="h-12 w-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                                        <svg class="h-12 w-12 text-slate-300" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0z" />
+                                        </svg>
                                         <p class="text-slate-500">No hay usuarios registrados</p>
                                     </div>
                                 </td>

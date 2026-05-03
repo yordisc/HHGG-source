@@ -69,4 +69,30 @@ class AdminQuestionsTest extends TestCase
         $this->assertStringContainsString('Test question', $content);
         $this->assertStringContainsString('A,B,C,D', $content);
     }
+
+    public function test_admin_questions_index_handles_array_query_filters_without_crashing(): void
+    {
+        $certification = Certification::query()->create([
+            'slug' => 'hetero',
+            'name' => 'Certificado Hetero',
+            'active' => true,
+        ]);
+
+        Question::create([
+            'certification_id' => $certification->id,
+            'prompt' => 'Pregunta robusta',
+            'option_1' => 'A',
+            'option_2' => 'B',
+            'option_3' => 'C',
+            'option_4' => 'D',
+            'correct_option' => 1,
+            'active' => true,
+        ]);
+
+        $this->asAdmin()
+            ->get('/admin/questions?cert_type[]=hetero&active[]=1&search[]=texto&sort[]=latest&per_page[]=20')
+            ->assertOk()
+            ->assertSee('Gestión de Preguntas')
+            ->assertSee('Pregunta robusta');
+    }
 }

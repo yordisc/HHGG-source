@@ -9,7 +9,7 @@
     }
 @endphp
 
-<form method="POST" action="{{ $action }}" class="space-y-6">
+<form method="POST" action="{{ $action }}" class="space-y-6" enctype="multipart/form-data">
     @csrf
     @if ($method !== 'POST')
         @method($method)
@@ -20,9 +20,11 @@
             <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <p class="text-sm font-semibold text-slate-900">Revisión automática de la certificación</p>
-                    <p class="text-xs text-slate-600">Resumen rápido para detectar problemas antes de publicar o probar.</p>
+                    <p class="text-xs text-slate-600">Resumen rápido para detectar problemas antes de publicar o probar.
+                    </p>
                 </div>
-                <span class="inline-flex rounded-full px-3 py-1 text-xs font-semibold {{ !empty($diagnostics['ready']) ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' }}">
+                <span
+                    class="inline-flex rounded-full px-3 py-1 text-xs font-semibold {{ !empty($diagnostics['ready']) ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' }}">
                     {{ !empty($diagnostics['ready']) ? 'Lista para pruebas' : 'Requiere atención' }}
                 </span>
             </div>
@@ -30,15 +32,18 @@
             <div class="mt-4 grid gap-3 sm:grid-cols-3">
                 <div class="rounded-xl bg-white px-4 py-3 shadow-sm">
                     <p class="text-xs uppercase tracking-wide text-slate-500">Preguntas totales</p>
-                    <p class="mt-1 text-lg font-semibold text-slate-900">{{ $diagnostics['summary']['total_questions'] ?? 0 }}</p>
+                    <p class="mt-1 text-lg font-semibold text-slate-900">
+                        {{ $diagnostics['summary']['total_questions'] ?? 0 }}</p>
                 </div>
                 <div class="rounded-xl bg-white px-4 py-3 shadow-sm">
                     <p class="text-xs uppercase tracking-wide text-slate-500">Preguntas activas</p>
-                    <p class="mt-1 text-lg font-semibold text-slate-900">{{ $diagnostics['summary']['active_questions'] ?? 0 }}</p>
+                    <p class="mt-1 text-lg font-semibold text-slate-900">
+                        {{ $diagnostics['summary']['active_questions'] ?? 0 }}</p>
                 </div>
                 <div class="rounded-xl bg-white px-4 py-3 shadow-sm">
                     <p class="text-xs uppercase tracking-wide text-slate-500">Requeridas</p>
-                    <p class="mt-1 text-lg font-semibold text-slate-900">{{ $diagnostics['summary']['required_questions'] ?? 0 }}</p>
+                    <p class="mt-1 text-lg font-semibold text-slate-900">
+                        {{ $diagnostics['summary']['required_questions'] ?? 0 }}</p>
                 </div>
             </div>
 
@@ -58,16 +63,22 @@
     <div class="grid gap-4 lg:grid-cols-2">
         <label class="block text-sm font-semibold text-slate-700">
             Slug
-            <input type="text" id="slug-input" name="slug" value="{{ old('slug', $certification->slug) }}" class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm" placeholder="marketing-101">
+            <input type="text" id="slug-input" name="slug" value="{{ old('slug', $certification->slug) }}"
+                class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm" placeholder="marketing-101">
             <div id="slug-feedback" class="mt-2 text-sm"></div>
             <p class="mt-1 text-xs text-slate-500">3-60 caracteres: letras min, números, guiones y guiones bajos</p>
-            @error('slug')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+            @error('slug')
+                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+            @enderror
         </label>
 
         <label class="block text-sm font-semibold text-slate-700">
             Nombre
-            <input type="text" name="name" value="{{ old('name', $certification->name) }}" class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm">
-            @error('name')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+            <input type="text" name="name" value="{{ old('name', $certification->name) }}"
+                class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm">
+            @error('name')
+                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+            @enderror
         </label>
     </div>
 
@@ -76,30 +87,32 @@
         document.getElementById('slug-input').addEventListener('input', async function() {
             const slug = this.value;
             const feedback = document.getElementById('slug-feedback');
-            const currentSlug = '{{ $certification->slug ?? "" }}';
-            
+            const currentSlug = '{{ $certification->slug ?? '' }}';
+
             if (!slug) {
                 feedback.innerHTML = '';
                 return;
             }
-            
+
             // No validar si es el slug actual (edit mode)
             if (currentSlug && slug === currentSlug) {
                 feedback.innerHTML = '';
                 return;
             }
-            
+
             // Validación local
             if (!/^[a-z0-9_-]{3,60}$/.test(slug)) {
-                feedback.innerHTML = '<span class="text-red-600">❌ Formato inválido (3-60 chars, minúsculas, números, - _)</span>';
+                feedback.innerHTML =
+                    '<span class="text-red-600">❌ Formato inválido (3-60 chars, minúsculas, números, - _)</span>';
                 return;
             }
-            
+
             // Validación servidor
             try {
-                const response = await fetch('{{ route("admin.api.check.slug") }}?slug=' + encodeURIComponent(slug));
+                const response = await fetch('{{ route('admin.api.check.slug') }}?slug=' + encodeURIComponent(
+                    slug));
                 const data = await response.json();
-                
+
                 if (data.available) {
                     feedback.innerHTML = '<span class="text-green-600">✅ Disponible</span>';
                 } else {
@@ -114,26 +127,40 @@
     <label class="block text-sm font-semibold text-slate-700">
         Descripción
         <textarea name="description" rows="4" class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm">{{ old('description', $certification->description) }}</textarea>
-        @error('description')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+        @error('description')
+            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+        @enderror
     </label>
 
     <div class="grid gap-4 lg:grid-cols-3">
         <label class="block text-sm font-semibold text-slate-700">
             Preguntas requeridas
-            <input type="number" min="1" name="questions_required" value="{{ old('questions_required', $certification->questions_required) }}" class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm">
-            @error('questions_required')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+            <input type="number" min="1" name="questions_required"
+                value="{{ old('questions_required', $certification->questions_required) }}"
+                class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm">
+            @error('questions_required')
+                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+            @enderror
         </label>
 
         <label class="block text-sm font-semibold text-slate-700">
             % de aprobación
-            <input type="number" min="0" max="100" step="0.01" name="pass_score_percentage" value="{{ old('pass_score_percentage', $certification->pass_score_percentage) }}" class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm">
-            @error('pass_score_percentage')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+            <input type="number" min="0" max="100" step="0.01" name="pass_score_percentage"
+                value="{{ old('pass_score_percentage', $certification->pass_score_percentage) }}"
+                class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm">
+            @error('pass_score_percentage')
+                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+            @enderror
         </label>
 
         <label class="block text-sm font-semibold text-slate-700">
             Días de cooldown
-            <input type="number" min="0" name="cooldown_days" value="{{ old('cooldown_days', $certification->cooldown_days) }}" class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm">
-            @error('cooldown_days')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+            <input type="number" min="0" name="cooldown_days"
+                value="{{ old('cooldown_days', $certification->cooldown_days) }}"
+                class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm">
+            @error('cooldown_days')
+                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+            @enderror
         </label>
     </div>
 
@@ -145,29 +172,54 @@
                     <option value="{{ $value }}" @selected(old('result_mode', $certification->result_mode) === $value)>{{ $label }}</option>
                 @endforeach
             </select>
-            <p class="mt-1 text-xs text-slate-500"><code>binary_threshold</code>: evalúa por porcentaje. <code>custom</code>: usa reglas y configuración JSON. <code>generic</code>: resultado simple.</p>
-            @error('result_mode')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+            <p class="mt-1 text-xs text-slate-500"><code>binary_threshold</code>: evalúa por porcentaje.
+                <code>custom</code>: usa reglas y configuración JSON. <code>generic</code>: resultado simple.</p>
+            @error('result_mode')
+                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+            @enderror
         </label>
 
         <label class="block text-sm font-semibold text-slate-700">
             Vista PDF
-            <input type="text" name="pdf_view" value="{{ old('pdf_view', $certification->pdf_view) }}" class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm">
-            <p class="mt-1 text-xs text-slate-500">Sección de presentación: indica la vista Blade que genera el certificado PDF (ej: <code>pdf.certificate</code>).</p>
-            @error('pdf_view')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+            <input type="text" name="pdf_view" value="{{ old('pdf_view', $certification->pdf_view) }}"
+                class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm">
+            <p class="mt-1 text-xs text-slate-500">Sección de presentación: indica la vista Blade que genera el
+                certificado PDF (ej: <code>pdf.certificate</code>).</p>
+            @error('pdf_view')
+                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+            @enderror
         </label>
 
         <label class="block text-sm font-semibold text-slate-700">
             Orden en home
-            <input type="number" min="0" name="home_order" value="{{ old('home_order', $certification->home_order) }}" class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm">
-            @error('home_order')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+            <input type="number" min="0" name="home_order"
+                value="{{ old('home_order', $certification->home_order) }}"
+                class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm">
+            @error('home_order')
+                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+            @enderror
+        </label>
+
+        <label class="block text-sm font-semibold text-slate-700">
+            Imagen destacada
+            <input type="file" name="featured_image" accept="image/*"
+                class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm">
+            <p class="mt-1 text-xs text-slate-500">Se mostrará en el home como portada de la certificación.</p>
+            @error('featured_image')
+                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+            @enderror
         </label>
     </div>
 
     <label class="block text-sm font-semibold text-slate-700">
         Settings JSON
-        <textarea name="settings" rows="6" class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 font-mono text-xs" placeholder='{"theme":"default","show_score":true,"max_attempts":3}'>{{ old('settings', $settingsValue) }}</textarea>
+        <textarea name="settings" rows="6"
+            class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 font-mono text-xs"
+            placeholder='{"theme":"default","show_score":true,"max_attempts":3}'>{{ old('settings', $settingsValue) }}</textarea>
         <p class="mt-1 text-xs text-slate-500">Solo JSON válido. Si no lo necesitas, puedes dejarlo vacío.</p>
-        @error('settings')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+        @error('settings')
+            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+        @enderror
     </label>
 
     {{-- Phase 3: Caducidad --}}
@@ -180,23 +232,34 @@
                     <option value="indefinite" @selected(old('expiry_mode', $certification->expiry_mode ?? 'indefinite') === 'indefinite')>Indefinida</option>
                     <option value="fixed" @selected(old('expiry_mode', $certification->expiry_mode ?? 'indefinite') === 'fixed')>Fija (con días)</option>
                 </select>
-                @error('expiry_mode')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+                @error('expiry_mode')
+                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                @enderror
             </label>
 
             <label class="block text-sm font-semibold text-slate-700">
                 Días de vigencia
-                <input type="number" min="1" max="3650" name="expiry_days" value="{{ old('expiry_days', $certification->expiry_days) }}" class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm" placeholder="365">
+                <input type="number" min="1" max="3650" name="expiry_days"
+                    value="{{ old('expiry_days', $certification->expiry_days) }}"
+                    class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm" placeholder="365">
                 <p class="mt-1 text-xs text-slate-500">Solo aplica si el modo es "Fija"</p>
-                @error('expiry_days')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+                @error('expiry_days')
+                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                @enderror
             </label>
         </div>
 
         <label class="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-slate-700">
             <input type="hidden" name="allow_certificate_download_after_deactivation" value="0">
-            <input type="checkbox" name="allow_certificate_download_after_deactivation" value="1" @checked(old('allow_certificate_download_after_deactivation', $certification->allow_certificate_download_after_deactivation ?? true))>
+            <input type="checkbox" name="allow_certificate_download_after_deactivation" value="1"
+                @checked(old(
+                        'allow_certificate_download_after_deactivation',
+                        $certification->allow_certificate_download_after_deactivation ?? true))>
             Permitir descarga de certificados tras desactivación
         </label>
-        @error('allow_certificate_download_after_deactivation')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+        @error('allow_certificate_download_after_deactivation')
+            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+        @enderror
     </div>
 
     {{-- Phase 3: Retención --}}
@@ -207,8 +270,11 @@
             <input type="checkbox" name="manual_user_data_purge_enabled" value="1" @checked(old('manual_user_data_purge_enabled', $certification->manual_user_data_purge_enabled ?? true))>
             Permitir purga manual de datos de usuarios
         </label>
-        <p class="mt-2 text-xs text-slate-600">Cuando está habilitado, los administradores pueden eliminar manualmente datos de usuarios aunque la certificación no haya expirado.</p>
-        @error('manual_user_data_purge_enabled')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+        <p class="mt-2 text-xs text-slate-600">Cuando está habilitado, los administradores pueden eliminar manualmente
+            datos de usuarios aunque la certificación no haya expirado.</p>
+        @error('manual_user_data_purge_enabled')
+            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+        @enderror
     </div>
 
     {{-- Phase 3: Randomización --}}
@@ -227,8 +293,12 @@
                 Mezclar opciones de respuesta
             </label>
         </div>
-        @error('shuffle_questions')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
-        @error('shuffle_options')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+        @error('shuffle_questions')
+            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+        @enderror
+        @error('shuffle_options')
+            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+        @enderror
     </div>
 
     {{-- Phase 3: Banco de preguntas --}}
@@ -236,11 +306,15 @@
         <h3 class="mb-4 text-sm font-bold text-slate-800">🏦 Banco de Preguntas</h3>
         <label class="inline-flex items-center gap-2 text-sm font-semibold text-slate-700">
             <input type="hidden" name="require_question_bank_for_activation" value="0">
-            <input type="checkbox" name="require_question_bank_for_activation" value="1" @checked(old('require_question_bank_for_activation', $certification->require_question_bank_for_activation ?? true))>
+            <input type="checkbox" name="require_question_bank_for_activation" value="1"
+                @checked(old('require_question_bank_for_activation', $certification->require_question_bank_for_activation ?? true))>
             Requerir banco mínimo para activación
         </label>
-        <p class="mt-2 text-xs text-slate-600">Si está habilitado, no se puede activar la certificación sin al menos un banco de preguntas válido.</p>
-        @error('require_question_bank_for_activation')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+        <p class="mt-2 text-xs text-slate-600">Si está habilitado, no se puede activar la certificación sin al menos un
+            banco de preguntas válido.</p>
+        @error('require_question_bank_for_activation')
+            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+        @enderror
     </div>
 
     {{-- Phase 3: Reglas automáticas --}}
@@ -248,18 +322,26 @@
         <h3 class="mb-4 text-sm font-bold text-slate-800">🤖 Reglas Automáticas de Aprobado/Desaprobado</h3>
         <label class="block text-sm font-semibold text-slate-700">
             Modo de reglas automáticas
-            <select name="auto_result_rule_mode" class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm">
+            <select name="auto_result_rule_mode"
+                class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm">
                 <option value="none" @selected(old('auto_result_rule_mode', $certification->auto_result_rule_mode ?? 'none') === 'none')>Sin reglas</option>
                 <option value="name_rule" @selected(old('auto_result_rule_mode', $certification->auto_result_rule_mode ?? 'none') === 'name_rule')>Reglas por nombre/apellido</option>
             </select>
-            @error('auto_result_rule_mode')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+            @error('auto_result_rule_mode')
+                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+            @enderror
         </label>
 
         <label class="mt-4 block text-sm font-semibold text-slate-700">
             Configuración de reglas (JSON)
-            <textarea name="auto_result_rule_config" rows="6" class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 font-mono text-xs" placeholder='{"rules": [{"name_pattern": "Juan", "last_name_pattern": "Pérez", "decision": "pass", "description": "Aprobación automática"}]}'>{{ old('auto_result_rule_config', is_array($certification->auto_result_rule_config ?? null) ? json_encode($certification->auto_result_rule_config, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) : ($certification->auto_result_rule_config ?? '')) }}</textarea>
-            <p class="mt-1 text-xs text-slate-500">Define `rules` como array de objetos con: `name_pattern`, `last_name_pattern`, `decision` (`pass` o `fail`) y `description`.</p>
-            @error('auto_result_rule_config')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+            <textarea name="auto_result_rule_config" rows="6"
+                class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 font-mono text-xs"
+                placeholder='{"rules": [{"name_pattern": "Juan", "last_name_pattern": "Pérez", "decision": "pass", "description": "Aprobación automática"}]}'>{{ old('auto_result_rule_config', is_array($certification->auto_result_rule_config ?? null) ? json_encode($certification->auto_result_rule_config, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) : $certification->auto_result_rule_config ?? '') }}</textarea>
+            <p class="mt-1 text-xs text-slate-500">Define `rules` como array de objetos con: `name_pattern`,
+                `last_name_pattern`, `decision` (`pass` o `fail`) y `description`.</p>
+            @error('auto_result_rule_config')
+                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+            @enderror
         </label>
     </div>
 
@@ -269,13 +351,16 @@
     </label>
 
     <div class="flex flex-wrap items-center gap-3">
-        <button type="button" onclick="showChangePreview()" class="rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+        <button type="button" onclick="showChangePreview()"
+            class="rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
             👁️ Vista previa
         </button>
-        <button type="submit" class="rounded-xl bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-white transition hover:brightness-110">
+        <button type="submit"
+            class="rounded-xl bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-white transition hover:brightness-110">
             {{ $buttonLabel }}
         </button>
-        <a href="{{ route('admin.certifications.index') }}" class="rounded-xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-[var(--accent)] hover:text-[var(--accent)]">
+        <a href="{{ route('admin.certifications.index') }}"
+            class="rounded-xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-[var(--accent)] hover:text-[var(--accent)]">
             Volver
         </a>
     </div>

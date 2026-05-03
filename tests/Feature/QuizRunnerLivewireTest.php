@@ -149,4 +149,49 @@ class QuizRunnerLivewireTest extends TestCase
         $this->assertFalse(session()->has('quiz_candidate.hetero'));
         $this->assertFalse(session()->has('quiz_attempt_' . $attemptUuid));
     }
+
+    public function test_quiz_runner_can_render_preview_without_candidate_session(): void
+    {
+        $certification = Certification::query()->create([
+            'slug' => 'preview-quiz',
+            'name' => 'Preview Quiz',
+            'active' => true,
+            'questions_required' => 1,
+            'pass_score_percentage' => 50,
+            'cooldown_days' => 30,
+            'result_mode' => 'binary_threshold',
+            'pdf_view' => 'pdf.certificate',
+            'home_order' => 10,
+        ]);
+
+        $question = Question::query()->create([
+            'certification_id' => $certification->id,
+            'prompt' => 'Preview question',
+            'option_1' => 'A',
+            'option_2' => 'B',
+            'option_3' => 'C',
+            'option_4' => 'D',
+            'correct_option' => 1,
+            'type' => QuestionType::MCQ_4->value,
+            'active' => true,
+        ]);
+
+        QuestionTranslation::query()->create([
+            'question_id' => $question->id,
+            'language' => app()->getLocale(),
+            'prompt' => 'Preview question',
+            'option_1' => 'A',
+            'option_2' => 'B',
+            'option_3' => 'C',
+            'option_4' => 'D',
+        ]);
+
+        Livewire::test(QuizRunner::class, ['certType' => 'preview-quiz', 'previewMode' => true])
+            ->assertSee('Preview question')
+            ->assertSee('wire:click="answer(1)"', false)
+            ->call('answer', 1)
+            ->assertSet('currentIndex', 0);
+
+        $this->assertDatabaseCount('certificates', 0);
+    }
 }
