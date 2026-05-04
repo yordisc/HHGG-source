@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Certificate;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class CertificatePdfLanguageTest extends TestCase
@@ -12,6 +13,8 @@ class CertificatePdfLanguageTest extends TestCase
 
     public function test_pdf_is_always_generated_in_english_regardless_of_session_locale(): void
     {
+        $this->fakeQrDownload();
+
         $certificate = Certificate::create([
             'serial' => 'TEST-2026-XX-ABCDEF',
             'certification_id' => null,
@@ -63,5 +66,14 @@ class CertificatePdfLanguageTest extends TestCase
         $response->assertOk();
         $response->assertHeader('Content-Type', 'application/pdf');
         $this->assertStringContainsString('%PDF', $response->getContent());
+    }
+
+    private function fakeQrDownload(): void
+    {
+        Http::fake([
+            'https://quickchart.io/qr*' => Http::response(base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO5qZ4kAAAAASUVORK5CYII='), 200, [
+                'Content-Type' => 'image/png',
+            ]),
+        ]);
     }
 }

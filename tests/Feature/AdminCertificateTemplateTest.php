@@ -80,7 +80,7 @@ class AdminCertificateTemplateTest extends TestCase
         $template = CertificateTemplate::create([
             'slug' => 'preview-test',
             'name' => 'Preview Test',
-            'html_template' => '<div>Nombre: {{nombre_completo}} | DNI: {{documento_identidad}} | País: {{pais_origen}} | Certificación: {{nombre_certificacion}}</div>',
+            'html_template' => '<div>Nombre: {{nombre_completo}} | DNI: {{documento_identidad}} | País: {{pais_origen}} | Certificación: {{nombre_certificacion}} | Firmado por: {{firma_director_nombre}}</div>',
             'css_template' => null,
             'is_default' => false,
         ]);
@@ -91,7 +91,28 @@ class AdminCertificateTemplateTest extends TestCase
             ->assertSee('Juan Pérez')
             ->assertSee('CC 12345678')
             ->assertSee('Colombia')
-            ->assertSee('Competencia Ejemplar');
+            ->assertSee('Competencia Ejemplar')
+            ->assertSee('Benjamin Netanyahu');
+    }
+
+    public function test_admin_can_view_template_preview_with_spaced_placeholders(): void
+    {
+        $template = CertificateTemplate::create([
+            'slug' => 'preview-test-spaced',
+            'name' => 'Preview Test Spaced',
+            'html_template' => '<div>Nombre: {{ nombre_completo }} | DNI: {{ documento_identidad }} | País: {{ pais_origen }} | Certificación: {{ nombre_certificacion }} | Firmado por: {{ firma_director_nombre }}</div>',
+            'css_template' => null,
+            'is_default' => false,
+        ]);
+
+        $this->asAdmin()
+            ->get(route('admin.certificates.templates.preview', $template))
+            ->assertOk()
+            ->assertSee('Juan Pérez')
+            ->assertSee('CC 12345678')
+            ->assertSee('Colombia')
+            ->assertSee('Competencia Ejemplar')
+            ->assertSee('Benjamin Netanyahu');
     }
 
     public function test_admin_can_create_custom_certification_template(): void

@@ -6,6 +6,7 @@ use App\Models\Certificate;
 use App\Models\Certification;
 use App\Support\CertificateIntegrityService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class CertificatePresentationContractTest extends TestCase
@@ -16,14 +17,16 @@ class CertificatePresentationContractTest extends TestCase
     {
         $certificate = $this->createCertificate();
         $verificationUrl = app(CertificateIntegrityService::class)->verificationUrl($certificate);
+        $certificatePdfUrl = route('cert.pdf', ['serial' => $certificate->serial]);
 
         $response = $this->get(route('result.show', ['serial' => $certificate->serial]));
 
         $response->assertOk();
         $response->assertSee('https://www.linkedin.com/profile/add?', false);
         $response->assertSee('startTask=CERTIFICATION_NAME', false);
-        $response->assertSee('certId='.$certificate->serial, false);
+        $response->assertSee('certId=' . $certificate->serial, false);
         $response->assertSee($verificationUrl, false);
+        $response->assertSee($certificatePdfUrl, false);
 
         $organizationId = trim((string) env('LINKEDIN_ORG_ID', ''));
         if ($organizationId === '') {
@@ -31,18 +34,20 @@ class CertificatePresentationContractTest extends TestCase
             return;
         }
 
-        $response->assertSee('organizationId='.$organizationId, false);
+        $response->assertSee('organizationId=' . $organizationId, false);
     }
 
     public function test_certificate_pdf_has_expected_filename_and_pdf_signature(): void
     {
+        $this->fakeQrDownload();
+
         $certificate = $this->createCertificate();
 
         $response = $this->get(route('cert.pdf', ['serial' => $certificate->serial]));
 
         $response->assertOk();
         $response->assertHeader('Content-Type', 'application/pdf');
-        $response->assertHeader('Content-Disposition', 'attachment; filename="'.$certificate->serial.'.pdf"');
+        $response->assertHeader('Content-Disposition', 'attachment; filename="' . $certificate->serial . '.pdf"');
 
         $raw = (string) $response->getContent();
         $this->assertStringStartsWith('%PDF', $raw);
@@ -138,6 +143,15 @@ class CertificatePresentationContractTest extends TestCase
             'error' => 'certificate_revoked',
             'revoked_reason' => 'Fraude documental detectado',
             'status' => 'revoked',
+        ]);
+    }
+
+    private function fakeQrDownload(): void
+    {
+        Http::fake([
+            'https://quickchart.io/qr*' => Http::response(base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO5qZ4kAAAAASUVORK5CYII='), 200, [
+                'Content-Type' => 'image/png',
+            ]),
         ]);
     }
 

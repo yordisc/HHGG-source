@@ -20,7 +20,7 @@
         <div class="rounded-2xl border border-slate-200 bg-slate-50 p-6">
             <div class="prose max-w-none rounded-xl bg-white p-8 shadow-sm dark:prose-invert">
                 @php
-                    $replacements = [];
+                    $html = $template->html_template;
                     foreach (
                         [
                             'nombre',
@@ -30,6 +30,7 @@
                             'competencia',
                             'nombre_certificacion',
                             'nota',
+                            'pais',
                             'pais_origen',
                             'documento_identidad',
                             'horas_cursadas',
@@ -39,15 +40,16 @@
                             'integridad_hash',
                             'logo_institucion',
                             'firma_director',
+                            'firma_director_nombre',
                         ]
                         as $key
                     ) {
                         $value = $sampleData[$key] ?? '';
-                        $replacements['{{ ' . $key . ' }}'] = $value;
-                        $replacements['{{ ' . $key . ' }}'] = $value;
+                        $pattern = '/\{\{\s*' . preg_quote($key, '/') . '\s*\}\}/';
+                        $html = preg_replace($pattern, $value, $html);
                     }
                 @endphp
-                {!! str_replace(array_keys($replacements), array_values($replacements), $template->html_template) !!}
+                {!! $html !!}
             </div>
         </div>
     </section>

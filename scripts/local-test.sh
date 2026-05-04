@@ -272,16 +272,31 @@ run_test_migrations() {
   php artisan migrate --force
 }
 
+run_phase3_tests() {
+  log "[INFO] Ejecutando validaciones de Phase 3..."
+
+  printf '%s\n' "[INFO] Ejecutando pruebas Phase 3 Error Flow..."
+  XDEBUG_MODE=off php artisan test tests/Feature/CertificatePhase3ErrorFlowTest.php --no-output
+
+  printf '%s\n' "[INFO] Ejecutando pruebas Certificate Negative Path..."
+  XDEBUG_MODE=off php artisan test tests/Feature/SearchAndCertificateNegativeTest.php --no-output
+
+  printf '%s\n' "[INFO] Ejecutando pruebas Certificate Presentation Contract..."
+  XDEBUG_MODE=off php artisan test tests/Feature/CertificatePresentationContractTest.php --no-output
+}
+
 run_tests() {
   TEST_LOG_DIR="$PROJECT_DIR/storage/logs"
   TEST_LOG_FILE="$TEST_LOG_DIR/local-test-tests.log"
 
   mkdir -p "$TEST_LOG_DIR"
 
-  log "[INFO] Ejecutando pruebas Feature..."
+  log "[INFO] Ejecutando validaciones previas de certificado..."
   : > "$TEST_LOG_FILE"
   set +e
   {
+    run_phase3_tests
+
     printf '%s\n' "[INFO] Ejecutando pruebas Feature..."
     XDEBUG_MODE=off php artisan test --testsuite=Feature --stop-on-failure
 

@@ -3,6 +3,8 @@
 namespace App\Support;
 
 use App\Models\Certificate;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 
 class CertificateIntegrityService
 {
@@ -61,6 +63,29 @@ class CertificateIntegrityService
 
     public function verificationQrUrl(Certificate $certificate, int $size = 220): string
     {
-        return 'https://quickchart.io/qr?size='.$size.'&text='.urlencode($this->verificationUrl($certificate));
+        return 'https://quickchart.io/qr?size=' . $size . '&text=' . urlencode($this->verificationUrl($certificate));
+    }
+
+    public function verificationQrDataUri(Certificate $certificate, int $size = 220): ?string
+    {
+        $cacheKey = sprintf('certificate-verification-qr:%s:%d', $certificate->serial, $size);
+
+        return Cache::remember($cacheKey, now()->addDay(), function () use ($certificate, $size): ?string {
+            try {
+                $response = Http::timeout(8)
+                    ->retry(1, 250)
+                    ->get($this->verificationQrUrl($certificate, $size));
+
+                if (! $response->successful()) {
+                    return null;
+                }
+
+                $contentType = trim((string) $response->header('Content-Type', 'image/png'));
+
+                return 'data:' . ($contentType !== '' ? $contentType : 'image/png') . ';base64,' . base64_encode($response->body());
+            } catch (\Throwable $throwable) {
+                return null;
+            }
+        });
     }
 }

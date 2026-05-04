@@ -212,6 +212,7 @@ class CertificateTemplateController extends Controller
                 'competencia' => 'Competencia Ejemplar',
                 'nombre_certificacion' => 'Competencia Ejemplar',
                 'nota' => 'Aprobado',
+                'pais' => 'Colombia',
                 'pais_origen' => 'Colombia',
                 'documento_identidad' => 'CC 12345678',
                 'horas_cursadas' => '40',
@@ -221,6 +222,7 @@ class CertificateTemplateController extends Controller
                 'integridad_hash' => hash('sha256', 'CERT-DEMO-INTEGRIDAD'),
                 'logo_institucion' => public_path('apple-touch-icon.png'),
                 'firma_director' => public_path('Signature/Benjamin_Netanyahu.png'),
+                'firma_director_nombre' => 'Benjamin Netanyahu',
             ],
         ]);
     }

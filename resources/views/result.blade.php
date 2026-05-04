@@ -46,7 +46,7 @@
                         class="rounded-full border border-emerald-400 bg-emerald-50 px-4 py-3 text-center text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100">
                         Verificar autenticidad firmada
                     </a>
-                    <a href="{{ route('cert.show', ['serial' => $certificate->serial]) }}"
+                    <a href="{{ route('cert.pdf', ['serial' => $certificate->serial]) }}"
                         class="rounded-full border border-slate-400 px-4 py-3 text-center text-sm font-semibold text-slate-700 transition hover:border-[var(--accent)] hover:text-[var(--accent)]">
                         {{ __('app.view_certificate') }}
                     </a>

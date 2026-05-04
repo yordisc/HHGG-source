@@ -43,6 +43,7 @@
                     <li>• <code class="text-yellow-600">@{{ verificacion_url }}</code> • <code
                             class="text-yellow-600">@{{ verificacion_qr }}</code> • <code
                             class="text-yellow-600">@{{ integridad_hash }}</code></li>
+                    <li>• <code class="text-yellow-600">@{{ firma_director_nombre }}</code></li>
                 </ul>
             </div>
 
@@ -109,7 +110,8 @@
                         </div>
                     @empty
                         <p class="text-slate-500">No hay archivos en <code>public/Certificates</code> ni
-                            <code>public/Signature</code>.</p>
+                            <code>public/Signature</code>.
+                        </p>
                     @endforelse
                 </div>
             </div>

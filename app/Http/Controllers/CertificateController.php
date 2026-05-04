@@ -30,7 +30,6 @@ class CertificateController extends Controller
             'supportedLocales' => config('app.supported_locales', ['en']),
         ]);
     }
-
     public function verify(Request $request, string $serial, string $token): View|JsonResponse
     {
         $certificate = Certificate::where('serial', $serial)->firstOrFail();
@@ -133,22 +132,23 @@ class CertificateController extends Controller
         $integrity = app(CertificateIntegrityService::class);
         $certificate = $this->ensureIntegrityMetadata($certificate, $integrity);
         $verificationUrl = $integrity->verificationUrl($certificate);
-        $verificationQrUrl = $integrity->verificationQrUrl($certificate);
+        $verificationQrDataUri = $integrity->verificationQrDataUri($certificate);
         $allowPdfImages = $this->isGdAvailable();
 
         if ($template !== null && trim((string) $template->html_template) !== '') {
             $pdf = Pdf::loadView('pdf.certificate-template', [
                 'cssTemplate' => (string) ($template->css_template ?? ''),
-                'renderedHtml' => $this->renderTemplateHtml($template->html_template, $certificate, $verificationUrl, $verificationQrUrl, $allowPdfImages),
+                'renderedHtml' => $this->renderTemplateHtml($template->html_template, $certificate, $verificationUrl, $verificationQrDataUri, $allowPdfImages),
             ]);
         } else {
             $pdf = Pdf::loadView('pdf.certificate', [
                 'certificate' => $certificate,
                 'verificationUrl' => $verificationUrl,
-                'verificationQrUrl' => $verificationQrUrl,
+                'verificationQrDataUri' => $verificationQrDataUri,
                 'integrityHash' => $certificate->content_hash,
                 'showLegalDisclaimer' => ! $this->isOfficialCertificateMode(),
                 'allowPdfImages' => $allowPdfImages,
+                'directorName' => $this->signatureDirectorName(),
             ]);
         }
 
@@ -194,7 +194,7 @@ class CertificateController extends Controller
         return CertificateTemplate::getDefault();
     }
 
-    private function renderTemplateHtml(string $htmlTemplate, Certificate $certificate, string $verificationUrl, string $verificationQrUrl, bool $allowPdfImages = true): string
+    private function renderTemplateHtml(string $htmlTemplate, Certificate $certificate, string $verificationUrl, ?string $verificationQrDataUri = null, bool $allowPdfImages = true): string
     {
         $issuedAt = $certificate->issued_at ?? $certificate->created_at ?? now();
         $validUntil = $certificate->expires_at?->format('Y-m-d') ?? '';
@@ -203,6 +203,8 @@ class CertificateController extends Controller
             $certificate->document_type,
             $certificate->doc_partial,
         ])));
+        $directorName = $this->signatureDirectorName();
+        $verificationImage = $verificationQrDataUri ?? '';
 
         $replacements = [
             '{{nombre}}' => trim($certificate->first_name . ' ' . $certificate->last_name),
@@ -233,22 +235,19 @@ class CertificateController extends Controller
             '{{ mencion_honorifica }}' => (string) ($certificationSettings['mencion_honorifica'] ?? ''),
             '{{verificacion_url}}' => $verificationUrl,
             '{{ verificacion_url }}' => $verificationUrl,
-            '{{verificacion_qr}}' => $allowPdfImages ? $verificationQrUrl : '',
-            '{{ verificacion_qr }}' => $allowPdfImages ? $verificationQrUrl : '',
+            '{{verificacion_qr}}' => $allowPdfImages ? $verificationImage : '',
+            '{{ verificacion_qr }}' => $allowPdfImages ? $verificationImage : '',
             '{{integridad_hash}}' => (string) ($certificate->content_hash ?? ''),
             '{{ integridad_hash }}' => (string) ($certificate->content_hash ?? ''),
             '{{logo_institucion}}' => $allowPdfImages ? public_path('apple-touch-icon.png') : '',
             '{{ logo_institucion }}' => $allowPdfImages ? public_path('apple-touch-icon.png') : '',
             '{{firma_director}}' => $allowPdfImages ? public_path('Signature/Benjamin_Netanyahu.png') : '',
             '{{ firma_director }}' => $allowPdfImages ? public_path('Signature/Benjamin_Netanyahu.png') : '',
+            '{{firma_director_nombre}}' => $allowPdfImages ? $directorName : '',
+            '{{ firma_director_nombre }}' => $allowPdfImages ? $directorName : '',
         ];
 
         $rendered = str_replace(array_keys($replacements), array_values($replacements), $htmlTemplate);
-
-        if (! $allowPdfImages) {
-            // Prevent Dompdf from trying to load image resources when GD is not available.
-            $rendered = (string) preg_replace('/<img\b[^>]*>/i', '', $rendered);
-        }
 
         return $rendered;
     }
@@ -261,6 +260,19 @@ class CertificateController extends Controller
     private function isOfficialCertificateMode(): bool
     {
         return config('app.certificate_mode', 'demo') === 'official';
+    }
+
+    private function signatureDirectorName(): string
+    {
+        $signatureFile = basename(public_path('Signature/Benjamin_Netanyahu.png'));
+        $signatureName = pathinfo($signatureFile, PATHINFO_FILENAME);
+
+        return trim(preg_replace('/[_-]+/', ' ', $signatureName) ?? '') ?: 'Director of Certification';
+    }
+
+    private function fallbackImageDataUri(): string
+    {
+        return 'data:image/gif;base64,R0lGODlhAQABAPAAAP///wAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==';
     }
 
     private function ensureIntegrityMetadata(Certificate $certificate, CertificateIntegrityService $integrity): Certificate

@@ -4,6 +4,19 @@
 <head>
     <meta charset="utf-8">
     <style>
+        @page {
+            size: letter;
+            margin: 18px;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+        }
+
         body {
             font-family: DejaVu Sans, sans-serif;
             color: #1f2937;
@@ -11,47 +24,51 @@
         }
 
         .wrap {
+            box-sizing: border-box;
+            min-height: calc(100% - 2px);
             border: 3px solid #1d3557;
-            padding: 28px;
+            padding: 20px 22px 18px;
             background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+            page-break-inside: avoid;
+            overflow: hidden;
         }
 
         .title {
-            font-size: 24px;
+            font-size: 22px;
             font-weight: 700;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             letter-spacing: 0.06em;
             text-transform: uppercase;
         }
 
         .big {
-            font-size: 22px;
+            font-size: 21px;
             font-weight: 700;
-            margin: 16px 0 8px;
+            margin: 12px 0 8px;
         }
 
         .badge {
             display: inline-block;
-            margin-top: 8px;
-            padding: 6px 12px;
+            margin-top: 6px;
+            padding: 5px 11px;
             border-radius: 999px;
             background: #1d3557;
             color: white;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 700;
         }
 
         .meta {
-            margin-top: 20px;
-            font-size: 12px;
+            margin-top: 14px;
+            font-size: 11px;
             color: #4b5563;
-            line-height: 1.7;
+            line-height: 1.45;
         }
 
         .divider {
             height: 1px;
             background: #e5e7eb;
-            margin: 18px 0;
+            margin: 14px 0;
         }
     </style>
 </head>
@@ -66,7 +83,8 @@
 
         <div class="big">{{ $certificate->first_name }} {{ $certificate->last_name }}</div>
         <p>{{ __('app.pdf_award', [], 'en') }}:
-            <strong>{{ __('app.result_' . $certificate->result_key, [], 'en') }}</strong></p>
+            <strong>{{ __('app.result_' . $certificate->result_key, [], 'en') }}</strong>
+        </p>
 
         <div class="meta">
             <p>{{ __('app.serial', [], 'en') }}: {{ $certificate->serial }}</p>
@@ -87,15 +105,18 @@
             @if (($showLegalDisclaimer ?? true) === true)
                 <p>{{ __('cert.disclaimer_pdf', [], 'en') }}</p>
             @endif
+            @if (!empty($directorName))
+                <p>Director: {{ $directorName }}</p>
+            @endif
         </div>
 
-        @if (($allowPdfImages ?? true) && !empty($verificationQrUrl))
-            <div class="meta" style="margin-top: 14px;">
+        @if (!empty($verificationQrDataUri))
+            <div class="meta" style="margin-top: 10px;">
                 <p>Verification QR</p>
-                <img src="{{ $verificationQrUrl }}" alt="Verification QR" style="width: 90px; height: 90px;">
+                <img src="{{ $verificationQrDataUri }}" alt="Verification QR" style="width: 88px; height: 88px;">
             </div>
         @elseif (!empty($verificationUrl))
-            <div class="meta" style="margin-top: 14px;">
+            <div class="meta" style="margin-top: 10px;">
                 <p>Verification URL: {{ $verificationUrl }}</p>
             </div>
         @endif
